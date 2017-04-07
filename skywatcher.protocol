@@ -1,0 +1,119 @@
+Introduction
+
+
+Please use the source code as a reference source
+
+How to talk with Axis
+
+The protocol of communication contains three basic elements.
+
+The Target Axis: An char represented which axis the command is sent to.
+value '1' means the following command is sent to AXIS1 (AZ/RA).
+value '2' means the following command is sent to AXIS2 (ALT/DEC).
+The Command: A char represented what action the target axis should react.
+Data String: A byte string for the command, if necessary. It may contain some encoding, depends on the command itself.
+How to send a request to the mount?
+
+The command send with data string (length N) to the mount, would look like:
+
+|Index |0| 1| 2| 3 ~ 3+N| 3+N+1| |:------|:|:-|:-|:-------|:-----| |Value 
+|Leading Char, ':'| command, char| Target Axis, '1' or '2'| The data string body, if any| Ending Char, 13|
+
+The Sample code
+
+``` protected override void SendRequest(AXISID Axis, char Command, string cmdDataStr) { if (cmdDataStr == null) cmdDataStr = "";
+
+        const int BufferSize = 20;
+        StringBuilder CommandStr = new StringBuilder(BufferSize);
+        CommandStr.Append(cStartChar_Out); // 0: Leading char
+        CommandStr.Append(Command);        // 1: Length of command( Source, distination, command char, data )
+
+        // Target Device
+        CommandStr.Append(Axis == AXISID.AXIS1 ? '1' : '2');    // 2: Target Axis
+        // Copy command data to buffer
+        CommandStr.Append(cmdDataStr);
+
+        CommandStr.Append(cEndChar);    // CR Character            
+
+        mConnection.Write(CommandStr.ToString());
+    }
+```
+
+How to read the response
+
+| Index | 0 | 1 ~ N | N+1 | |:------|:---|:--------|:------| 
+| Value | response or error message, '=' or '!'| response data body | Ending Char, 13|
+
+The Sample Code
+
+``` protected override string RecieveResponse() { 
+// Receive Response // format "::e1\r=020883\r" long startticks = DateTime.Now.Ticks;
+
+        StringBuilder mBuffer = new StringBuilder(15);
+        bool StartReading = false, EndReading = false;
+
+        int index = 0;
+        long interval = 0;
+        while (!EndReading)
+        {
+            index++;
+            long curticks = DateTime.Now.Ticks;
+            interval = curticks - startticks;
+
+            if ((curticks - startticks) > 10000 * 1000)
+            {
+                //Trace.TraceError("Timeout {0} / {1}", mConnection.mBuffer, mBuffer);          
+                throw new TimeoutException();
+            }
+
+            string r =mConnection.Read();
+
+            for (int i = 0; i < r.Length; i++)
+            {
+                // this code order is important
+                if (r[i] == cStartChar_In || r[i] == cErrChar)
+                    StartReading = true;
+
+                if (StartReading)
+                    mBuffer.Append(r[i]);
+
+                if (r[i] == cEndChar)
+                {
+                    if (StartReading)
+                    {
+                        EndReading = true;
+                        break;
+                    }
+                }
+            }
+
+            Thread.Sleep(1);
+        }
+
+        //Trace.TraceInformation("Loop :" + index.ToString() + "Ticks :" + interval);
+        return mBuffer.ToString();
+    }
+```
+Command Set | Command Name| Command| Variable| Return| Description | 
+|:------------|:--------|:---------|:-------|:-------------| 
+| Initialize | F | | | Initial the target axis | 
+| InquireMotorBoardVersion| e | | Encoded String| | Inquire Motor Board Version | 
+| InquireGridPerRevolution| a | | Encoded String| Inquire Grid Ratio | 
+| InquireTimerInterruptFreq| b | | Encoded String| Inquire Timer Interrupt Frequency | 
+| InquireHighSpeedRatio| g | | Encoded String| Inquire High Speed Ratio | 
+| InquirePECPeriod| s | | Encoded String| Inquire PEC Period | 
+| AxisStop (Instant Stop)| L | | | Stop the target axis instantly | 
+| AxisStop (Not Instant stop)| K | | | Stop the target axis normally | 
+| SetAxisPosition| E | Encoded String| | Set the target axis position to the specify value | 
+| GetAxisPosition| j | | Encoded String| Get the target axis position | 
+| GetAxisStatus| f | | Encoded String| Get the target axis's status | 
+| SetSwitch | O | '1' turn on , '0' turn off| | Turn On/Off of the trigger | 
+| SetMotionMode| G | '0' high speed GOTO slewing, 
+  		     '1' low speed slewing mode, 
+		     '2' low speed GOTO mode, 
+		     '3' High slewing mode| | Set the different motion mode | 
+| SetGotoTargetIncrement| H | Encoded String| | Set the goto target increment | 
+| SetBreakPointIncrement| M | Encoded String| | Set the break point increment | 
+| SetBreakSteps| U | Encoded String| | Set the Break Steps| 
+| SetStepPeriod| I | Encoded String| | Set the step counts| 
+| StartMotion | J | | | Start motion based on previous settings |

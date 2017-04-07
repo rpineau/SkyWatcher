@@ -1,0 +1,5 @@
+Install :
+Copy the  'dmountlist Skywatcher.txt' file to the "Common/Miscellaneous Files" directory inside of TheSkyX Pro.
+Copy libSkywatcher.dll and Skywatcher.ui to the "Common/PlugIns/MountPlugIns" directory inside of TheSkyX Pro.
+
+
