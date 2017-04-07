@@ -1,0 +1,2 @@
+//Version|Manufacturer|Model|Comment|MapsTo|PlugInDllName
+1|X2 Skywatcher EQ Mount|X2 Skywatcher|X2 EQDirect driver for Skywatcher EQ Mount| |libSkywatcher

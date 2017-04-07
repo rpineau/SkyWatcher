@@ -1,0 +1,3 @@
+Install :
+Run the rpi_install.sh, it'll copy the files in the proper place. This need to be done after you run TheSkyX at least once so that it can use the "~/Library/Application Support/Software Bisque/TheSkyX Professional Edition/TheSkyXInstallPath.txt" to find where TheSkyX is installed.
+

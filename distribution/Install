@@ -1,0 +1,4 @@
+#!/bin/bash
+
+cp libSkywatcher.so Skywatcher.ui ~/TheSkyX/Resources/Common/PlugInsARM32/MountPlugIns
+cp "mountlist Skywatcher.txt" ~/TheSkyX/Resources/Common/"Miscellaneous Files"

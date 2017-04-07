@@ -1,0 +1,309 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		93B6BC601E62127D0050E48B /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 93B6BC5A1E62127D0050E48B /* main.cpp */; };
+		93B6BC611E62127D0050E48B /* main.h in Headers */ = {isa = PBXBuildFile; fileRef = 93B6BC5B1E62127D0050E48B /* main.h */; };
+		93B6BC621E62127D0050E48B /* Skywatcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 93B6BC5C1E62127D0050E48B /* Skywatcher.cpp */; };
+		93B6BC631E62127D0050E48B /* Skywatcher.h in Headers */ = {isa = PBXBuildFile; fileRef = 93B6BC5D1E62127D0050E48B /* Skywatcher.h */; };
+		93B6BC641E62127D0050E48B /* x2mount.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 93B6BC5E1E62127D0050E48B /* x2mount.cpp */; };
+		93B6BC651E62127D0050E48B /* x2mount.h in Headers */ = {isa = PBXBuildFile; fileRef = 93B6BC5F1E62127D0050E48B /* x2mount.h */; };
+		93B6BC681E6223EE0050E48B /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 93B6BC671E6223EE0050E48B /* IOKit.framework */; };
+		93B6BC6A1E6223F60050E48B /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 93B6BC691E6223F60050E48B /* CoreFoundation.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		93B6BC521E62122B0050E48B /* libSkywatcher.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libSkywatcher.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+		93B6BC5A1E62127D0050E48B /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		93B6BC5B1E62127D0050E48B /* main.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = main.h; sourceTree = "<group>"; };
+		93B6BC5C1E62127D0050E48B /* Skywatcher.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Skywatcher.cpp; sourceTree = "<group>"; };
+		93B6BC5D1E62127D0050E48B /* Skywatcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Skywatcher.h; sourceTree = "<group>"; };
+		93B6BC5E1E62127D0050E48B /* x2mount.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = x2mount.cpp; sourceTree = "<group>"; };
+		93B6BC5F1E62127D0050E48B /* x2mount.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = x2mount.h; sourceTree = "<group>"; };
+		93B6BC671E6223EE0050E48B /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
+		93B6BC691E6223F60050E48B /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		93B6BC4F1E62122B0050E48B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				93B6BC6A1E6223F60050E48B /* CoreFoundation.framework in Frameworks */,
+				93B6BC681E6223EE0050E48B /* IOKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		93B6BC491E62122B0050E48B = {
+			isa = PBXGroup;
+			children = (
+				93B6BC591E6212610050E48B /* Sources */,
+				93B6BC531E62122B0050E48B /* Products */,
+				93B6BC661E6223EE0050E48B /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		93B6BC531E62122B0050E48B /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				93B6BC521E62122B0050E48B /* libSkywatcher.dylib */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		93B6BC591E6212610050E48B /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				93B6BC5A1E62127D0050E48B /* main.cpp */,
+				93B6BC5B1E62127D0050E48B /* main.h */,
+				93B6BC5C1E62127D0050E48B /* Skywatcher.cpp */,
+				93B6BC5D1E62127D0050E48B /* Skywatcher.h */,
+				93B6BC5E1E62127D0050E48B /* x2mount.cpp */,
+				93B6BC5F1E62127D0050E48B /* x2mount.h */,
+			);
+			name = Sources;
+			sourceTree = "<group>";
+		};
+		93B6BC661E6223EE0050E48B /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				93B6BC691E6223F60050E48B /* CoreFoundation.framework */,
+				93B6BC671E6223EE0050E48B /* IOKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		93B6BC501E62122B0050E48B /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				93B6BC611E62127D0050E48B /* main.h in Headers */,
+				93B6BC651E62127D0050E48B /* x2mount.h in Headers */,
+				93B6BC631E62127D0050E48B /* Skywatcher.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		93B6BC511E62122B0050E48B /* Skywatcher */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 93B6BC561E62122B0050E48B /* Build configuration list for PBXNativeTarget "Skywatcher" */;
+			buildPhases = (
+				93B6BC4E1E62122B0050E48B /* Sources */,
+				93B6BC4F1E62122B0050E48B /* Frameworks */,
+				93B6BC501E62122B0050E48B /* Headers */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Skywatcher;
+			productName = Skywatcher;
+			productReference = 93B6BC521E62122B0050E48B /* libSkywatcher.dylib */;
+			productType = "com.apple.product-type.library.dynamic";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		93B6BC4A1E62122B0050E48B /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0820;
+				ORGANIZATIONNAME = "RTI-Zone";
+				TargetAttributes = {
+					93B6BC511E62122B0050E48B = {
+						CreatedOnToolsVersion = 8.2.1;
+						DevelopmentTeam = PB97QXVYQC;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 93B6BC4D1E62122B0050E48B /* Build configuration list for PBXProject "Skywatcher" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 93B6BC491E62122B0050E48B;
+			productRefGroup = 93B6BC531E62122B0050E48B /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				93B6BC511E62122B0050E48B /* Skywatcher */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		93B6BC4E1E62122B0050E48B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				93B6BC641E62127D0050E48B /* x2mount.cpp in Sources */,
+				93B6BC621E62127D0050E48B /* Skywatcher.cpp in Sources */,
+				93B6BC601E62127D0050E48B /* main.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		93B6BC541E62122B0050E48B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		93B6BC551E62122B0050E48B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		93B6BC571E62122B0050E48B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				DEVELOPMENT_TEAM = PB97QXVYQC;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				EXECUTABLE_PREFIX = lib;
+				"GCC_PREPROCESSOR_DEFINITIONS[arch=*]" = SB_MAC_BUILD;
+				HEADER_SEARCH_PATHS = (
+					"\"$(SRCROOT)/\"",
+					"\"$(SRCROOT)/../..\"",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		93B6BC581E62122B0050E48B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				DEVELOPMENT_TEAM = PB97QXVYQC;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				EXECUTABLE_PREFIX = lib;
+				"GCC_PREPROCESSOR_DEFINITIONS[arch=*]" = SB_MAC_BUILD;
+				HEADER_SEARCH_PATHS = (
+					"\"$(SRCROOT)/\"",
+					"\"$(SRCROOT)/../..\"",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		93B6BC4D1E62122B0050E48B /* Build configuration list for PBXProject "Skywatcher" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				93B6BC541E62122B0050E48B /* Debug */,
+				93B6BC551E62122B0050E48B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		93B6BC561E62122B0050E48B /* Build configuration list for PBXNativeTarget "Skywatcher" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				93B6BC571E62122B0050E48B /* Debug */,
+				93B6BC581E62122B0050E48B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 93B6BC4A1E62122B0050E48B /* Project object */;
+}
