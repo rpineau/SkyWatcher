@@ -17,13 +17,13 @@ if [ ! -d "$TheSkyX_Path" ]; then
     exit 1
 fi
 
-cp "./domelist Skywatcher.txt" "$TheSkyX_Path/Resources/Common/Miscellaneous Files/"
+cp "./mountlist Skywatcher.txt" "$TheSkyX_Path/Resources/Common/Miscellaneous Files/"
 cp "./Skywatcher.ui" "$TheSkyX_Path/Resources/Common/PlugInsARM32/MountPlugIns/"
 cp "./libSkywatcher.so" "$TheSkyX_Path/Resources/Common/PlugInsARM32/MountPlugIns/"
 
 app_owner=`/usr/bin/stat -c "%u" "$TheSkyX_Path" | xargs id -n -u`
 if [ ! -z "$app_owner" ]; then
-	chown $app_owner "$TheSkyX_Path/Resources/Common/Miscellaneous Files/domelist Skywatcher.txt"
+	chown $app_owner "$TheSkyX_Path/Resources/Common/Miscellaneous Files/mountlist Skywatcher.txt"
 	chown $app_owner "$TheSkyX_Path/Resources/Common/PlugInsARM32/MountPlugIns/Skywatcher.ui"
 	chown $app_owner "$TheSkyX_Path/Resources/Common/PlugInsARM32/MountPlugIns/libSkywatcher.so"
 fi
