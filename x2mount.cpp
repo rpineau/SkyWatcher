@@ -415,7 +415,7 @@ void	X2Mount::driverInfoDetailedInfo(BasicStringInterface& str) const
 #ifdef HEQ5_DEBUG
 	if (LogFile) fprintf(LogFile, "driverInfoDetailedInfo Called\n");
 #endif
-		str = "EQ Direct";
+		str = "EQ Direct X2 plugin by Colin McGill";
 }
 
 double	X2Mount::driverInfoVersion(void) const				
