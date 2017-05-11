@@ -299,7 +299,7 @@ int Skywatcher::SetTrackingRateAxis(SkywatcherAxis Axis, double Rate, unsigned l
 	// Calulate interupt period for slew rate - see SKYWATCHER basic api code for details
 	Period = (unsigned long) ((double) InteruptFrequency / (double) Steps360*360.0*3600.0 / Rate );
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::SetTrackingRateAxis %f Period %d Steps360 %d InteruptFrequency %d\n", Period, Steps360, InteruptFrequency);
+	fprintf(Logfile, "Skyw::SetTrackingRateAxis Period %d Steps360 %d InteruptFrequency %d\n", Period, Steps360, InteruptFrequency);
 #endif
 
 	// Set AxisPeriod

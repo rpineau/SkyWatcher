@@ -7,7 +7,7 @@
 #include "../../licensedinterfaces/mountdriverinterface.h"
 #include "../../licensedinterfaces/loggerinterface.h"
 
-// #define SKYW_DEBUG 1   // define this to have log files
+#define SKYW_DEBUG 1   // define this to have log files
 
 #ifdef SKYW_DEBUG
 #if defined(SB_WIN_BUILD)
