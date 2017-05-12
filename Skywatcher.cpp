@@ -245,7 +245,7 @@ int Skywatcher::SetTrackingRateAxis(SkywatcherAxis Axis, double Rate, unsigned l
 	int err = 0;
 
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::SetTrackingRateAxis Called Axis %c %f %d %d %d\n", Axis, Rate, Steps360, InteruptFrequency, HighspeedRatio);
+	fprintf(Logfile, "Skyw::SetTrackingRateAxis Called Axis %c %f %lu %lu %lu\n", Axis, Rate, Steps360, InteruptFrequency, HighspeedRatio);
 #endif
 
 	if (Rate < 0) {
@@ -299,7 +299,7 @@ int Skywatcher::SetTrackingRateAxis(SkywatcherAxis Axis, double Rate, unsigned l
 	// Calulate interupt period for slew rate - see SKYWATCHER basic api code for details
 	Period = (unsigned long) ((double) InteruptFrequency / (double) Steps360*360.0*3600.0 / Rate );
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::SetTrackingRateAxis Period %d Steps360 %d InteruptFrequency %d\n", Period, Steps360, InteruptFrequency);
+	fprintf(Logfile, "Skyw::SetTrackingRateAxis Period %lu Steps360 %lu InteruptFrequency %lu\n", Period, Steps360, InteruptFrequency);
 #endif
 
 	// Set AxisPeriod
@@ -435,7 +435,7 @@ int Skywatcher::GetMountHAandDec(double& dHa, double& dDec)
 	}
 
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::GetMountHAandDec called %d %d %f %f\n", RAStep, DEStep, dHa, dDec);
+	fprintf(Logfile, "Skyw::GetMountHAandDec called %lu %lu %f %f\n", RAStep, DEStep, dHa, dDec);
 #endif	
 
 	return err;
@@ -514,7 +514,7 @@ int Skywatcher::StartOpenSlew(const MountDriverInterface::MoveDir & 	Dir, double
 	// Diretions are tuned to match jog so that can have same reflection settings.
 	if ((NorthHemisphere && (DEStep < DEStepInit)) || (!NorthHemisphere && (DEStep > DEStepInit))) {    // Pre-Meridian
 #ifdef SKYW_DEBUG
-		fprintf(Logfile, "Skyw::StartOpenSlew called Pre-Meridian: NorthHemisphere %d DESSTEP %d DESTEPINIT %d\n", NorthHemisphere, DEStep, DEStepInit);
+		fprintf(Logfile, "Skyw::StartOpenSlew called Pre-Meridian: NorthHemisphere %d DESSTEP %lu DESTEPINIT %lu\n", NorthHemisphere, DEStep, DEStepInit);
 #endif
 		switch (Dir) {
 		case MountDriverInterface::MD_NORTH:;
@@ -533,7 +533,7 @@ int Skywatcher::StartOpenSlew(const MountDriverInterface::MoveDir & 	Dir, double
 	}
 	else {               // Post-Meridian
 #ifdef SKYW_DEBUG
-		fprintf(Logfile, "Skyw::StartOpenSlew called Post-Meridian: NorthHemisphere %d DESSTEP %d DESTEPINIT %d\n", NorthHemisphere, DEStep, DEStepInit);
+		fprintf(Logfile, "Skyw::StartOpenSlew called Post-Meridian: NorthHemisphere %d DESSTEP %lu DESTEPINIT %lu\n", NorthHemisphere, DEStep, DEStepInit);
 #endif
 		switch (Dir) {
 		case MountDriverInterface::MD_NORTH:;
@@ -580,7 +580,7 @@ int Skywatcher::PolarAlignment(double dHAHome, double dDecHome, int HomeIndex, d
 	EncoderValuesfromHAanDEC(dHAHome, dDecHome, TargetRaStep, TargetDeStep);
 
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::PolarAlignment called hAHome %f decHome %f HomeIndex %d HaPolaris %f RAStepPolarHome %d\n", dHAHome, dDecHome, HomeIndex, HaPolaris, TargetRaStep);
+	fprintf(Logfile, "Skyw::PolarAlignment called hAHome %f decHome %f HomeIndex %d HaPolaris %f RAStepPolarHome %lu\n", dHAHome, dDecHome, HomeIndex, HaPolaris, TargetRaStep);
 #endif	
 	// Now add on steps to position of Polaris, and allowing for location of home poistion (12 O'clock, 3 0'Clock etc).
 	if (NorthHemisphere) {
@@ -593,7 +593,7 @@ int Skywatcher::PolarAlignment(double dHAHome, double dDecHome, int HomeIndex, d
 		TargetRaStep += int((HAOctansSigma + 12.0 - HomeIndex*6.0+24.0)*RASteps360 / 24.0);      
 	}
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::PolarAlignment called TargetRAStep %d\n", TargetRaStep);
+	fprintf(Logfile, "Skyw::PolarAlignment called TargetRAStep %lu\n", TargetRaStep);
 #endif	
 
 
@@ -602,7 +602,7 @@ int Skywatcher::PolarAlignment(double dHAHome, double dDecHome, int HomeIndex, d
 		TargetRaStep -= RASteps360;
 	}
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::PolarAlignment called TargetRAStep in range %d\n", TargetRaStep);
+	fprintf(Logfile, "Skyw::PolarAlignment called TargetRAStep in range %lu\n", TargetRaStep);
 #endif
 	// Detemine max step in either RA or DEC - used to calculate time of slew to get more accurate RA position
 	if (abs(TargetRaStep - RAStep) > abs(TargetDeStep - DEStep)) {
@@ -658,9 +658,9 @@ int Skywatcher::StartSlewTo(const double& dRa, const double& dDec)
 	}
 
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::StartSlewTo called RA %f Dec %f HA %f TargetRAStep %d TargetDEStep %d\n", dRa, dDec, HA, TargetRaStep, TargetDeStep);
-	fprintf(Logfile, "Skyw::StartSlewTo called RAStepInit %d RASteps360 %d DEStepINit %d DESteps %d MaxStep%d\n", RAStepInit, RASteps360, DEStepInit, DESteps360, MaxStep);
-	fprintf(Logfile, "Skyw::StartSlewTo called RAStep %d DEStep %d\n", RAStep, DEStep);
+	fprintf(Logfile, "Skyw::StartSlewTo called RA %f Dec %f HA %f TargetRAStep %lu TargetDEStep %lu\n", dRa, dDec, HA, TargetRaStep, TargetDeStep);
+	fprintf(Logfile, "Skyw::StartSlewTo called RAStepInit %lu RASteps360 %lu DEStepINit %lu DESteps %lu MaxStep%lu\n", RAStepInit, RASteps360, DEStepInit, DESteps360, MaxStep);
+	fprintf(Logfile, "Skyw::StartSlewTo called RAStep %lu DEStep %lu\n", RAStep, DEStep);
 #endif	
 
 	// Set Slews in Train - add on time taken for slew to RA position
@@ -713,8 +713,8 @@ int Skywatcher::StartTargetSlew(SkywatcherAxis Axis, long CurrentStep, long Targ
 	// First determine if moving backwards or forwards
 	MovingSteps = TargetStep - CurrentStep;
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::StartTargetSlew CurrentStep %d TargetStep %d Movingsteps %d MaxStep %d\n", CurrentStep, TargetStep, MovingSteps, MaxStep);
-	fprintf(Logfile, "Skyw::StartTargetSlew CurrentStep %d TargetStep %d Movingsteps %d\n", CurrentStep, TargetStep, MovingSteps);
+	fprintf(Logfile, "Skyw::StartTargetSlew CurrentStep %ld TargetStep %ld Movingsteps %ld MaxStep %ld\n", CurrentStep, TargetStep, MovingSteps, MaxStep);
+	fprintf(Logfile, "Skyw::StartTargetSlew CurrentStep %ld TargetStep %ld Movingsteps %ld\n", CurrentStep, TargetStep, MovingSteps);
 #endif
 	if (MovingSteps > 0) {
 		Direction = FORWARD;
@@ -750,7 +750,7 @@ int Skywatcher::StartTargetSlew(SkywatcherAxis Axis, long CurrentStep, long Targ
 
 
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::StartTargetSlew called SetMotion response %s movingsteps %d direction %d\n", response, MovingSteps, Direction);
+	fprintf(Logfile, "Skyw::StartTargetSlew called SetMotion response %s movingsteps %ld direction %d\n", response, MovingSteps, Direction);
 #endif
 
 	// Tell mount the target to move to
@@ -826,11 +826,16 @@ int Skywatcher::ReadMountData(void)
 	}
 #ifdef SKYW_DEBUG
 	fprintf(Logfile, "Skyw::ReadMountData InquireMotorBoardVersion response string %s\n", response);
-	fprintf(Logfile, "Skyw::ReadMountData Mount Code %ul\n", MountCode);
-	fprintf(Logfile, "Skyw::ReadMountData MC Version %ul %s", MCVersion, MCVersionName);
+	fprintf(Logfile, "Skyw::ReadMountData Mount Code %lul\n", MountCode);
+	fprintf(Logfile, "Skyw::ReadMountData MC Version %lul %s", MCVersion, MCVersionName);
 	fprintf(Logfile, "Skyw::ReadMountData Mount %s\n", MountName);
 #endif
 
+    // If this is an AZEQ5 or 6, disable the encoder
+    if (MountCode == 0x05 || MountCode == 0x06) {
+        err = SendSkywatcherCommand((Skywatcher::SkywatcherCommand) 0x05, Axis1, NULL, response, SKYWATCHER_MAX_CMD); if (err) return err;
+        err = SendSkywatcherCommand((Skywatcher::SkywatcherCommand) 0x05, Axis2, NULL, response, SKYWATCHER_MAX_CMD); if (err) return err;
+    }
 
 	// Now read the Steps per 360 degrees for RA and Dec
 	err = SendSkywatcherCommand(InquireGridPerRevolution, Axis1, NULL, response, SKYWATCHER_MAX_CMD); if (err) return err;
@@ -869,10 +874,10 @@ int Skywatcher::ReadMountData(void)
 	}
 
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::ReadMountData RASteps360 %ul DESteps360 %ul\n", RASteps360, DESteps360);
-	fprintf(Logfile, "Skyw::ReadMountData RAStepsWorm %ul DEStepsWorm %ul\n", RAInteruptFreq, DEInteruptFreq);
-	fprintf(Logfile, "Skyw::ReadMountData RAHighSpeedRatio %ul DEHighSpeedRatio %ul\n", RAHighspeedRatio, DEHighspeedRatio);
-	fprintf(Logfile, "Skyw::ReadMountData RAStepInit %ul DEStepInit %ul\n", RAStepInit, DEStepInit);
+	fprintf(Logfile, "Skyw::ReadMountData RASteps360 %lu DESteps360 %lul\n", RASteps360, DESteps360);
+	fprintf(Logfile, "Skyw::ReadMountData RAStepsWorm %lu DEStepsWorm %lul\n", RAInteruptFreq, DEInteruptFreq);
+	fprintf(Logfile, "Skyw::ReadMountData RAHighSpeedRatio %lu DEHighSpeedRatio %lul\n", RAHighspeedRatio, DEHighspeedRatio);
+	fprintf(Logfile, "Skyw::ReadMountData RAStepInit %lu DEStepInit %lul\n", RAStepInit, DEStepInit);
 #endif
 
 	return err;
@@ -941,7 +946,7 @@ int Skywatcher::SendSkywatcherCommandInnerLoop(SkywatcherCommand cmd, Skywatcher
 	if (!err) *--bufPtr = 0; //remove the trailing character
 
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::SendSkywatcherCommand %c Error Code :%d  read response %s bytes read %d\n", cmd, err, response, totalBytesRead);
+	fprintf(Logfile, "Skyw::SendSkywatcherCommand %c Error Code :%d  read response %s bytes read %lu\n", cmd, err, response, totalBytesRead);
 #endif	
 	return err;
 
