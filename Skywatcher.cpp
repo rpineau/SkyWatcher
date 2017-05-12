@@ -827,14 +827,14 @@ int Skywatcher::ReadMountData(void)
 #ifdef SKYW_DEBUG
 	fprintf(Logfile, "Skyw::ReadMountData InquireMotorBoardVersion response string %s\n", response);
 	fprintf(Logfile, "Skyw::ReadMountData Mount Code %lul\n", MountCode);
-	fprintf(Logfile, "Skyw::ReadMountData MC Version %lul %s", MCVersion, MCVersionName);
+	fprintf(Logfile, "Skyw::ReadMountData MC Version %lul %s\n", MCVersion, MCVersionName);
 	fprintf(Logfile, "Skyw::ReadMountData Mount %s\n", MountName);
 #endif
 
     // If this is an AZEQ5 or 6, disable the encoder
     if (MountCode == 0x05 || MountCode == 0x06) {
-        err = SendSkywatcherCommand((Skywatcher::SkywatcherCommand) 0x05, Axis1, NULL, response, SKYWATCHER_MAX_CMD); if (err) return err;
-        err = SendSkywatcherCommand((Skywatcher::SkywatcherCommand) 0x05, Axis2, NULL, response, SKYWATCHER_MAX_CMD); if (err) return err;
+        err = SendSkywatcherCommand((Skywatcher::SkywatcherCommand) ENCODER_OFF_CMD, Axis1, NULL, response, SKYWATCHER_MAX_CMD); if (err) return err;
+        err = SendSkywatcherCommand((Skywatcher::SkywatcherCommand) ENCODER_OFF_CMD, Axis2, NULL, response, SKYWATCHER_MAX_CMD); if (err) return err;
     }
 
 	// Now read the Steps per 360 degrees for RA and Dec
