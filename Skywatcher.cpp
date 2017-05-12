@@ -945,17 +945,18 @@ int Skywatcher::SendSkywatcherCommandInnerLoop(SkywatcherCommand cmd, Skywatcher
 
 	if (!err) *--bufPtr = 0; //remove the trailing character
     
+    // this might not work.
     switch (response[0]) {
         case '=': break;
         case '!':
-            err = ERR_CMDFAILED;
+            // err = ERR_CMDFAILED;
 #ifdef SKYW_DEBUG
-            fprintf(Logfile, "Skyw::SendSkywatcherCommand - Failed command %s - Reply %s", command, response);
+            fprintf(Logfile, "Skyw::SendSkywatcherCommand - Failed command %s - Reply %s\n", command, response);
 #endif
         default:
-            err = ERR_CMDFAILED;
+            // err = ERR_CMDFAILED;
 #ifdef SKYW_DEBUG
-            fprintf(Logfile, "Skyw::SendSkywatcherCommand - Invalid response to command %s - Reply %s", command, response);
+            fprintf(Logfile, "Skyw::SendSkywatcherCommand - Invalid response to command %s - Reply %s\n", command, response);
 #endif
     }
     
