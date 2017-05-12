@@ -79,7 +79,7 @@ int Skywatcher::Connect(char *portName)
 		SetST4GuideRate(m_ST4GuideRate);
 	}
 
-	// Set flat to indicate whether north or south latitude
+	// Set flag to indicate whether north or south latitude
 	NorthHemisphere = (m_pTSX->latitude() > 0);
 
 #ifdef  SKYW_DEBUG
@@ -944,7 +944,21 @@ int Skywatcher::SendSkywatcherCommandInnerLoop(SkywatcherCommand cmd, Skywatcher
 	} while (*bufPtr++ != SkywatcherTrailingChar && totalBytesRead < maxlen);
 
 	if (!err) *--bufPtr = 0; //remove the trailing character
-
+    
+    switch (response[0]) {
+        case '=': break;
+        case '!':
+            err = ERR_CMDFAILED;
+#ifdef SKYW_DEBUG
+            fprintf(Logfile, "Skyw::SendSkywatcherCommand - Failed command %s - Reply %s", command, response);
+#endif
+        default:
+            err = ERR_CMDFAILED;
+#ifdef SKYW_DEBUG
+            fprintf(Logfile, "Skyw::SendSkywatcherCommand - Invalid response to command %s - Reply %s", command, response);
+#endif
+    }
+    
 #ifdef SKYW_DEBUG
 	fprintf(Logfile, "Skyw::SendSkywatcherCommand %c Error Code :%d  read response %s bytes read %lu\n", cmd, err, response, totalBytesRead);
 #endif	
