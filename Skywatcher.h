@@ -39,6 +39,8 @@
 #define SKYWATCHER_MAX_GOTO_ITERATIONS 5  // How many times to attempt an iterative goto
 #define SKYWATCHER_GOTO_ERROR          5 // Permitted arcseconds of error in goto target
 
+#define ENCODER_ON_CMD 0x04
+#define ENCODER_OFF_CMD 0x05
 
 // Next turns string charcter representing a HEX code into a number
 #define HEX(c) (((c) < 'A')?((c)-'0'):((c) - 'A') + 10)
