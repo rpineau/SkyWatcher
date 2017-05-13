@@ -26,7 +26,8 @@ Skywatcher::Skywatcher(SerXInterface *pSerX, SleeperInterface *pSleeper, TheSkyX
 
 #ifdef  SKYW_DEBUG
 	Logfile = fopen(SKYW_LOGFILENAME, "w");
-	fprintf(Logfile, "SkyW New Constructor Called %f\n", m_pTSX->latitude());
+    ltime=time(NULL);
+	fprintf(Logfile, "[%s] SkyW New Constructor Called %f\n", asctime(localtime(&ltime)) , m_pTSX->latitude());
 #endif
 }
 
@@ -35,7 +36,8 @@ Skywatcher::~Skywatcher(void)
 {
 	Disconnect();
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "SkyW Destructor Called\n");
+    ltime=time(NULL);
+	fprintf(Logfile, "[%s] SkyW Destructor Called\n", asctime( localtime(&ltime) ) );
 	// Close LogFile
 	if (Logfile) fclose(Logfile);
 #endif
@@ -47,17 +49,20 @@ int Skywatcher::Connect(char *portName)
 	char response[SKYWATCHER_MAX_CMD];
 
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::Connect Called %s\n", portName);
+    ltime=time(NULL);
+	fprintf(Logfile, "[%s] Skyw::Connect Called %s\n", asctime(localtime(&ltime)), portName);
 #endif
     if(m_pSerX->open(portName, 9600, SerXInterface::B_NOPARITY, "-DTR_CONTROL 1") == 0) {
 		m_bLinked = true;
 #ifdef SKYW_DEBUG
-		fprintf(Logfile, "Skyw::Connect opened %s\n", portName);
+        ltime=time(NULL);
+		fprintf(Logfile, "[%s] Skyw::Connect opened %s\n", asctime(localtime(&ltime)), portName);
 #endif
 	}
 	else {
 #ifdef SKYW_DEBUG
-		fprintf(Logfile, "Skyw::Connect did not open %s\n", portName);
+        ltime=time(NULL);
+		fprintf(Logfile, "[%s] Skyw::Connect did not open %s\n", asctime(localtime(&ltime)), portName);
 #endif
 		m_bLinked = false;
 	}
@@ -83,7 +88,8 @@ int Skywatcher::Connect(char *portName)
 	NorthHemisphere = (m_pTSX->latitude() > 0);
 
 #ifdef  SKYW_DEBUG
-	fprintf(Logfile, "Connect: latitude %f %d\n", m_pTSX->latitude(), NorthHemisphere);
+    ltime=time(NULL);
+	fprintf(Logfile, "[%s] Connect: latitude %f %d\n", asctime(localtime(&ltime)), m_pTSX->latitude(), NorthHemisphere);
 #endif
 	return err;
 }
@@ -106,7 +112,8 @@ int Skywatcher::SetST4GuideRate(int m_GuideRateIndex)
 int Skywatcher::Disconnect(void)
 {
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::Disconnect Called\n");
+    ltime=time(NULL);
+	fprintf(Logfile, "[%s] Skyw::Disconnect Called\n", asctime(localtime(&ltime)));
 #endif
 	if (m_bLinked) {
         m_pSerX->flushTx();
@@ -123,7 +130,8 @@ int Skywatcher::Abort(void)
 	int err;
 
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::Abort Called\n");
+    ltime=time(NULL);
+	fprintf(Logfile, "[%s] Skyw::Abort Called\n", asctime(localtime(&ltime)));
 #endif
 
 	// Abandon goto if in progress to make sure iterative goto does not start it again!
@@ -152,7 +160,8 @@ int Skywatcher::StopAxesandWait(void)
 		count++;
 	} while (AxisStatus[RA].motionmode != STOPPED || AxisStatus[DEC].motionmode != STOPPED);
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::StopAxesandWait Called count %d\n", count-1);
+    ltime=time(NULL);
+	fprintf(Logfile, "[%s] Skyw::StopAxesandWait Called count %d\n", asctime(localtime(&ltime)), count-1);
 #endif
 
 	// Check that they are actually stopped!
@@ -166,7 +175,8 @@ int Skywatcher::StopAxesandWait(void)
 	} while (currentRAStep != RAStep || currentDEStep != DEStep);
 
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::StopAxesandWait motors moving count %d\n", count - 1);
+    ltime=time(NULL);
+	fprintf(Logfile, "[%s] Skyw::StopAxesandWait motors moving count %d\n", asctime(localtime(&ltime)), count - 1);
 #endif
 
 	return err;
@@ -189,7 +199,8 @@ int Skywatcher::StopAxisandWait(SkywatcherAxis Axis)
 	} while (CurrentAxisStatus.motionmode != STOPPED);
 
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::StopAxisandWait count %d\n", count - 1);
+    ltime=time(NULL);
+	fprintf(Logfile, "[%s] Skyw::StopAxisandWait count %d\n", asctime(localtime(&ltime)), count - 1);
 #endif
 
 	return err;
@@ -215,7 +226,8 @@ int Skywatcher::SetTrackingRates(const bool& bTrackingOn, const bool& bIgnoreRat
 	}
 
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::SetTrackingRates Called bTrackingOn %d %f %f %f\n", bTrackingOn, dRaRateArcSecPerSec, dDecRateArcSecPerSec, SKYWATCHER_SIDEREAL_SPEED);
+    ltime=time(NULL);
+	fprintf(Logfile, "[%s] Skyw::SetTrackingRates Called bTrackingOn %d %f %f %f\n", asctime(localtime(&ltime)), bTrackingOn, dRaRateArcSecPerSec, dDecRateArcSecPerSec, SKYWATCHER_SIDEREAL_SPEED);
 #endif
 
 	if (bTrackingOn) { // set tracking
@@ -245,7 +257,8 @@ int Skywatcher::SetTrackingRateAxis(SkywatcherAxis Axis, double Rate, unsigned l
 	int err = 0;
 
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::SetTrackingRateAxis Called Axis %c %f %lu %lu %lu\n", Axis, Rate, Steps360, InteruptFrequency, HighspeedRatio);
+    ltime=time(NULL);
+	fprintf(Logfile, "[%s] Skyw::SetTrackingRateAxis Called Axis %c %f %lu %lu %lu\n", asctime(localtime(&ltime)), Axis, Rate, Steps360, InteruptFrequency, HighspeedRatio);
 #endif
 
 	if (Rate < 0) {
@@ -261,7 +274,8 @@ int Skywatcher::SetTrackingRateAxis(SkywatcherAxis Axis, double Rate, unsigned l
 	if (Rate < SKYWATCHER_SIDEREAL_SPEED * SKYWATCHER_MINSLEW_RATE) { // Rate effectively zero - stop axis
 		err = SendSkywatcherCommand(NotInstantAxisStop, Axis, NULL, response, SKYWATCHER_MAX_CMD);
 #ifdef SKYW_DEBUG
-		fprintf(Logfile, "Skyw::SetTrackingRateAxis NotInstantAxisStop %d %s\n", err, response);
+        ltime=time(NULL);
+		fprintf(Logfile, "[%s] Skyw::SetTrackingRateAxis NotInstantAxisStop %d %s\n", asctime(localtime(&ltime)), err, response);
 #endif
 		return err;
 	}
@@ -274,7 +288,8 @@ int Skywatcher::SetTrackingRateAxis(SkywatcherAxis Axis, double Rate, unsigned l
 	}
 
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::SetTrackingRateAxis Speedmode %d Direction %d\n", Speedmode, Direction);
+    ltime=time(NULL);
+	fprintf(Logfile, "[%s] Skyw::SetTrackingRateAxis Speedmode %d Direction %d\n", asctime(localtime(&ltime)), Speedmode, Direction);
 #endif
 
 	// Get axis status and determine if need to stop axis
@@ -299,7 +314,8 @@ int Skywatcher::SetTrackingRateAxis(SkywatcherAxis Axis, double Rate, unsigned l
 	// Calulate interupt period for slew rate - see SKYWATCHER basic api code for details
 	Period = (unsigned long) ((double) InteruptFrequency / (double) Steps360*360.0*3600.0 / Rate );
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::SetTrackingRateAxis Period %lu Steps360 %lu InteruptFrequency %lu\n", Period, Steps360, InteruptFrequency);
+    ltime=time(NULL);
+	fprintf(Logfile, "[%s] Skyw::SetTrackingRateAxis Period %lu Steps360 %lu InteruptFrequency %lu\n", asctime(localtime(&ltime)), Period, Steps360, InteruptFrequency);
 #endif
 
 	// Set AxisPeriod
@@ -326,7 +342,8 @@ int Skywatcher::GetAxesStatus(void)
 	IsWestofPier = NorthHemisphere ? (RAStep > RAStepInit) : (RAStep < RAStepInit);
 
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::GetAxisStaus RAMotion %d DecMotion %d IsNotGoto %d\n", AxisStatus[RA].motionmode, AxisStatus[DEC].motionmode, IsNotGoto);
+    ltime=time(NULL);
+	fprintf(Logfile, "[%s] Skyw::GetAxisStaus RAMotion %d DecMotion %d IsNotGoto %d\n", asctime(localtime(&ltime)), AxisStatus[RA].motionmode, AxisStatus[DEC].motionmode, IsNotGoto);
 #endif
 
 	return err;
@@ -396,7 +413,8 @@ int Skywatcher::GetMountHAandDec(double& dHa, double& dDec)
 		m_bParkInProgress = false;
 		m_bGotoInProgress = false;
 #ifdef SKYW_DEBUG
-		fprintf(Logfile, "Skyw::GetMountHAandDec - about to stop parking\n");
+        ltime=time(NULL);
+		fprintf(Logfile, "[%s] Skyw::GetMountHAandDec - about to stop parking\n", asctime(localtime(&ltime)));
 #endif
 		err = SetTrackingRates(false, true, 0.0, 0.0); if (err) return err;
 	}
@@ -409,12 +427,14 @@ int Skywatcher::GetMountHAandDec(double& dHa, double& dDec)
 		if (abs(DeltaHA) > SKYWATCHER_GOTO_ERROR && m_iGotoIterations < SKYWATCHER_MAX_GOTO_ITERATIONS) { // If error bigger than should be iterate again;
 			err = StartSlewTo(m_dGotoRATarget, m_dGotoDECTarget);
 #ifdef SKYW_DEBUG
-			fprintf(Logfile, "Skyw::GetMountHAandDec m_iGotoIterations %d DeltaHA %f\n", m_iGotoIterations, DeltaHA);
+            ltime=time(NULL);
+			fprintf(Logfile, "[%s] Skyw::GetMountHAandDec m_iGotoIterations %d DeltaHA %f\n", asctime(localtime(&ltime)), m_iGotoIterations, DeltaHA);
 #endif
 		}
 		else {  // Close enough - stop goto and start tracking
 #ifdef SKYW_DEBUG
-			fprintf(Logfile, "Skyw::GetMountHAandDec - about to start tracking\n");
+            ltime=time(NULL);
+			fprintf(Logfile, "[%s] Skyw::GetMountHAandDec - about to start tracking\n", asctime(localtime(&ltime)));
 #endif
 			err = SetTrackingRates(true, true, 0.0, 0.0); if (err) return err;
 			m_bGotoInProgress = false;
@@ -429,13 +449,15 @@ int Skywatcher::GetMountHAandDec(double& dHa, double& dDec)
 			m_dDeltaHASteps -= DeltaHAPostTracking;
 
 #ifdef SKYW_DEBUG
-			fprintf(Logfile, "Skyw::GetAxisStaus Goto Succeeded %d DeltaHA arc sec %f Steps %f\n", m_iGotoIterations, DeltaHAPostTracking*360.0*3600.0 / (double)RASteps360, m_dDeltaHASteps);
+            ltime=time(NULL);
+			fprintf(Logfile, "[%s] Skyw::GetAxisStaus Goto Succeeded %d DeltaHA arc sec %f Steps %f\n", asctime(localtime(&ltime)), m_iGotoIterations, DeltaHAPostTracking*360.0*3600.0 / (double)RASteps360, m_dDeltaHASteps);
 #endif
 		}
 	}
 
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::GetMountHAandDec called %lu %lu %f %f\n", RAStep, DEStep, dHa, dDec);
+    ltime=time(NULL);
+	fprintf(Logfile, "[%s] Skyw::GetMountHAandDec called %lu %lu %f %f\n", asctime(localtime(&ltime)), RAStep, DEStep, dHa, dDec);
 #endif	
 
 	return err;
@@ -509,12 +531,14 @@ int Skywatcher::StartOpenSlew(const MountDriverInterface::MoveDir & 	Dir, double
 	double DECRate = 0.0;
 
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::StartOpenSlew called direction %d rate %f\n", Dir, rate);
+    ltime=time(NULL);
+	fprintf(Logfile, "[%s] Skyw::StartOpenSlew called direction %d rate %f\n", asctime(localtime(&ltime)), Dir, rate);
 #endif
 	// Diretions are tuned to match jog so that can have same reflection settings.
 	if ((NorthHemisphere && (DEStep < DEStepInit)) || (!NorthHemisphere && (DEStep > DEStepInit))) {    // Pre-Meridian
 #ifdef SKYW_DEBUG
-		fprintf(Logfile, "Skyw::StartOpenSlew called Pre-Meridian: NorthHemisphere %d DESSTEP %lu DESTEPINIT %lu\n", NorthHemisphere, DEStep, DEStepInit);
+        ltime=time(NULL);
+		fprintf(Logfile, "[%s] Skyw::StartOpenSlew called Pre-Meridian: NorthHemisphere %d DESSTEP %lu DESTEPINIT %lu\n", asctime(localtime(&ltime)), NorthHemisphere, DEStep, DEStepInit);
 #endif
 		switch (Dir) {
 		case MountDriverInterface::MD_NORTH:;
@@ -533,7 +557,8 @@ int Skywatcher::StartOpenSlew(const MountDriverInterface::MoveDir & 	Dir, double
 	}
 	else {               // Post-Meridian
 #ifdef SKYW_DEBUG
-		fprintf(Logfile, "Skyw::StartOpenSlew called Post-Meridian: NorthHemisphere %d DESSTEP %lu DESTEPINIT %lu\n", NorthHemisphere, DEStep, DEStepInit);
+        ltime=time(NULL);
+		fprintf(Logfile, "[%s] Skyw::StartOpenSlew called Post-Meridian: NorthHemisphere %d DESSTEP %lu DESTEPINIT %lu\n", asctime(localtime(&ltime)), NorthHemisphere, DEStep, DEStepInit);
 #endif
 		switch (Dir) {
 		case MountDriverInterface::MD_NORTH:;
@@ -580,7 +605,8 @@ int Skywatcher::PolarAlignment(double dHAHome, double dDecHome, int HomeIndex, d
 	EncoderValuesfromHAanDEC(dHAHome, dDecHome, TargetRaStep, TargetDeStep);
 
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::PolarAlignment called hAHome %f decHome %f HomeIndex %d HaPolaris %f RAStepPolarHome %lu\n", dHAHome, dDecHome, HomeIndex, HaPolaris, TargetRaStep);
+    ltime=time(NULL);
+	fprintf(Logfile, "[%s] Skyw::PolarAlignment called hAHome %f decHome %f HomeIndex %d HaPolaris %f RAStepPolarHome %lu\n", asctime(localtime(&ltime)), dHAHome, dDecHome, HomeIndex, HaPolaris, TargetRaStep);
 #endif	
 	// Now add on steps to position of Polaris, and allowing for location of home poistion (12 O'clock, 3 0'Clock etc).
 	if (NorthHemisphere) {
@@ -593,7 +619,8 @@ int Skywatcher::PolarAlignment(double dHAHome, double dDecHome, int HomeIndex, d
 		TargetRaStep += int((HAOctansSigma + 12.0 - HomeIndex*6.0+24.0)*RASteps360 / 24.0);      
 	}
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::PolarAlignment called TargetRAStep %lu\n", TargetRaStep);
+    ltime=time(NULL);
+	fprintf(Logfile, "[%s] Skyw::PolarAlignment called TargetRAStep %lu\n", asctime(localtime(&ltime)), TargetRaStep);
 #endif	
 
 
@@ -602,7 +629,8 @@ int Skywatcher::PolarAlignment(double dHAHome, double dDecHome, int HomeIndex, d
 		TargetRaStep -= RASteps360;
 	}
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::PolarAlignment called TargetRAStep in range %lu\n", TargetRaStep);
+    ltime=time(NULL);
+	fprintf(Logfile, "[%s] Skyw::PolarAlignment called TargetRAStep in range %lu\n", asctime(localtime(&ltime)), TargetRaStep);
 #endif
 	// Detemine max step in either RA or DEC - used to calculate time of slew to get more accurate RA position
 	if (abs(TargetRaStep - RAStep) > abs(TargetDeStep - DEStep)) {
@@ -658,9 +686,10 @@ int Skywatcher::StartSlewTo(const double& dRa, const double& dDec)
 	}
 
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::StartSlewTo called RA %f Dec %f HA %f TargetRAStep %lu TargetDEStep %lu\n", dRa, dDec, HA, TargetRaStep, TargetDeStep);
-	fprintf(Logfile, "Skyw::StartSlewTo called RAStepInit %lu RASteps360 %lu DEStepINit %lu DESteps %lu MaxStep%lu\n", RAStepInit, RASteps360, DEStepInit, DESteps360, MaxStep);
-	fprintf(Logfile, "Skyw::StartSlewTo called RAStep %lu DEStep %lu\n", RAStep, DEStep);
+    ltime=time(NULL);
+	fprintf(Logfile, "[%s] Skyw::StartSlewTo called RA %f Dec %f HA %f TargetRAStep %lu TargetDEStep %lu\n", asctime(localtime(&ltime)), dRa, dDec, HA, TargetRaStep, TargetDeStep);
+	fprintf(Logfile, "[%s] Skyw::StartSlewTo called RAStepInit %lu RASteps360 %lu DEStepINit %lu DESteps %lu MaxStep%lu\n", asctime(localtime(&ltime)), RAStepInit, RASteps360, DEStepInit, DESteps360, MaxStep);
+	fprintf(Logfile, "[%s] Skyw::StartSlewTo called RAStep %lu DEStep %lu\n", asctime(localtime(&ltime)), RAStep, DEStep);
 #endif	
 
 	// Set Slews in Train - add on time taken for slew to RA position
@@ -679,7 +708,8 @@ int Skywatcher::StartPark(void)
 {
 	int err = 0;
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::StartPark called\n");
+    ltime=time(NULL);
+	fprintf(Logfile, "[%s] Skyw::StartPark called\n", asctime(localtime(&ltime)));
 #endif
 	err = StopAxesandWait(); if (err) return err;                 // Ensure no motion before starting a slew
 	err = InquireMountAxisStepPositions(); if (err) return err;   // Get Axis Positions in class members RAStep and DEStep
@@ -713,8 +743,9 @@ int Skywatcher::StartTargetSlew(SkywatcherAxis Axis, long CurrentStep, long Targ
 	// First determine if moving backwards or forwards
 	MovingSteps = TargetStep - CurrentStep;
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::StartTargetSlew CurrentStep %ld TargetStep %ld Movingsteps %ld MaxStep %ld\n", CurrentStep, TargetStep, MovingSteps, MaxStep);
-	fprintf(Logfile, "Skyw::StartTargetSlew CurrentStep %ld TargetStep %ld Movingsteps %ld\n", CurrentStep, TargetStep, MovingSteps);
+    ltime=time(NULL);
+	fprintf(Logfile, "[%s] Skyw::StartTargetSlew CurrentStep %ld TargetStep %ld Movingsteps %ld MaxStep %ld\n", asctime(localtime(&ltime)), CurrentStep, TargetStep, MovingSteps, MaxStep);
+	fprintf(Logfile, "[%s] Skyw::StartTargetSlew CurrentStep %ld TargetStep %ld Movingsteps %ld\n", asctime(localtime(&ltime)), CurrentStep, TargetStep, MovingSteps);
 #endif
 	if (MovingSteps > 0) {
 		Direction = FORWARD;
@@ -750,7 +781,8 @@ int Skywatcher::StartTargetSlew(SkywatcherAxis Axis, long CurrentStep, long Targ
 
 
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::StartTargetSlew called SetMotion response %s movingsteps %ld direction %d\n", response, MovingSteps, Direction);
+    ltime=time(NULL);
+	fprintf(Logfile, "[%s] Skyw::StartTargetSlew called SetMotion response %s movingsteps %ld direction %d\n", asctime(localtime(&ltime)), response, MovingSteps, Direction);
 #endif
 
 	// Tell mount the target to move to
@@ -758,14 +790,16 @@ int Skywatcher::StartTargetSlew(SkywatcherAxis Axis, long CurrentStep, long Targ
 	err = SendSkywatcherCommand(SetGotoTargetIncrement, Axis, command, response, SKYWATCHER_MAX_CMD); if (err) return err;
 
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::StartTargetSlew called SetGototTarget Command %s :%s\n", command, response);
+    ltime=time(NULL);
+	fprintf(Logfile, "[%s] Skyw::StartTargetSlew called SetGototTarget Command %s :%s\n", asctime(localtime(&ltime)), command, response);
 #endif
 	// Set breaksteps for the target - when turns into low speed slew
 	long2Revu24str(SKYWATCHER_BREAKSTEPS, command);	// Convert break steps into string
 	err = SendSkywatcherCommand(SetBreakPointIncrement, Axis, command, response, SKYWATCHER_MAX_CMD); if (err) return err;
 
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::StartTargetSlew called SetBreakPointIncrementCommand %s :%s\n", command, response);
+    ltime=time(NULL);
+	fprintf(Logfile, "[%s] Skyw::StartTargetSlew called SetBreakPointIncrementCommand %s :%s\n", asctime(localtime(&ltime)), command, response);
 #endif
 
 	// Finally, start the slew
@@ -826,25 +860,29 @@ int Skywatcher::ReadMountData(void)
 		return err;
 	}
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::ReadMountData InquireMotorBoardVersion response string %s\n", response);
-	fprintf(Logfile, "Skyw::ReadMountData Mount Code %lul\n", MountCode);
-	fprintf(Logfile, "Skyw::ReadMountData MC Version %lul %s\n", MCVersion, MCVersionName);
-	fprintf(Logfile, "Skyw::ReadMountData Mount %s\n", MountName);
+    ltime=time(NULL);
+	fprintf(Logfile, "[%s] Skyw::ReadMountData InquireMotorBoardVersion response string %s\n", asctime(localtime(&ltime)), response);
+	fprintf(Logfile, "[%s] Skyw::ReadMountData Mount Code %lul\n", asctime(localtime(&ltime)), MountCode);
+	fprintf(Logfile, "[%s] Skyw::ReadMountData MC Version %lul %s\n", asctime(localtime(&ltime)), MCVersion, MCVersionName);
+	fprintf(Logfile, "[%s] Skyw::ReadMountData Mount %s\n", asctime(localtime(&ltime)), MountName);
 #endif
 
 	// If the mount is AZWQ5 or 6, turn off the encoders
 	if (MountCode == 0x05 || MountCode == 0x06) {
 #ifdef SKYW_DEBUG
-		fprintf(Logfile, "Skyw::ReadMountData About to turn off encoders\n");
+        ltime=time(NULL);
+		fprintf(Logfile, "[%s] Skyw::ReadMountData About to turn off encoders\n", asctime(localtime(&ltime)));
 #endif
 		long2Revu24str(ENCODER_OFF_CMD, command);
 		err = SendSkywatcherCommand(SetFeatureCmd, Axis1, command, response, SKYWATCHER_MAX_CMD); if (err) return err;
 #ifdef SKYW_DEBUG
-		fprintf(Logfile, "Skyw::ReadMountData Encoders off Axis 1: %s\n", response);
+        ltime=time(NULL);
+		fprintf(Logfile, "[%s] Skyw::ReadMountData Encoders off Axis 1: %s\n", asctime(localtime(&ltime)), response);
 #endif
 		err = SendSkywatcherCommand(SetFeatureCmd, Axis2, command, response, SKYWATCHER_MAX_CMD); if (err) return err;
 #ifdef SKYW_DEBUG
-		fprintf(Logfile, "Skyw::ReadMountData Encoders off Axis 2: %s\n", response);
+        ltime=time(NULL);
+		fprintf(Logfile, "[%s] Skyw::ReadMountData Encoders off Axis 2: %s\n", asctime(localtime(&ltime)), response);
 #endif
 	}
 
@@ -885,10 +923,11 @@ int Skywatcher::ReadMountData(void)
 	}
 
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::ReadMountData RASteps360 %lu DESteps360 %lu\n", RASteps360, DESteps360);
-	fprintf(Logfile, "Skyw::ReadMountData RAStepsWorm %lu DEStepsWorm %lu\n", RAInteruptFreq, DEInteruptFreq);
-	fprintf(Logfile, "Skyw::ReadMountData RAHighSpeedRatio %lu DEHighSpeedRatio %lu\n", RAHighspeedRatio, DEHighspeedRatio);
-	fprintf(Logfile, "Skyw::ReadMountData RAStepInit %lu DEStepInit %lu\n", RAStepInit, DEStepInit);
+    ltime=time(NULL);
+	fprintf(Logfile, "[%s] Skyw::ReadMountData RASteps360 %lu DESteps360 %lu\n", asctime(localtime(&ltime)), RASteps360, DESteps360);
+	fprintf(Logfile, "[%s] Skyw::ReadMountData RAStepsWorm %lu DEStepsWorm %lu\n", asctime(localtime(&ltime)), RAInteruptFreq, DEInteruptFreq);
+	fprintf(Logfile, "[%s] Skyw::ReadMountData RAHighSpeedRatio %lu DEHighSpeedRatio %lu\n", asctime(localtime(&ltime)), RAHighspeedRatio, DEHighspeedRatio);
+	fprintf(Logfile, "[%s] Skyw::ReadMountData RAStepInit %lu DEStepInit %lu\n", asctime(localtime(&ltime)), RAStepInit, DEStepInit);
 #endif
 
 
@@ -908,10 +947,14 @@ int Skywatcher::SendSkywatcherCommand(SkywatcherCommand cmd, SkywatcherAxis Axis
 
 #ifdef SKYW_DEBUG
 	if (err != SB_OK) {
-		fprintf(Logfile, "Skyw::SendSkywatcherCommand Error Code: %d\n", err);
+        ltime=time(NULL);
+		fprintf(Logfile, "[%s] Skyw::SendSkywatcherCommand Error Code: %d\n", asctime(localtime(&ltime)), err);
 	}
 	else {
-		if (itries > 0) fprintf(Logfile, "Skyw::SendSkywatcherCommand itries: %d\n", itries);
+        if (itries > 0){
+            ltime=time(NULL);
+            fprintf(Logfile, "[%s] Skyw::SendSkywatcherCommand itries: %d\n", asctime(localtime(&ltime)), itries);
+        }
 	}
 #endif
 	return err;
@@ -958,7 +1001,8 @@ int Skywatcher::SendSkywatcherCommandInnerLoop(SkywatcherCommand cmd, Skywatcher
 	if (!err) *--bufPtr = 0; //remove the trailing character
 
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::SendSkywatcherCommand %c Error Code :%d  read response %s bytes read %lu\n", cmd, err, response, totalBytesRead);
+    ltime=time(NULL);
+	fprintf(Logfile, "[%s] Skyw::SendSkywatcherCommand %c Error Code :%d  read response %s bytes read %lu\n", asctime(localtime(&ltime)), cmd, err, response, totalBytesRead);
 #endif	
 	return err;
 

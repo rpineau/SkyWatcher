@@ -1,5 +1,7 @@
 #pragma once
 #include <cstdio>
+#include <time.h>
+
 #include "../../licensedinterfaces/serxinterface.h"
 #include "../../licensedinterfaces/sberrorx.h"
 #include "../../licensedinterfaces/theskyxfacadefordriversinterface.h"
@@ -195,9 +197,10 @@ private:
 	long abs(long value); //Utility function since not in math.h in Unix
 
 
-	
 #ifdef SKYW_DEBUG
-	FILE *Logfile;	  // LogFile
+    // timestamp for logs
+    time_t ltime;
+    FILE *Logfile;	  // LogFile
 #endif
 
 };
