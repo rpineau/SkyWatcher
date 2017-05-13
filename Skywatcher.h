@@ -20,7 +20,7 @@
 #endif
 
 // Defines below from INDI EQMOD
-#define SKYWATCHER_DRIVER_VERSION 1.0;
+#define SKYWATCHER_DRIVER_VERSION 1.1;
 #define SKYWATCHER_MAX_CMD        16
 #define SKYWATCHER_MAX_TRIES      3
 #define SKYWATCHER_CHAR_BUFFER   1024
