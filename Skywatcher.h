@@ -46,12 +46,12 @@
 #define HEX(c) (((c) < 'A')?((c)-'0'):((c) - 'A') + 10)
 
 // Define Class for Skywatcher
-class Skywatcher 
+class Skywatcher
 {
 public:
 	Skywatcher(SerXInterface *pSerX, SleeperInterface *pSleeper, TheSkyXFacadeForDriversInterface *pTSX);
 	~Skywatcher();
-
+	
 	int Connect(char *portName);
 	int Disconnect();
 	bool isConnected() const { return m_bLinked; }
@@ -70,13 +70,13 @@ public:
 	int StartOpenSlew(const MountDriverInterface::MoveDir & 	Dir, double rate);
 	int PolarAlignment(double dHAHome, double dDecHome, int HomeIndex, double HaPolaris, double HAOctansSigma);
 	int SetST4GuideRate(int m_ST4GuideRateIndex);
-
-
+	
+	
 private:
 	SerXInterface *m_pSerX;                       // Serial X interface to use to connect to device
 	SleeperInterface *m_pSleeper;				  // Sleeper interface for Sky X
 	TheSkyXFacadeForDriversInterface *m_pTSX;	  // Pointer to interface to allow calculation of LST etc.
-
+	
 	bool m_bLinked;                               // Connected to the mount?
 	int m_ST4GuideRate;	                          // Guide Rate
 	bool NorthHemisphere;					      // Located in the Northern Hemisphere?
@@ -90,7 +90,7 @@ private:
 	unsigned long DEInteruptFreq;                 // DEC Stepper motor frequency
 	unsigned long RAHighspeedRatio;               // Motor controller multiplies speed values by this ratio when in low speed mode
 	unsigned long DEHighspeedRatio;               // This is a reflect of either using a timer interrupt with an interrupt count greater than 1 for low speed
-									              // or of using microstepping only for low speeds and half/full stepping for high speeds
+	// or of using microstepping only for low speeds and half/full stepping for high speeds
 	unsigned long RAStep;                         // Current RA encoder position in step
 	unsigned long DEStep;                         // Current DE encoder position in step
 	unsigned long RAStepInit;                     // Initial RA position in step
@@ -99,14 +99,14 @@ private:
 	unsigned long DEStepHome;                     // Home DE position in step
 	unsigned long RAPeriod;                       // Current RA worm period ??
 	unsigned long DEPeriod;                       // Current DE worm period
-
+	
 	double m_dGotoRATarget;						  // Current Target RA;
 	double m_dGotoDECTarget;                      // Current Goto Target Dec;
 	int m_iGotoIterations;					      // Iterations to goto target
 	bool m_bGotoInProgress;						  // Is GOTO in progress?
 	double m_dDeltaHASteps;						  // Error from previous slew when at low speed slew
 	bool m_bParkInProgress;						  // Is a park in progress?
-
+	
 	// Types
 	enum SkywatcherCommand {
 		Initialize = 'F',
@@ -137,7 +137,7 @@ private:
 		InquireAuxEncoder = 'd', // EQ8/AZEQ6/AZEQ5 only
 		NUMBER_OF_SkywatcherCommand
 	};
-
+	
 	// From the latest INDI release - commands to deal with features.
 	enum SkywatcherSetFeatureCmd {
 		START_PPEC_TRAINING_CMD = 0x00, STOP_PPEC_TRAINING_CMD = 0x01,
@@ -146,30 +146,30 @@ private:
 		DISABLE_FULL_CURRENT_LOW_SPEED_CMD = 0x0006, ENABLE_FULL_CURRENT_LOW_SPEED_CMD = 0x0106,
 		RESET_HOME_INDEXER_CMD = 0x08
 	};
-
-
+	
+	
 	enum SkywatcherAxis {
 		Axis1 = '1',       // RA/AZ
 		Axis2 = '2',       // DE/ALT
 		NUMBER_OF_SKYWATCHERAXIS
 	};
-
+	
 	enum SkywatcherAxisName {
 		RA = 0,
 		DEC = 1,
 		NUMBER_OF_SKYWATCHERAXISNAMES
 	};
-
+	
 	enum SkywatcherDirection { FORWARD = 0, BACKWARD = 1 };
 	enum SkywatcherMotionMode { STOPPED = 0, SLEW = 1, GOTO = 2};
 	enum SkywatcherSpeedMode { LOWSPEED = 0, HIGHSPEED = 1 };
 	enum SkywatcherInitialised {INITIALISED=0, NOTINITIALISED = 1};
 	typedef struct SkywatcherAxisStatus { SkywatcherDirection direction; SkywatcherMotionMode motionmode; SkywatcherSpeedMode speedmode; SkywatcherInitialised initialised; } SkywatcherAxisStatus;
 	enum SkywatcherError { NO_ERROR, ER_1, ER_2, ER_3 };
-
+	
 	int SendSkywatcherCommand(SkywatcherCommand cmd, SkywatcherAxis Axis, char *cmdArgs, char *response, int maxlen);
 	int SendSkywatcherCommandInnerLoop(SkywatcherCommand cmd, SkywatcherAxis Axis, char *cmdArgs, char *response, int maxlen);
-	int ReadMountData(void);              // Read the initial mount data  
+	int ReadMountData(void);              // Read the initial mount data
 	bool IsNotGoto;
 	bool IsWestofPier;                    // Is the mount west of the pier?
 	int SetTrackingRateAxis(SkywatcherAxis Axis1, double Rate, unsigned long Steps360, unsigned long InteruptFrequency, unsigned long HighspeedRatio);
@@ -180,8 +180,8 @@ private:
 	int GetAxisStatus(SkywatcherAxis Axis, SkywatcherAxisStatus &AxisStatus);
 	void HAandDECfromEncoderValues(unsigned long RAEncoder, unsigned long DEEncoder, double &dHA, double &dDec);
 	void EncoderValuesfromHAanDEC(double dHa, double dDec, unsigned long &RAEncoder, unsigned long &DEEncoder);
-
-
+	
+	
 	// Official Skywatcher Protocol
 	// See http://code.google.com/p/skywatcher/wiki/SkyWatcherProtocol
 	// Constants
@@ -189,19 +189,19 @@ private:
 	static const char SkywatcherTrailingChar = 0x0d;
 	unsigned long minperiods[2];
 	SkywatcherAxisStatus AxisStatus[2];
-
+	
 	// Convenience functions from INDI EQMOD which convert from/to a hex string <=>long value
 	unsigned long Revu24str2long(char *); // Converts 4 character HEX number encoded as string to a long value
 	unsigned long Highstr2long(char *);   // Converts 2 character HEX number encoded as string to a long value
 	void long2Revu24str(unsigned long, char *); // Converts long number to character string
 	long abs(long value); //Utility function since not in math.h in Unix
-
-
+	
+	
 #ifdef SKYW_DEBUG
-    // timestamp for logs
-    time_t ltime;
-    FILE *Logfile;	  // LogFile
+	// timestamp for logs
+	time_t ltime;
+	FILE *Logfile;	  // LogFile
 #endif
-
+	
 };
 

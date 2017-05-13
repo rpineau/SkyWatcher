@@ -101,48 +101,48 @@ public:
 
 // Operations
 public:
-
+	
 	/*!\name DriverRootInterface Implementation
-	See DriverRootInterface.*/
-	//@{ 
+	 See DriverRootInterface.*/
+	//@{
 	virtual DeviceType							deviceType(void)							  {return DriverRootInterface::DT_MOUNT;}
 	virtual int									queryAbstraction(const char* pszName, void** ppVal) ;
-	//@} 
-
+	//@}
+	
 	/* See LinkInterface.*/
-	//@{ 
+	//@{
 	virtual int									establishLink(void)						;
 	virtual int									terminateLink(void)						;
 	virtual bool								isLinked(void) const					;
 	virtual bool								isEstablishLinkAbortable(void) const	;
-	//@} 
-
+	//@}
+	
 	/*!\name DriverInfoInterface Implementation
-	See DriverInfoInterface.*/
-	//@{ 
+	 See DriverInfoInterface.*/
+	//@{
 	virtual void								driverInfoDetailedInfo(BasicStringInterface& str) const;
 	virtual double								driverInfoVersion(void) const				;
-	//@} 
-
+	//@}
+	
 	/*!\name HardwareInfoInterface Implementation
-	See HardwareInfoInterface.*/
-	//@{ 
+	 See HardwareInfoInterface.*/
+	//@{
 	virtual void deviceInfoNameShort(BasicStringInterface& str) const				;
 	virtual void deviceInfoNameLong(BasicStringInterface& str) const				;
 	virtual void deviceInfoDetailedDescription(BasicStringInterface& str) const	;
 	virtual void deviceInfoFirmwareVersion(BasicStringInterface& str)				;
 	virtual void deviceInfoModel(BasicStringInterface& str)						;
-	//@} 
-
+	//@}
+	
 	virtual int									raDec(double& ra, double& dec, const bool& bCached = false)					;
 	virtual int									abort(void)																	;
-
+	
 	//Optional interfaces, uncomment and implement as required.
-
+	
 	//SyncMountInterface
 	virtual int syncMount(const double& ra, const double& dec)									;
 	virtual bool isSynced()																		;
-
+	
 	//SlewToInterface
 	virtual int								startSlewTo(const double& dRa, const double& dDec)	;
 	virtual int								isCompleteSlewTo(bool& bComplete) const				;
@@ -153,7 +153,7 @@ public:
 	virtual int beyondThePole(bool& bYes);
 	virtual double flipHourAngle();
 	virtual int gemLimits(double& dHoursEast, double& dHoursWest);
-
+	
 	//OpenLoopMoveInterface
 	virtual int								startOpenLoopMove(const MountDriverInterface::MoveDir& Dir, const int& nRateIndex);
 	virtual int								endOpenLoopMove(void)															;
@@ -161,41 +161,41 @@ public:
 	virtual int								rateCountOpenLoopMove(void) const												;
 	virtual int								rateNameFromIndexOpenLoopMove(const int& nZeroBasedIndex, char* pszOut, const int& nOutMaxSize);
 	virtual int								rateIndexOpenLoopMove(void);
-
+	
 	//NeedsRefractionInterface
 	virtual bool							needsRefactionAdjustments(void);
-
+	
 	//LinkFromUIThreadInterface
-
-	//TrackingRatesInterface 
+	
+	//TrackingRatesInterface
 	virtual int setTrackingRates( const bool& bTrackingOn, const bool& bIgnoreRates, const double& dRaRateArcSecPerSec, const double& dDecRateArcSecPerSec);
 	virtual int trackingRates( bool& bTrackingOn, double& dRaRateArcSecPerSec, double& dDecRateArcSecPerSec);
-
+	
 	/* Parking Interface */
 	virtual bool							isParked(void);
 	virtual int								startPark(const double& dAz, const double& dAlt);
 	virtual int								isCompletePark(bool& bComplete) const;
 	virtual int								endPark(void);
-
-
+	
+	
 	/* Unparking Interface */
 	int								startUnpark(void);
 	/*!Called to monitor the unpark process.  \param bComplete Set to true if the unpark is complete, otherwise set to false.*/
 	int								isCompleteUnpark(bool& bComplete) const;
 	/*!Called once the unpark is complete.  This is called once for every corresponding startUnpark() allowing software implementations of unpark.*/
 	int								endUnpark(void);
-
-
+	
+	
 	// GUI Interface
 	virtual int initModalSettingsDialog(void) { return 0; }
 	virtual int execModalSettingsDialog(void);
 	void uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent); // Process a UI event
-
-
-// Implementation
-private:	
+	
+	
+	// Implementation
+private:
 	// Sky Interfaces
-	SerXInterface 							*GetSerX() {return m_pSerX; }		
+	SerXInterface 							*GetSerX() {return m_pSerX; }
 	TheSkyXFacadeForDriversInterface		*GetTheSkyXFacadeForMounts() {return m_pTheSkyXForMounts;}
 	SleeperInterface						*GetSleeper() {return m_pSleeper; }
 	BasicIniUtilInterface					*GetSimpleIniUtil() {return m_pIniUtil; }
@@ -205,21 +205,21 @@ private:
 	
 	// Variables to store Sky X interfaces
 	int m_nPrivateMulitInstanceIndex;
-	SerXInterface*							m_pSerX;		
+	SerXInterface*							m_pSerX;
 	TheSkyXFacadeForDriversInterface* 		m_pTheSkyXForMounts;
 	SleeperInterface*						m_pSleeper;
 	BasicIniUtilInterface*					m_pIniUtil;
 	LoggerInterface*						m_pLogger;
 	MutexInterface*							m_pIOMutex;
 	TickCountInterface*						m_pTickCount;
-
+	
 	// Variables for Skywatcher Driver
 	Skywatcher SkyW;
-
+	
 	bool m_bSynced;
 	bool m_bParked;
 	bool m_wasslewing;
-
+	
 	int m_HomePolarisClock;
 	double m_HomeAlignmentHA;
 	double m_HomeAlignmentDEC;
@@ -228,16 +228,16 @@ private:
 	bool m_bPolarisAlignmentSlew;
 	int m_iST4GuideRateIndex;
 	int m_iPostSlewDelay;
-
+	
 	int m_CurrentRateIndex;
 	char SlewSpeedNames[NSLEWSPEEDS][MAXSLEWNAMESIZE];
 	double SlewSpeeds[NSLEWSPEEDS];
 	char GuideSpeedNames[NGUIDESPEEDS][MAXSLEWNAMESIZE];
-
-    
+	
+	
 #ifdef HEQ5_DEBUG
 	FILE *LogFile;	  // LogFile
 #endif
-
-
+	
+	
 };
