@@ -79,7 +79,7 @@ int Skywatcher::Connect(char *portName)
 		SetST4GuideRate(m_ST4GuideRate);
 	}
 
-	// Set flag to indicate whether north or south latitude
+	// Set flat to indicate whether north or south latitude
 	NorthHemisphere = (m_pTSX->latitude() > 0);
 
 #ifdef  SKYW_DEBUG
@@ -794,6 +794,7 @@ int Skywatcher::InquireMountAxisStepPositions(void)
 int Skywatcher::ReadMountData(void)
 {
 	char response[SKYWATCHER_MAX_CMD];
+	char command[SKYWATCHER_MAX_CMD];
 	unsigned long tmpMCVersion = 0;
 	int err;
 
@@ -831,11 +832,21 @@ int Skywatcher::ReadMountData(void)
 	fprintf(Logfile, "Skyw::ReadMountData Mount %s\n", MountName);
 #endif
 
-    // If this is an AZEQ5 or 6, disable the encoder
-    if (MountCode == 0x05 || MountCode == 0x06) {
-        err = SendSkywatcherCommand((Skywatcher::SkywatcherCommand) ENCODER_OFF_CMD, Axis1, NULL, response, SKYWATCHER_MAX_CMD); if (err) return err;
-        err = SendSkywatcherCommand((Skywatcher::SkywatcherCommand) ENCODER_OFF_CMD, Axis2, NULL, response, SKYWATCHER_MAX_CMD); if (err) return err;
-    }
+	// If the mount is AZWQ5 or 6, turn off the encoders
+	if (MountCode == 0x05 || MountCode == 0x06) {
+#ifdef SKYW_DEBUG
+		fprintf(Logfile, "Skyw::ReadMountData About to turn off encoders\n");
+#endif
+		long2Revu24str(ENCODER_OFF_CMD, command);
+		err = SendSkywatcherCommand(SetFeatureCmd, Axis1, command, response, SKYWATCHER_MAX_CMD); if (err) return err;
+#ifdef SKYW_DEBUG
+		fprintf(Logfile, "Skyw::ReadMountData Encoders off Axis 1: %s\n", response);
+#endif
+		err = SendSkywatcherCommand(SetFeatureCmd, Axis2, command, response, SKYWATCHER_MAX_CMD); if (err) return err;
+#ifdef SKYW_DEBUG
+		fprintf(Logfile, "Skyw::ReadMountData Encoders off Axis 2: %s\n", response);
+#endif
+	}
 
 	// Now read the Steps per 360 degrees for RA and Dec
 	err = SendSkywatcherCommand(InquireGridPerRevolution, Axis1, NULL, response, SKYWATCHER_MAX_CMD); if (err) return err;
@@ -874,11 +885,12 @@ int Skywatcher::ReadMountData(void)
 	}
 
 #ifdef SKYW_DEBUG
-	fprintf(Logfile, "Skyw::ReadMountData RASteps360 %lu DESteps360 %lul\n", RASteps360, DESteps360);
-	fprintf(Logfile, "Skyw::ReadMountData RAStepsWorm %lu DEStepsWorm %lul\n", RAInteruptFreq, DEInteruptFreq);
-	fprintf(Logfile, "Skyw::ReadMountData RAHighSpeedRatio %lu DEHighSpeedRatio %lul\n", RAHighspeedRatio, DEHighspeedRatio);
-	fprintf(Logfile, "Skyw::ReadMountData RAStepInit %lu DEStepInit %lul\n", RAStepInit, DEStepInit);
+	fprintf(Logfile, "Skyw::ReadMountData RASteps360 %lu DESteps360 %lu\n", RASteps360, DESteps360);
+	fprintf(Logfile, "Skyw::ReadMountData RAStepsWorm %lu DEStepsWorm %lu\n", RAInteruptFreq, DEInteruptFreq);
+	fprintf(Logfile, "Skyw::ReadMountData RAHighSpeedRatio %lu DEHighSpeedRatio %lu\n", RAHighspeedRatio, DEHighspeedRatio);
+	fprintf(Logfile, "Skyw::ReadMountData RAStepInit %lu DEStepInit %lu\n", RAStepInit, DEStepInit);
 #endif
+
 
 	return err;
 }
@@ -944,22 +956,7 @@ int Skywatcher::SendSkywatcherCommandInnerLoop(SkywatcherCommand cmd, Skywatcher
 	} while (*bufPtr++ != SkywatcherTrailingChar && totalBytesRead < maxlen);
 
 	if (!err) *--bufPtr = 0; //remove the trailing character
-    
-    // this might not work.
-    switch (response[0]) {
-        case '=': break;
-        case '!':
-            // err = ERR_CMDFAILED;
-#ifdef SKYW_DEBUG
-            fprintf(Logfile, "Skyw::SendSkywatcherCommand - Failed command %s - Reply %s\n", command, response);
-#endif
-        default:
-            // err = ERR_CMDFAILED;
-#ifdef SKYW_DEBUG
-            fprintf(Logfile, "Skyw::SendSkywatcherCommand - Invalid response to command %s - Reply %s\n", command, response);
-#endif
-    }
-    
+
 #ifdef SKYW_DEBUG
 	fprintf(Logfile, "Skyw::SendSkywatcherCommand %c Error Code :%d  read response %s bytes read %lu\n", cmd, err, response, totalBytesRead);
 #endif	
