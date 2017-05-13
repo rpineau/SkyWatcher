@@ -44,7 +44,7 @@ class TickCountInterface;
 
 #include <cstdio>
 
-// #define HEQ5_DEBUG    // Define this to have log files
+#define HEQ5_DEBUG    // Define this to have log files
 
 #ifdef HEQ5_DEBUG
 #if defined(SB_WIN_BUILD)
@@ -234,6 +234,7 @@ private:
 	double SlewSpeeds[NSLEWSPEEDS];
 	char GuideSpeedNames[NGUIDESPEEDS][MAXSLEWNAMESIZE];
 
+    
 #ifdef HEQ5_DEBUG
 	FILE *LogFile;	  // LogFile
 #endif

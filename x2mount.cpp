@@ -60,8 +60,9 @@ X2Mount::X2Mount(const char* pszDriverSelection,
 
 #ifdef HEQ5_DEBUG
 	int i;
+    time_t ltime=time(NULL);
 	for (i = 0; i < NSLEWSPEEDS; i++) {
-		fprintf(LogFile, "Slew Speed[%d] %f %s\n", i, SlewSpeeds[i], SlewSpeedNames[i]);
+		fprintf(LogFile, "[%s] Slew Speed[%d] %f %s\n", asctime(localtime(&ltime)), i, SlewSpeeds[i], SlewSpeedNames[i]);
 	}
 #endif	
 	m_CurrentRateIndex = 3;
@@ -88,7 +89,8 @@ X2Mount::X2Mount(const char* pszDriverSelection,
 	m_bPolarisAlignmentSlew = false;   // Only true when slewing to Polaris for alignment
 
 #ifdef HEQ5_DEBUG
-	fprintf(LogFile, "Polaris Alignment: %f %f %d %d %s %d\n", m_HomeAlignmentDEC, m_HomeAlignmentHA, m_HomePolarisClock, m_bPolarisHomeAlignmentSet, m_PortName, m_iST4GuideRateIndex);
+    ltime=time(NULL);
+	fprintf(LogFile, "[%s] Polaris Alignment: %f %f %d %d %s %d\n", asctime(localtime(&ltime)), m_HomeAlignmentDEC, m_HomeAlignmentHA, m_HomePolarisClock, m_bPolarisHomeAlignmentSet, m_PortName, m_iST4GuideRateIndex);
 #endif
 	X2MutexLocker ml(GetMutex());  // Mount should not be connected yet, but just in case...
 	SkyW.SetST4GuideRate(m_iST4GuideRateIndex);
@@ -98,7 +100,8 @@ X2Mount::~X2Mount()
 {
 	// Write the stored values
 #ifdef HEQ5_DEBUG
-	fprintf(LogFile, "Polaris Alignment on exit: %f %f %d %d %s %d\n", m_HomeAlignmentDEC, m_HomeAlignmentHA, m_HomePolarisClock, m_bPolarisHomeAlignmentSet, m_PortName, m_iST4GuideRateIndex);
+    time_t ltime=time(NULL);
+	fprintf(LogFile, "[%s] Polaris Alignment on exit: %f %f %d %d %s %d\n", asctime(localtime(&ltime)), m_HomeAlignmentDEC, m_HomeAlignmentHA, m_HomePolarisClock, m_bPolarisHomeAlignmentSet, m_PortName, m_iST4GuideRateIndex);
 #endif	
 	m_pIniUtil->writeInt(PARENT_KEY, CHILD_KEY_ALIGNMENT_CLOCK_POSITION, m_HomePolarisClock);
 	m_pIniUtil->writeDouble(PARENT_KEY, CHILD_KEY_ALIGNMENT_DEC, m_HomeAlignmentDEC);
@@ -163,7 +166,10 @@ int	X2Mount::queryAbstraction(const char* pszName, void** ppVal)
 	*/
 
 #ifdef HEQ5_DEBUG
-	if (LogFile) fprintf(LogFile, "Query Abstraction Called: %s\n", pszName);
+    if (LogFile) {
+        time_t ltime=time(NULL);
+        fprintf(LogFile, "[%s] Query Abstraction Called: %s\n", asctime(localtime(&ltime)), pszName);
+    }
 #endif
 	return SB_OK;
 }
@@ -174,14 +180,20 @@ int	X2Mount::startOpenLoopMove(const MountDriverInterface::MoveDir& Dir, const i
 	X2MutexLocker ml(GetMutex());
 	m_CurrentRateIndex = nRateIndex;
 #ifdef HEQ5_DEBUG
-	if (LogFile) fprintf(LogFile, "startOpenLoopMove called %d %d\n", Dir, nRateIndex);
+    if (LogFile) {
+        time_t ltime=time(NULL);
+        fprintf(LogFile, "[%s] startOpenLoopMove called %d %d\n", asctime(localtime(&ltime)), Dir, nRateIndex);
+    }
 #endif
 	return SkyW.StartOpenSlew(Dir, SlewSpeeds[nRateIndex]);
 }
 int	X2Mount::endOpenLoopMove(void)
 {
 #ifdef HEQ5_DEBUG
-	if (LogFile) fprintf(LogFile, "endOpenLoopMove Called\n");
+    if (LogFile){
+        time_t ltime=time(NULL);
+        fprintf(LogFile, "[%s] endOpenLoopMove Called\n", asctime(localtime(&ltime)));
+    }
 #endif
 	X2MutexLocker ml(GetMutex());
 	return SkyW.SetTrackingRates(true, true, 0.0, 0.0);                    // Starting to track will stop move
@@ -215,7 +227,10 @@ int X2Mount::execModalSettingsDialog(void)
 	int i;
 
 #ifdef HEQ5_DEBUG
-	if (LogFile) fprintf(LogFile, "execModelSettingsDialog called %d\n", m_bPolarisHomeAlignmentSet);
+    if (LogFile) {
+        time_t ltime=time(NULL);
+        fprintf(LogFile, "[%s] execModelSettingsDialog called %d\n", asctime(localtime(&ltime)), m_bPolarisHomeAlignmentSet);
+    }
 #endif
 
 	if (NULL == ui) return ERR_POINTER;
@@ -278,7 +293,10 @@ int X2Mount::execModalSettingsDialog(void)
 	if (bPressedOK)
 	{		
 #ifdef HEQ5_DEBUG
-		if (LogFile) fprintf(LogFile, "execModealSetting:: Pressed OK button\n");
+        if (LogFile) {
+            time_t ltime=time(NULL);
+            fprintf(LogFile, "[%s] execModealSetting:: Pressed OK button\n", asctime(localtime(&ltime)));
+        }
 #endif
 		dx->propertyString("lineEdit","text",m_PortName, MAX_PORT_NAME_SIZE);
 		m_pIniUtil->writeString(PARENT_KEY, CHILD_KEY_PORT_NAME, m_PortName);
@@ -289,7 +307,10 @@ int X2Mount::execModalSettingsDialog(void)
 		m_pIniUtil->writeInt(PARENT_KEY, CHILD_KEY_SLEWDELAY, m_iPostSlewDelay);
 
 #ifdef HEQ5_DEBUG
-		if (LogFile) fprintf(LogFile, "execModealSetting:: Port Name %s\n", m_PortName);
+        if (LogFile){
+            time_t ltime=time(NULL);
+            fprintf(LogFile, "[%s] execModealSetting:: Port Name %s\n", asctime(localtime(&ltime)), m_PortName);
+        }
 #endif
 	}
 	return nErr;
@@ -308,12 +329,18 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 	X2MutexLocker ml(GetMutex());
 
 #ifdef HEQ5_DEBUG
-	if (LogFile) fprintf(LogFile, "uievent %s\n", pszEvent);
+    if (LogFile) {
+        time_t ltime=time(NULL);
+        fprintf(LogFile, "[%s] uievent %s\n", asctime(localtime(&ltime)), pszEvent);
+    }
 #endif
 	if (!strcmp(pszEvent, "on_timer")) { // Periodical event - use it to check status of slew
 		if (!m_bPolarisAlignmentSlew) return; // No need to do anything unless slewing
 #ifdef HEQ5_DEBUG
-		if (LogFile) fprintf(LogFile, "uievent %s %d %d\n", pszEvent, SkyW.GetIsNotGoto(), m_bPolarisAlignmentSlew);
+        if (LogFile) {
+            time_t ltime=time(NULL);
+            fprintf(LogFile, "[%s] uievent %s %d %d\n", asctime(localtime(&ltime)), pszEvent, SkyW.GetIsNotGoto(), m_bPolarisAlignmentSlew);
+        }
 #endif
 		if (!SkyW.GetIsPolarAlignInProgress()) {            // Slewing has finished
 			uiex->setPropertyString("pushButton_2", "text", "Move to Alignment Position"); // Change label to indicate action taken
@@ -335,7 +362,10 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 
 		// Store values in init file
 #ifdef HEQ5_DEBUG
-		if (LogFile) fprintf(LogFile, "pushButton_clicked Index %d Ra %f dec%f\n", m_HomePolarisClock, m_HomeAlignmentHA, m_HomeAlignmentDEC);
+        if (LogFile) {
+            time_t ltime=time(NULL);
+            fprintf(LogFile, "[%s] pushButton_clicked Index %d Ra %f dec%f\n", asctime(localtime(&ltime)), m_HomePolarisClock, m_HomeAlignmentHA, m_HomeAlignmentDEC);
+        }
 #endif
 		m_pIniUtil->writeInt(PARENT_KEY, CHILD_KEY_ALIGNMENT_CLOCK_POSITION, m_HomePolarisClock);
 		m_pIniUtil->writeDouble(PARENT_KEY, CHILD_KEY_ALIGNMENT_DEC, m_HomeAlignmentDEC);
@@ -377,7 +407,10 @@ int	X2Mount::establishLink(void)
 	X2MutexLocker ml(GetMutex()); 
 	// get serial port device name
 #ifdef HEQ5_DEBUG
-	if (LogFile) fprintf(LogFile, "Establish Link called\n");
+    if (LogFile) {
+        time_t ltime=time(NULL);
+        fprintf(LogFile, "[%s] Establish Link called\n", asctime(localtime(&ltime)));
+    }
 #endif
 	return SkyW.Connect(m_PortName);
 }
@@ -385,7 +418,10 @@ int	X2Mount::terminateLink(void)
 {
 	X2MutexLocker ml(GetMutex());
 #ifdef HEQ5_DEBUG
-	if (LogFile) fprintf(LogFile, "Terminate Link called\n");
+    if (LogFile) {
+        time_t ltime=time(NULL);
+        fprintf(LogFile, "[%s] Terminate Link called\n", asctime(localtime(&ltime)));
+    }
 #endif
 	return SkyW.Disconnect();
 }
@@ -394,7 +430,10 @@ bool X2Mount::isLinked(void) const
 {
 	bool temp;
 #ifdef HEQ5_DEBUG
-	if (LogFile) fprintf(LogFile, "isLinked called\n");
+    if (LogFile) {
+        time_t ltime=time(NULL);
+        fprintf(LogFile, "[%s] isLinked called\n", asctime(localtime(&ltime)));
+    }
 #endif
 
 	temp = SkyW.isConnected();
@@ -413,7 +452,10 @@ bool X2Mount::isEstablishLinkAbortable(void) const	{return false;}
 void	X2Mount::driverInfoDetailedInfo(BasicStringInterface& str) const
 {
 #ifdef HEQ5_DEBUG
-	if (LogFile) fprintf(LogFile, "driverInfoDetailedInfo Called\n");
+    if (LogFile) {
+        time_t ltime=time(NULL);
+        fprintf(LogFile, "[%s] driverInfoDetailedInfo Called\n", asctime(localtime(&ltime)));
+    }
 #endif
 		str = "EQ Direct X2 plugin by Colin McGill";
 }
@@ -421,7 +463,10 @@ void	X2Mount::driverInfoDetailedInfo(BasicStringInterface& str) const
 double	X2Mount::driverInfoVersion(void) const				
 {
 #ifdef HEQ5_DEBUG
-	if (LogFile) fprintf(LogFile, "driverInfoVersion Called\n");
+    if (LogFile) {
+        time_t ltime=time(NULL);
+        fprintf(LogFile, "[%s] driverInfoVersion Called\n", asctime(localtime(&ltime)));
+    }
 #endif
 	return SKYWATCHER_DRIVER_VERSION;
 }
@@ -430,14 +475,20 @@ double	X2Mount::driverInfoVersion(void) const
 void X2Mount::deviceInfoNameShort(BasicStringInterface& str) const				
 {
 #ifdef HEQ5_DEBUG
-	if (LogFile) fprintf(LogFile, "driverInfoNameShort Called\n");
+    if (LogFile) {
+        time_t ltime=time(NULL);
+        fprintf(LogFile, "[%s] driverInfoNameShort Called\n", asctime(localtime(&ltime)));
+    }
 #endif
 	str = "Doesn't Seem to be used";
 }
 void X2Mount::deviceInfoNameLong(BasicStringInterface& str) const				
 {
 #ifdef HEQ5_DEBUG
-	if (LogFile) fprintf(LogFile, "deviceInfoNameLong Called\n");
+    if (LogFile) {
+        time_t ltime=time(NULL);
+        fprintf(LogFile, "[%s] deviceInfoNameLong Called\n", asctime(localtime(&ltime)));
+    }
 #endif
 	str = "Skywatcher EQ Mount";
 
@@ -445,7 +496,10 @@ void X2Mount::deviceInfoNameLong(BasicStringInterface& str) const
 void X2Mount::deviceInfoDetailedDescription(BasicStringInterface& str) const	
 {
 #ifdef HEQ5_DEBUG
-	if (LogFile) fprintf(LogFile, "driverInfoDetailedDescription Called\n");
+    if (LogFile) {
+        time_t ltime=time(NULL);
+        fprintf(LogFile, "[%s] driverInfoDetailedDescription Called\n", asctime(localtime(&ltime)));
+    }
 #endif
 	str = "Connects to a Skywatcher equatorial mount through an EQDIR cable - see the EQMOD project for details";
 	
@@ -453,7 +507,10 @@ void X2Mount::deviceInfoDetailedDescription(BasicStringInterface& str) const
 void X2Mount::deviceInfoFirmwareVersion(BasicStringInterface& str)		
 {
 #ifdef HEQ5_DEBUG
-	if (LogFile) fprintf(LogFile, "driverInfoFirmwareVersion Called\n");
+    if (LogFile) {
+        time_t ltime=time(NULL);
+        fprintf(LogFile, "[%s] driverInfoFirmwareVersion Called\n", asctime(localtime(&ltime)));
+    }
 #endif
 	if (SkyW.isConnected()) {
 		str = SkyW.GetMCVersionName();
@@ -465,7 +522,10 @@ void X2Mount::deviceInfoFirmwareVersion(BasicStringInterface& str)
 void X2Mount::deviceInfoModel(BasicStringInterface& str)
 {
 #ifdef HEQ5_DEBUG
-	if (LogFile) fprintf(LogFile, "driverInfoModel Called\n");
+    if (LogFile) {
+        time_t ltime=time(NULL);
+        fprintf(LogFile, "[%s] driverInfoModel Called\n", asctime(localtime(&ltime)));
+    }
 #endif
 	if (SkyW.isConnected()) {
 		str = SkyW.GetMountName();
@@ -483,7 +543,10 @@ int	X2Mount::raDec(double& ra, double& dec, const bool& bCached)
 	X2MutexLocker ml(GetMutex());
 
 #ifdef HEQ5_DEBUG
-	if (LogFile) fprintf(LogFile, "raDec Called\n");
+    if (LogFile) {
+        time_t ltime=time(NULL);
+        fprintf(LogFile, "[%s] raDec Called\n", asctime(localtime(&ltime)));
+    }
 #endif
 	// Get the HA and DEC from the mount
 	err = SkyW.GetMountHAandDec(Ha, dec);
@@ -498,7 +561,10 @@ int	X2Mount::raDec(double& ra, double& dec, const bool& bCached)
 		ra -= 24.0;
 	}
 #ifdef HEQ5_DEBUG
-	if (LogFile) fprintf(LogFile, "raDec Ra: %f Dec %f\n", ra, dec);
+    if (LogFile) {
+        time_t ltime=time(NULL);
+        fprintf(LogFile, "[%s] raDec Ra: %f Dec %f\n", asctime(localtime(&ltime)), ra, dec);
+    }
 #endif
 	return err;
 }
@@ -506,7 +572,10 @@ int	X2Mount::raDec(double& ra, double& dec, const bool& bCached)
 int	X2Mount::abort(void)												
 {
 #ifdef HEQ5_DEBUG
-	if (LogFile) fprintf(LogFile, "abort Called\n");
+    if (LogFile) {
+        time_t ltime=time(NULL);
+        fprintf(LogFile, "[%s] abort Called\n", asctime(localtime(&ltime)));
+    }
 #endif
 	X2MutexLocker ml(GetMutex());
 	return SkyW.Abort();
@@ -516,7 +585,10 @@ int X2Mount::startSlewTo(const double& dRa, const double& dDec)
 {
 	int err;
 #ifdef HEQ5_DEBUG
-	if (LogFile) fprintf(LogFile, "startSlewTo Called %f %f\n", dRa, dDec);
+    if (LogFile) {
+        time_t ltime=time(NULL);
+        fprintf(LogFile, "[%s] startSlewTo Called %f %f\n", asctime(localtime(&ltime)), dRa, dDec);
+    }
 #endif
 	X2MutexLocker ml(GetMutex());
 	if (dDec > 89.8 || dDec < -89.8) { // Special case - assume is parking to Skywatcher home location - catch and send to correct HA
@@ -534,7 +606,10 @@ int X2Mount::isCompleteSlewTo(bool& bComplete) const
 	bComplete = SkyW.GetIsNotGoto();
 
 #ifdef HEQ5_DEBUG
-	if (LogFile) fprintf(LogFile, "isCompleteSlewTo called %d\n", bComplete);
+    if (LogFile) {
+        time_t ltime=time(NULL);
+        fprintf(LogFile, "[%s] isCompleteSlewTo called %d\n", asctime(localtime(&ltime)), bComplete);
+    }
 #endif
 
 	return SB_OK;
@@ -549,7 +624,10 @@ int X2Mount::endSlewTo(void)
 	m_wasslewing = false; 
 
 #ifdef HEQ5_DEBUG
-	if (LogFile) fprintf(LogFile, "endSlewTo Called\n");
+    if (LogFile) {
+        time_t ltime=time(NULL);
+        fprintf(LogFile, "[%s] endSlewTo Called\n", asctime(localtime(&ltime)));
+    }
 #endif
 	return SB_OK;
 }
@@ -560,7 +638,10 @@ int X2Mount::syncMount(const double& ra, const double& dec)
 {
 	X2MutexLocker ml(GetMutex());
 #ifdef HEQ5_DEBUG
-	if (LogFile) fprintf(LogFile, "syncMount Called\n");
+    if (LogFile) {
+        time_t ltime=time(NULL);
+        fprintf(LogFile, "[%s] syncMount Called\n", asctime(localtime(&ltime)));
+    }
 #endif
 	m_bSynced = true;
 	return SB_OK;
@@ -569,7 +650,10 @@ int X2Mount::syncMount(const double& ra, const double& dec)
 bool X2Mount::isSynced(void)
 {
 #ifdef HEQ5_DEBUG
-	if (LogFile) fprintf(LogFile, "syncMount Called\n");
+    if (LogFile) {
+        time_t ltime=time(NULL);
+        fprintf(LogFile, "[%s] syncMount Called\n", asctime(localtime(&ltime)));
+    }
 #endif
 	return true;   // As per definition - see X2 Standard for mounts - Mount does not know (or care) if synced.
 }
@@ -578,7 +662,10 @@ int X2Mount::setTrackingRates(const bool& bTrackingOn, const bool& bIgnoreRates,
 {
 	X2MutexLocker ml(GetMutex());
 #ifdef HEQ5_DEBUG
-	if (LogFile) fprintf(LogFile, "setTrackingRates Called Tracking On %d Ignore Rates%d\n", bTrackingOn, bIgnoreRates);
+    if (LogFile) {
+        time_t ltime=time(NULL);
+        fprintf(LogFile, "[%s] setTrackingRates Called Tracking On %d Ignore Rates%d\n", asctime(localtime(&ltime)), bTrackingOn, bIgnoreRates);
+    }
 #endif
 	return SkyW.SetTrackingRates(bTrackingOn, bIgnoreRates, dRaRateArcSecPerSec, dDecRateArcSecPerSec);
 
@@ -605,7 +692,10 @@ bool X2Mount::needsRefactionAdjustments(void)
 bool X2Mount::isParked(void) {
 
 #ifdef HEQ5_DEBUG
-	if (LogFile) fprintf(LogFile, "isParked Called\n");
+    if (LogFile) {
+        time_t ltime=time(NULL);
+        fprintf(LogFile, "[%s] isParked Called\n", asctime(localtime(&ltime)));
+    }
 #endif
 	return m_bParked;
 }
@@ -619,18 +709,27 @@ int X2Mount::startPark(const double& dAz, const double& dAlt)
 	X2MutexLocker ml(GetMutex());
 	err = m_pTheSkyXForMounts->HzToEq(dAz, dAlt, dRa, dDec); if (err) return err;
 #ifdef HEQ5_DEBUG
-	if (LogFile) fprintf(LogFile, "startPark Called Alt %f Az %f Ra %f Dec %f\n", dAz, dAlt, dRa, dDec);
+    if (LogFile) {
+        time_t ltime=time(NULL);
+        fprintf(LogFile, "[%s] startPark Called Alt %f Az %f Ra %f Dec %f\n", asctime(localtime(&ltime)), dAz, dAlt, dRa, dDec);
+    }
 #endif
 	if (fabs(dDec - 90.0) < 0.1 || fabs (dDec+90) < 0.1) {
 		err = SkyW.StartPark();
 #ifdef HEQ5_DEBUG
-		if (LogFile) fprintf(LogFile, "startPark Called SkyW.StartPark() %d\n", err);
+        if (LogFile) {
+            time_t ltime=time(NULL);
+            fprintf(LogFile, "[%s] startPark Called SkyW.StartPark() %d\n", asctime(localtime(&ltime)), err);
+        }
 #endif
 	}
 	else {
 		err = SkyW.StartSlewTo(dRa, dDec);
 #ifdef HEQ5_DEBUG
-		if (LogFile) fprintf(LogFile, "startPark Called SkyW.StartSlewTo Err %d Ra %f Dec %f \n", err, dRa, dDec);
+        if (LogFile) {
+            time_t ltime=time(NULL);
+            fprintf(LogFile, "[%s] startPark Called SkyW.StartSlewTo Err %d Ra %f Dec %f \n", asctime(localtime(&ltime)), err, dRa, dDec);
+        }
 #endif
 	}
 
@@ -641,7 +740,10 @@ int X2Mount::startPark(const double& dAz, const double& dAlt)
 int X2Mount::isCompletePark(bool& bComplete) const
 {
 #ifdef HEQ5_DEBUG
-	if (LogFile) fprintf(LogFile, "isCompletePark Called\n");
+    if (LogFile) {
+        time_t ltime=time(NULL);
+        fprintf(LogFile, "[%s] isCompletePark Called\n", asctime(localtime(&ltime)));
+    }
 #endif
 	bComplete = SkyW.GetIsParkingComplete();
 	return SB_OK;
@@ -651,7 +753,10 @@ int X2Mount::endPark(void)
 	int err;
 	X2MutexLocker ml(GetMutex());
 #ifdef HEQ5_DEBUG
-	if (LogFile) fprintf(LogFile, "endPark Called\n");
+    if (LogFile) {
+        time_t ltime=time(NULL);
+        fprintf(LogFile, "[%s] endPark Called\n", asctime(localtime(&ltime)));
+    }
 #endif
 	err = setTrackingRates(false, true, 0.0, 0.0); if (err) return err;
 	m_bParked = true;
