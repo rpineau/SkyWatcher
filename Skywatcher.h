@@ -39,8 +39,6 @@
 #define SKYWATCHER_MAX_GOTO_ITERATIONS 5  // How many times to attempt an iterative goto
 #define SKYWATCHER_GOTO_ERROR          5 // Permitted arcseconds of error in goto target
 
-#define ENCODER_ON_CMD 0x04
-#define ENCODER_OFF_CMD 0x05
 
 // Next turns string charcter representing a HEX code into a number
 #define HEX(c) (((c) < 'A')?((c)-'0'):((c) - 'A') + 10)
@@ -131,10 +129,20 @@ private:
 		GetStepPeriod = 'D', // See Merlin protocol http://www.papywizard.org/wiki/DevelopGuide
 		ActivateMotor = 'B', // See eq6direct implementation http://pierre.nerzic.free.fr/INDI/
 		SetGuideRate = 'P',  // See EQASCOM driver
-		Deactivate = 'd',    // Not sure
-		SetEncoderCmd = 'W', // EQ8/AZEQ6 only
-		SetIndexerCmd = 'q', // EQ8/AZEQ6 only
+		GetHomePosition = 'd',    // Get Home position encoder count (default at startup)
+		SetFeatureCmd = 'W', // EQ8/AZEQ6/AZEQ5 only
+		GetFeatureCmd = 'q', // EQ8/AZEQ6/AZEQ5 only
+		InquireAuxEncoder = 'd', // EQ8/AZEQ6/AZEQ5 only
 		NUMBER_OF_SkywatcherCommand
+	};
+
+	// From the latest INDI release - commands to deal with features.
+	enum SkywatcherSetFeatureCmd {
+		START_PPEC_TRAINING_CMD = 0x00, STOP_PPEC_TRAINING_CMD = 0x01,
+		TURN_PPEC_ON_CMD = 0x02, TURN_PPEC_OFF_CMD = 0X03,
+		ENCODER_ON_CMD = 0x04, ENCODER_OFF_CMD = 0x05,
+		DISABLE_FULL_CURRENT_LOW_SPEED_CMD = 0x0006, ENABLE_FULL_CURRENT_LOW_SPEED_CMD = 0x0106,
+		RESET_HOME_INDEXER_CMD = 0x08
 	};
 
 
