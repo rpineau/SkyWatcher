@@ -13,9 +13,9 @@
 
 #ifdef SKYW_DEBUG
 #if defined(SB_WIN_BUILD)
-#define SKYW_LOGFILENAME "C:\\Users\\Colin\\Documents\\SkyLog.txt"
+#define SKYW_LOGFILENAME "C:\\SkyLog.txt"
 #elif defined(SB_LINUX_BUILD)
-#define SKYW_LOGFILENAME "/home/colin/Documents/SkyLog.txt"
+#define SKYW_LOGFILENAME "/tmp/SkyLog.txt"
 #elif defined(SB_MAC_BUILD)
 #define SKYW_LOGFILENAME "/tmp/SkyLog.txt"
 #endif

@@ -48,9 +48,9 @@ class TickCountInterface;
 
 #ifdef HEQ5_DEBUG
 #if defined(SB_WIN_BUILD)
-#define HEQ5_LOGFILENAME "C:\\Users\\Colin\\Documents\\Logfile.txt"
+#define HEQ5_LOGFILENAME "C:\\Logfile.txt"
 #elif defined(SB_LINUX_BUILD)
-#define HEQ5_LOGFILENAME "/home/colin/Documents/Logfile.txt"
+#define HEQ5_LOGFILENAME "/tmp/Logfile.txt"
 #elif defined (SB_MAC_BUILD)
 #define HEQ5_LOGFILENAME "/tmp/Logfile.txt"
 #endif
