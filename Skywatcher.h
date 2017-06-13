@@ -58,6 +58,7 @@ public:
 	char *GetMCVersionName() { return MCVersionName;  }
 	char *GetMountName() { return MountName;  }
 	int StartSlewTo(const double& dRa, const double& dDec);
+	int SyncTo(const double& dRa, const double& dDec);
 	int GetMountHAandDec(double& dHa, double &dDec);
 	bool GetIsNotGoto() const { return !m_bGotoInProgress; }
 	bool GetIsParkingComplete() const { return !m_bGotoInProgress; }

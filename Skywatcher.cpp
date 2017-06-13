@@ -728,7 +728,7 @@ int Skywatcher::StartSlewTo(const double& dRa, const double& dDec)
 	unsigned long TargetRaStep, TargetDeStep, MaxStep;
 	int err;
 	double HA;
-	
+
 	// Is this the first goto attempt?
 	if (!m_bGotoInProgress) {
 		err = StopAxesandWait(); if (err) return err;				  // Ensure no motion before starting a slew
@@ -740,14 +740,14 @@ int Skywatcher::StartSlewTo(const double& dRa, const double& dDec)
 	else {
 		m_iGotoIterations++;
 	}
-	
+
 	// Determine HA from RA
 	HA = m_pTSX->hourAngle(dRa);
-	
+
 	// Calculate target RA and DEC step locations
 	err = InquireMountAxisStepPositions(); if (err) return err;	  // Get Axis Positions in class members RAStep and DEStep
 	EncoderValuesfromHAanDEC(HA, dDec, TargetRaStep, TargetDeStep);
-	
+
 	// Detemine max step in either RA or DEC - used to calculate time of slew to get more accurate RA position
 	if (abs(TargetRaStep - RAStep) > abs(TargetDeStep - DEStep)) {
 		MaxStep = abs(TargetRaStep - RAStep);
@@ -755,7 +755,7 @@ int Skywatcher::StartSlewTo(const double& dRa, const double& dDec)
 	else {
 		MaxStep = abs(TargetDeStep - DEStep);
 	}
-	
+
 #ifdef SKYW_DEBUG
 	ltime = time(NULL);
 	char *timestamp = asctime(localtime(&ltime));
@@ -764,17 +764,68 @@ int Skywatcher::StartSlewTo(const double& dRa, const double& dDec)
 	fprintf(Logfile, "[%s] Skyw::StartSlewTo called RAStepInit %lu RASteps360 %lu DEStepINit %lu DESteps %lu MaxStep%lu\n", timestamp, RAStepInit, RASteps360, DEStepInit, DESteps360, MaxStep);
 	fprintf(Logfile, "[%s] Skyw::StartSlewTo called RAStep %lu DEStep %lu\n", timestamp, RAStep, DEStep);
 #endif
-	
+
 	// Set Slews in Train - add on time taken for slew to RA position
 	err = StartTargetSlew(Axis1, RAStep, TargetRaStep, RASteps360, MaxStep);
 	if (err)return err;
 	// In this case MaxStep=0 - no time dependency for DEC
 	err = StartTargetSlew(Axis2, DEStep, TargetDeStep, DESteps360, 0);
-	
+
 	// Update axes status
 	err = GetAxesStatus();
-	
+
 	return err;
+}
+
+int Skywatcher::SyncTo(const double& dRa, const double& dDec)
+{
+
+	unsigned long TargetRaStep=0, TargetDeStep=0;
+	int err = SB_OK;
+	double HA=0;
+	char command[SKYWATCHER_MAX_CMD], response[SKYWATCHER_MAX_CMD];
+
+
+#ifdef SKYW_DEBUG
+	fprintf(Logfile, "Skyw::SyncToTo called RA %f Dec %f\n", dRa, dDec);
+#endif
+
+	// Determine HA from RA
+	HA = m_pTSX->hourAngle(dRa);
+	
+	// Calculate encoder values from HA and DEC
+	EncoderValuesfromHAanDEC(HA, dDec, TargetRaStep, TargetDeStep);
+
+	
+	// Set Mount axis to this location
+#ifdef SKYW_DEBUG
+	fprintf(Logfile, "Skyw::SyncToTo called RA %f Dec %f HA %f TargetRAStep %lu TargetDEStep %lu\n", dRa, dDec, HA, TargetRaStep, TargetDeStep);
+#endif
+
+	// Stop axis before setting location
+	err = StopAxesandWait(); 
+
+	long2Revu24str(TargetRaStep, command);	// Convert target steps into string
+	err = SendSkywatcherCommand(SetAxisPositionCmd, Axis1, command, response, SKYWATCHER_MAX_CMD); if (err) return err;
+
+#ifdef SKYW_DEBUG
+	fprintf(Logfile, "Skyw::SyncToTo set TargetRAStep command: %s response: %s\n", command, response);
+#endif
+
+	long2Revu24str(TargetDeStep, command);	// Convert target steps into string
+	err = SendSkywatcherCommand(SetAxisPositionCmd, Axis2, command, response, SKYWATCHER_MAX_CMD); if (err) return err;
+
+#ifdef SKYW_DEBUG
+	fprintf(Logfile, "Skyw::SyncToTo set TargetDeStep command: %s response: %s\n", command, response);
+#endif
+
+
+	// Start trackign again
+	err = SetTrackingRates(true, true, 0.0, 0.0); if (err) return err;
+	err = GetAxesStatus(); if (err) return err;
+
+	return err;
+
 }
 
 int Skywatcher::StartPark(void)

@@ -151,8 +151,8 @@ int X2Mount::queryAbstraction(const char* pszName, void** ppVal)
 {
 	*ppVal = NULL;
 	
-	//if (!strcmp(pszName, SyncMountInterface_Name))
-	//*ppVal = dynamic_cast<SyncMountInterface*>(this);
+	if (!strcmp(pszName, SyncMountInterface_Name))
+	    *ppVal = dynamic_cast<SyncMountInterface*>(this);
 	if (!strcmp(pszName, SlewToInterface_Name))
 		*ppVal = dynamic_cast<SlewToInterface*>(this);
 	else if (!strcmp(pszName, AsymmetricalEquatorialInterface_Name))
@@ -704,16 +704,21 @@ int X2Mount::endSlewTo(void)
 int X2Mount::syncMount(const double& ra, const double& dec)
 {
 	X2MutexLocker ml(GetMutex());
+	int err = SB_OK;
+
+
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
 		time_t ltime = time(NULL);
 		char *timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] syncMount Called\n", timestamp);
+		fprintf(LogFile, "[%s] syncMount Called ra %f dec %f\n", timestamp, ra, dec);
 	}
 #endif
+	err = SkyW.SyncTo(ra, dec);
+
 	m_bSynced = true;
-	return SB_OK;
+	return err;
 }
 
 bool X2Mount::isSynced(void)
@@ -723,7 +728,7 @@ bool X2Mount::isSynced(void)
 		time_t ltime = time(NULL);
 		char *timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] syncMount Called\n", timestamp);
+		fprintf(LogFile, "[%s] issyncMount Called\n", timestamp);
 	}
 #endif
 	return true;   // As per definition - see X2 Standard for mounts - Mount does not know (or care) if synced.
