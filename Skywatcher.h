@@ -21,8 +21,9 @@
 #endif
 #endif
 
+#define SKYWATCHER_DRIVER_VERSION 1.11;
+
 // Defines below from INDI EQMOD
-#define SKYWATCHER_DRIVER_VERSION 1.1;
 #define SKYWATCHER_MAX_CMD        16
 #define SKYWATCHER_MAX_TRIES      3
 #define SKYWATCHER_CHAR_BUFFER   1024
@@ -58,6 +59,7 @@ public:
 	char *GetMCVersionName() { return MCVersionName;  }
 	char *GetMountName() { return MountName;  }
 	int StartSlewTo(const double& dRa, const double& dDec);
+	int SyncTo(const double& dRa, const double& dDec);
 	int GetMountHAandDec(double& dHa, double &dDec);
 	bool GetIsNotGoto() const { return !m_bGotoInProgress; }
 	bool GetIsParkingComplete() const { return !m_bGotoInProgress; }
