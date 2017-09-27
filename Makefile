@@ -19,8 +19,6 @@ $(TARGET_LIB): $(OBJS)
 $(SRCS:.cpp=.d):%.d:%.cpp
 	$(CC) $(CFLAGS) $(CPPFLAGS) -MM $< >$@
 
-include $(SRCS:.cpp=.d)
-
 .PHONY: clean
 clean:
-	-${RM} ${TARGET_LIB} ${OBJS} $(SRCS:.cpp=.d)
+	${RM} ${TARGET_LIB} ${OBJS}
