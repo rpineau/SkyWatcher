@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>466</width>
-    <height>523</height>
+    <height>444</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -155,10 +155,10 @@ p, li { white-space: pre-wrap; }
       <widget class="QPushButton" name="pushButton">
        <property name="geometry">
         <rect>
-         <x>40</x>
+         <x>10</x>
          <y>80</y>
-         <width>141</width>
-         <height>23</height>
+         <width>180</width>
+         <height>30</height>
         </rect>
        </property>
        <property name="toolTip">
@@ -177,10 +177,10 @@ p, li { white-space: pre-wrap; }
       <widget class="QPushButton" name="pushButton_2">
        <property name="geometry">
         <rect>
-         <x>240</x>
-         <y>20</y>
-         <width>141</width>
-         <height>91</height>
+         <x>200</x>
+         <y>30</y>
+         <width>200</width>
+         <height>70</height>
         </rect>
        </property>
        <property name="toolTip">
@@ -194,9 +194,9 @@ Requires home position to have been set previously.</string>
       <widget class="QComboBox" name="comboBox">
        <property name="geometry">
         <rect>
-         <x>40</x>
+         <x>10</x>
          <y>50</y>
-         <width>141</width>
+         <width>180</width>
          <height>22</height>
         </rect>
        </property>
@@ -207,9 +207,9 @@ Requires home position to have been set previously.</string>
       <widget class="QLabel" name="label">
        <property name="geometry">
         <rect>
-         <x>40</x>
-         <y>20</y>
-         <width>161</width>
+         <x>10</x>
+         <y>30</y>
+         <width>190</width>
          <height>16</height>
         </rect>
        </property>
@@ -303,9 +303,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QComboBox" name="comboBox_2">
        <property name="geometry">
         <rect>
-         <x>20</x>
+         <x>10</x>
          <y>30</y>
-         <width>151</width>
+         <width>170</width>
          <height>22</height>
         </rect>
        </property>
@@ -326,11 +326,17 @@ p, li { white-space: pre-wrap; }
       <widget class="QSpinBox" name="spinBox">
        <property name="geometry">
         <rect>
-         <x>30</x>
+         <x>20</x>
          <y>30</y>
-         <width>61</width>
+         <width>80</width>
          <height>22</height>
         </rect>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+       <property name="maximum">
+        <number>3600</number>
        </property>
       </widget>
       <widget class="QLabel" name="label_5">
@@ -338,8 +344,8 @@ p, li { white-space: pre-wrap; }
         <rect>
          <x>110</x>
          <y>33</y>
-         <width>47</width>
-         <height>13</height>
+         <width>60</width>
+         <height>20</height>
         </rect>
        </property>
        <property name="text">
