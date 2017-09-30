@@ -22,7 +22,7 @@
 #endif
 
 // Defines below from INDI EQMOD
-#define SKYWATCHER_DRIVER_VERSION 1.11;
+#define SKYWATCHER_DRIVER_VERSION 1.12;
 #define SKYWATCHER_MAX_CMD        16
 #define SKYWATCHER_MAX_TRIES      3
 #define SKYWATCHER_CHAR_BUFFER   1024
@@ -170,6 +170,7 @@ private:
 	
 	int SendSkywatcherCommand(SkywatcherCommand cmd, SkywatcherAxis Axis, char *cmdArgs, char *response, int maxlen);
 	int SendSkywatcherCommandInnerLoop(SkywatcherCommand cmd, SkywatcherAxis Axis, char *cmdArgs, char *response, int maxlen);
+	int ResetMotions(void);
 	int ReadMountData(void);              // Read the initial mount data
 	bool IsNotGoto;
 	bool IsWestofPier;                    // Is the mount west of the pier?

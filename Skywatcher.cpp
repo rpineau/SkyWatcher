@@ -332,7 +332,7 @@ int Skywatcher::SetTrackingRateAxis(SkywatcherAxis Axis, double Rate, unsigned l
 #endif
 	
 	// Get axis status and determine if need to stop axis
-	err = GetAxisStatus(Axis, CurrentAxisStatus);
+	err = GetAxisStatus(Axis, CurrentAxisStatus); if (err) return err;
 	
 	// Determine if need to stop and set motion mode
 	if (CurrentAxisStatus.motionmode == GOTO ||							// Need to stop if in GOTO (though should not be here in GOTO mode!)
@@ -380,7 +380,7 @@ int Skywatcher::GetAxesStatus(void)
 	IsNotGoto = (AxisStatus[RA].motionmode != GOTO && AxisStatus[DEC].motionmode != GOTO);
 	
 	//Set flag to indicate if west of pier
-	IsWestofPier = NorthHemisphere ? (RAStep > RAStepInit) : (RAStep < RAStepInit);
+	IsWestofPier = (DEStep < DEStepInit);
 	
 #ifdef SKYW_DEBUG
 	ltime = time(NULL);
@@ -488,6 +488,9 @@ int Skywatcher::GetMountHAandDec(double& dHa, double& dDec)
 			timestamp[strlen(timestamp) - 1] = 0;
 			fprintf(Logfile, "[%s] Skyw::GetMountHAandDec - about to start tracking\n", timestamp);
 #endif
+			/* Astro EQ mounts seem to need a :G send at the end of a slew according to */
+			err = ResetMotions(); if (err) return err;
+
 			err = SetTrackingRates(true, true, 0.0, 0.0); if (err) return err;
 			m_bGotoInProgress = false;
 			
@@ -1083,6 +1086,27 @@ int Skywatcher::ReadMountData(void)
 	
 	return err;
 }
+
+/* This is taken from the Indi mount - has added this to the end of a slew for AstroEQ mounts */
+int Skywatcher::ResetMotions(void)
+{
+	char command[SKYWATCHER_MAX_CMD], response[SKYWATCHER_MAX_CMD];
+	SkywatcherAxisStatus CurrentAxisStatus;
+	int err = SB_OK;
+
+	// Get axis status to find direction and set
+	err = GetAxisStatus(Axis1, CurrentAxisStatus); if (err) return err;
+	sprintf(command, "1%d", CurrentAxisStatus.direction);
+	err = SendSkywatcherCommand(SetMotionMode, Axis1, command, response, SKYWATCHER_MAX_CMD); if (err) return err;
+
+	err = GetAxisStatus(Axis2, CurrentAxisStatus); if (err) return err;
+	sprintf(command, "1%d", CurrentAxisStatus.direction);
+	err = SendSkywatcherCommand(SetMotionMode, Axis2, command, response, SKYWATCHER_MAX_CMD); if (err) return err;
+
+	return SB_OK;
+}
+
+
 
 int Skywatcher::SendSkywatcherCommand(SkywatcherCommand cmd, SkywatcherAxis Axis, char *cmdArgs, char *response, int maxlen)
 {
