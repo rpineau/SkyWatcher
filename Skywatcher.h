@@ -22,7 +22,7 @@
 #endif
 
 // Defines below from INDI EQMOD
-#define SKYWATCHER_DRIVER_VERSION 1.12;
+#define SKYWATCHER_DRIVER_VERSION 1.14;
 #define SKYWATCHER_MAX_CMD        16
 #define SKYWATCHER_MAX_TRIES      3
 #define SKYWATCHER_CHAR_BUFFER   1024
@@ -62,7 +62,7 @@ public:
 	int GetMountHAandDec(double& dHa, double &dDec);
 	bool GetIsNotGoto() const { return !m_bGotoInProgress; }
 	bool GetIsParkingComplete() const { return !m_bGotoInProgress; }
-	bool GetIsWestofPier() const { return IsWestofPier; }
+	bool GetIsBeyondThePole() const { return IsBeyondThePole; }
 	bool GetIsPolarAlignInProgress() const { return !IsNotGoto; }
 	int Abort(void);
 	int SetTrackingRates(const bool& bTrackingOn, const bool& bIgnoreRates, const double& dRaRateArcSecPerSec, const double& dDecRateArcSecPerSec);
@@ -173,7 +173,7 @@ private:
 	int ResetMotions(void);
 	int ReadMountData(void);              // Read the initial mount data
 	bool IsNotGoto;
-	bool IsWestofPier;                    // Is the mount west of the pier?
+	bool IsBeyondThePole;                    // Is the mount west of the pier?
 	int SetTrackingRateAxis(SkywatcherAxis Axis1, double Rate, unsigned long Steps360, unsigned long InteruptFrequency, unsigned long HighspeedRatio);
 	int InquireMountAxisStepPositions(void);
 	int StartTargetSlew(SkywatcherAxis Axis, long CurrentStep, long TargetStep, long StepsPer360, long MaxStep);

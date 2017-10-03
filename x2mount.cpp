@@ -155,8 +155,17 @@ int X2Mount::queryAbstraction(const char* pszName, void** ppVal)
 	    *ppVal = dynamic_cast<SyncMountInterface*>(this);
 	if (!strcmp(pszName, SlewToInterface_Name))
 		*ppVal = dynamic_cast<SlewToInterface*>(this);
-	else if (!strcmp(pszName, AsymmetricalEquatorialInterface_Name))
+	else if (!strcmp(pszName, AsymmetricalEquatorialInterface_Name)) {
 		*ppVal = dynamic_cast<AsymmetricalEquatorialInterface*>(this);
+#ifdef HEQ5_DEBUG
+		if (LogFile) {
+			time_t ltime = time(NULL);
+			char *timestamp = asctime(localtime(&ltime));
+			timestamp[strlen(timestamp) - 1] = 0;
+			fprintf(LogFile, "[%s] AsymmetricalEquatorialInterface tested \n", timestamp);
+		}
+#endif
+	} 
 	else if (!strcmp(pszName, OpenLoopMoveInterface_Name))
 		*ppVal = dynamic_cast<OpenLoopMoveInterface*>(this);
 	else if (!strcmp(pszName, NeedsRefractionInterface_Name))
@@ -872,16 +881,40 @@ int		X2Mount::endUnpark(void)
 }
 
 int X2Mount::beyondThePole(bool& bYes) {
-	bYes = SkyW.GetIsWestofPier();
+	bYes = SkyW.GetIsBeyondThePole();
 	return SB_OK;
 }
+
+
+// Leave the two functions below as virtual functions since we're not setting them explicitly
+
 double X2Mount::flipHourAngle() {
+#ifdef HEQ5_DEBUG
+	if (LogFile) {
+		time_t ltime = time(NULL);
+		char *timestamp = asctime(localtime(&ltime));
+		timestamp[strlen(timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] flipHourAngle called\n", timestamp);
+	}
+#endif
+
 	return 0.0;
 }
 
+
 int X2Mount::gemLimits(double& dHoursEast, double& dHoursWest)
 {
+#ifdef HEQ5_DEBUG
+	if (LogFile) {
+		time_t ltime = time(NULL);
+		char *timestamp = asctime(localtime(&ltime));
+		timestamp[strlen(timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] gemLimits called\n", timestamp);
+	}
+#endif
+
 	dHoursEast = 0.0;
 	dHoursWest = 0.0;
 	return SB_OK;
 }
+

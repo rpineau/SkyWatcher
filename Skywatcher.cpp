@@ -11,7 +11,7 @@ Skywatcher::Skywatcher(SerXInterface *pSerX, SleeperInterface *pSleeper, TheSkyX
 	m_pTSX = pTSX;
 	
 	m_bLinked = false;
-	IsWestofPier = false;
+	IsBeyondThePole = false;
 	m_bGotoInProgress = false;
 	m_bParkInProgress = false;
 	
@@ -379,8 +379,8 @@ int Skywatcher::GetAxesStatus(void)
 	// Set flag to indicate whether under a GOTO or not.
 	IsNotGoto = (AxisStatus[RA].motionmode != GOTO && AxisStatus[DEC].motionmode != GOTO);
 	
-	//Set flag to indicate if west of pier
-	IsWestofPier = (DEStep < DEStepInit);
+	//Set flag to indicate if beyond the pole
+	IsBeyondThePole = NorthHemisphere ? (DEStep < DEStepInit): (DEStep > DEStepInit);
 	
 #ifdef SKYW_DEBUG
 	ltime = time(NULL);
@@ -469,6 +469,11 @@ int Skywatcher::GetMountHAandDec(double& dHa, double& dDec)
 	
 	// Iterative goto. If goto was ongoing, but motors have now stopped, see how close to target RA (DEC should be exact)
 	if (m_bGotoInProgress && IsNotGoto) {
+
+		/* Goto has finished. Astro EQ mounts seem to need a :G send at the end of a slew according to the INDI code */
+		/* ResetMotions does this */
+		err = ResetMotions(); if (err) return err;
+
 		HANow = m_pTSX->hourAngle(m_dGotoRATarget);
 		DeltaHA = (dHa - HANow)*15.0*3600.0;	  // Delta in arcsec
 		
@@ -488,9 +493,7 @@ int Skywatcher::GetMountHAandDec(double& dHa, double& dDec)
 			timestamp[strlen(timestamp) - 1] = 0;
 			fprintf(Logfile, "[%s] Skyw::GetMountHAandDec - about to start tracking\n", timestamp);
 #endif
-			/* Astro EQ mounts seem to need a :G send at the end of a slew according to */
-			err = ResetMotions(); if (err) return err;
-
+	
 			err = SetTrackingRates(true, true, 0.0, 0.0); if (err) return err;
 			m_bGotoInProgress = false;
 			

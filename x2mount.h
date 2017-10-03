@@ -151,6 +151,8 @@ public:
 	//AsymmetricalEquatorialInterface
 	virtual bool knowsBeyondThePole() { return true; }
 	virtual int beyondThePole(bool& bYes);
+
+	// Leave the following functions as virtual since we don't use them - the defaults are fine.
 	virtual double flipHourAngle();
 	virtual int gemLimits(double& dHoursEast, double& dHoursWest);
 	
