@@ -13,7 +13,7 @@
 
 #ifdef SKYW_DEBUG
 #if defined(SB_WIN_BUILD)
-#define SKYW_LOGFILENAME "C:\\SkyLog.txt"
+#define SKYW_LOGFILENAME "C:\\Users\\Colin\\Documents\\SkyLog.txt"
 #elif defined(SB_LINUX_BUILD)
 #define SKYW_LOGFILENAME "/tmp/SkyLog.txt"
 #elif defined(SB_MAC_BUILD)
@@ -21,9 +21,8 @@
 #endif
 #endif
 
-#define SKYWATCHER_DRIVER_VERSION 1.11;
-
 // Defines below from INDI EQMOD
+#define SKYWATCHER_DRIVER_VERSION 1.20;
 #define SKYWATCHER_MAX_CMD        16
 #define SKYWATCHER_MAX_TRIES      3
 #define SKYWATCHER_CHAR_BUFFER   1024
@@ -63,7 +62,7 @@ public:
 	int GetMountHAandDec(double& dHa, double &dDec);
 	bool GetIsNotGoto() const { return !m_bGotoInProgress; }
 	bool GetIsParkingComplete() const { return !m_bGotoInProgress; }
-	bool GetIsWestofPier() const { return IsWestofPier; }
+	bool GetIsBeyondThePole() const { return IsBeyondThePole; }
 	bool GetIsPolarAlignInProgress() const { return !IsNotGoto; }
 	int Abort(void);
 	int SetTrackingRates(const bool& bTrackingOn, const bool& bIgnoreRates, const double& dRaRateArcSecPerSec, const double& dDecRateArcSecPerSec);
@@ -72,7 +71,7 @@ public:
 	int StartOpenSlew(const MountDriverInterface::MoveDir & 	Dir, double rate);
 	int PolarAlignment(double dHAHome, double dDecHome, int HomeIndex, double HaPolaris, double HAOctansSigma);
 	int SetST4GuideRate(int m_ST4GuideRateIndex);
-	
+	int ResetMotions(void);
 	
 private:
 	SerXInterface *m_pSerX;                       // Serial X interface to use to connect to device
@@ -171,9 +170,10 @@ private:
 	
 	int SendSkywatcherCommand(SkywatcherCommand cmd, SkywatcherAxis Axis, char *cmdArgs, char *response, int maxlen);
 	int SendSkywatcherCommandInnerLoop(SkywatcherCommand cmd, SkywatcherAxis Axis, char *cmdArgs, char *response, int maxlen);
+
 	int ReadMountData(void);              // Read the initial mount data
 	bool IsNotGoto;
-	bool IsWestofPier;                    // Is the mount west of the pier?
+	bool IsBeyondThePole;                    // Is the mount west of the pier?
 	int SetTrackingRateAxis(SkywatcherAxis Axis1, double Rate, unsigned long Steps360, unsigned long InteruptFrequency, unsigned long HighspeedRatio);
 	int InquireMountAxisStepPositions(void);
 	int StartTargetSlew(SkywatcherAxis Axis, long CurrentStep, long TargetStep, long StepsPer360, long MaxStep);

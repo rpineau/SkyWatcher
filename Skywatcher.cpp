@@ -11,7 +11,7 @@ Skywatcher::Skywatcher(SerXInterface *pSerX, SleeperInterface *pSleeper, TheSkyX
 	m_pTSX = pTSX;
 	
 	m_bLinked = false;
-	IsWestofPier = false;
+	IsBeyondThePole = false;
 	m_bGotoInProgress = false;
 	m_bParkInProgress = false;
 	
@@ -332,7 +332,7 @@ int Skywatcher::SetTrackingRateAxis(SkywatcherAxis Axis, double Rate, unsigned l
 #endif
 	
 	// Get axis status and determine if need to stop axis
-	err = GetAxisStatus(Axis, CurrentAxisStatus);
+	err = GetAxisStatus(Axis, CurrentAxisStatus); if (err) return err;
 	
 	// Determine if need to stop and set motion mode
 	if (CurrentAxisStatus.motionmode == GOTO ||							// Need to stop if in GOTO (though should not be here in GOTO mode!)
@@ -379,8 +379,8 @@ int Skywatcher::GetAxesStatus(void)
 	// Set flag to indicate whether under a GOTO or not.
 	IsNotGoto = (AxisStatus[RA].motionmode != GOTO && AxisStatus[DEC].motionmode != GOTO);
 	
-	//Set flag to indicate if west of pier
-	IsWestofPier = NorthHemisphere ? (RAStep > RAStepInit) : (RAStep < RAStepInit);
+	//Set flag to indicate if beyond the pole
+	IsBeyondThePole = NorthHemisphere ? (DEStep < DEStepInit): (DEStep > DEStepInit);
 	
 #ifdef SKYW_DEBUG
 	ltime = time(NULL);
@@ -469,11 +469,21 @@ int Skywatcher::GetMountHAandDec(double& dHa, double& dDec)
 	
 	// Iterative goto. If goto was ongoing, but motors have now stopped, see how close to target RA (DEC should be exact)
 	if (m_bGotoInProgress && IsNotGoto) {
+
+		/* Goto has finished. Astro EQ mounts seem to need a :G send at the end of a slew according to the INDI code */
+		/* ResetMotions does this */
+		err = ResetMotions(); if (err) return err;
+
 		HANow = m_pTSX->hourAngle(m_dGotoRATarget);
 		DeltaHA = (dHa - HANow)*15.0*3600.0;	  // Delta in arcsec
 		
-		if (abs(DeltaHA) > SKYWATCHER_GOTO_ERROR && m_iGotoIterations < SKYWATCHER_MAX_GOTO_ITERATIONS) { // If error bigger than should be iterate again;
+		// Iterate towards the desired HA & DEC unless a newer mount - seems to cause problems.
+		if (abs(DeltaHA) > SKYWATCHER_GOTO_ERROR && m_iGotoIterations < SKYWATCHER_MAX_GOTO_ITERATIONS && MountCode < 0x04) { // If error bigger than should be iterate again;
+
+			// First confirm that the axes have stopped
+			err = StopAxesandWait(); if (err) return err;
 			err = StartSlewTo(m_dGotoRATarget, m_dGotoDECTarget);
+
 #ifdef SKYW_DEBUG
 			ltime = time(NULL);
 			timestamp = asctime(localtime(&ltime));
@@ -488,6 +498,7 @@ int Skywatcher::GetMountHAandDec(double& dHa, double& dDec)
 			timestamp[strlen(timestamp) - 1] = 0;
 			fprintf(Logfile, "[%s] Skyw::GetMountHAandDec - about to start tracking\n", timestamp);
 #endif
+	
 			err = SetTrackingRates(true, true, 0.0, 0.0); if (err) return err;
 			m_bGotoInProgress = false;
 			
@@ -728,7 +739,7 @@ int Skywatcher::StartSlewTo(const double& dRa, const double& dDec)
 	unsigned long TargetRaStep, TargetDeStep, MaxStep;
 	int err;
 	double HA;
-	
+
 	// Is this the first goto attempt?
 	if (!m_bGotoInProgress) {
 		err = StopAxesandWait(); if (err) return err;				  // Ensure no motion before starting a slew
@@ -740,14 +751,14 @@ int Skywatcher::StartSlewTo(const double& dRa, const double& dDec)
 	else {
 		m_iGotoIterations++;
 	}
-	
+
 	// Determine HA from RA
 	HA = m_pTSX->hourAngle(dRa);
-	
+
 	// Calculate target RA and DEC step locations
 	err = InquireMountAxisStepPositions(); if (err) return err;	  // Get Axis Positions in class members RAStep and DEStep
 	EncoderValuesfromHAanDEC(HA, dDec, TargetRaStep, TargetDeStep);
-	
+
 	// Detemine max step in either RA or DEC - used to calculate time of slew to get more accurate RA position
 	if (abs(TargetRaStep - RAStep) > abs(TargetDeStep - DEStep)) {
 		MaxStep = abs(TargetRaStep - RAStep);
@@ -755,7 +766,7 @@ int Skywatcher::StartSlewTo(const double& dRa, const double& dDec)
 	else {
 		MaxStep = abs(TargetDeStep - DEStep);
 	}
-	
+
 #ifdef SKYW_DEBUG
 	ltime = time(NULL);
 	char *timestamp = asctime(localtime(&ltime));
@@ -764,15 +775,16 @@ int Skywatcher::StartSlewTo(const double& dRa, const double& dDec)
 	fprintf(Logfile, "[%s] Skyw::StartSlewTo called RAStepInit %lu RASteps360 %lu DEStepINit %lu DESteps %lu MaxStep%lu\n", timestamp, RAStepInit, RASteps360, DEStepInit, DESteps360, MaxStep);
 	fprintf(Logfile, "[%s] Skyw::StartSlewTo called RAStep %lu DEStep %lu\n", timestamp, RAStep, DEStep);
 #endif
+
 	// Set Slews in Train - add on time taken for slew to RA position
 	err = StartTargetSlew(Axis1, RAStep, TargetRaStep, RASteps360, MaxStep);
 	if (err)return err;
 	// In this case MaxStep=0 - no time dependency for DEC
 	err = StartTargetSlew(Axis2, DEStep, TargetDeStep, DESteps360, 0);
-	
+
 	// Update axes status
 	err = GetAxesStatus();
-	
+
 	return err;
 }
 
@@ -1082,6 +1094,37 @@ int Skywatcher::ReadMountData(void)
 	
 	return err;
 }
+
+/* This is taken from the Indi mount - has added this to the end of a slew for AstroEQ mounts */
+int Skywatcher::ResetMotions(void)
+{
+	char command[SKYWATCHER_MAX_CMD], response[SKYWATCHER_MAX_CMD];
+	SkywatcherAxisStatus CurrentAxisStatus;
+	int err = SB_OK;
+#ifdef SKYW_DEBUG
+	char *timestamp;
+#endif
+
+#ifdef SKYW_DEBUG
+	ltime = time(NULL);
+	timestamp = asctime(localtime(&ltime));
+	timestamp[strlen(timestamp) - 1] = 0;
+	fprintf(Logfile, "[%s] Skyw::ResetMotions Called\n", timestamp);
+#endif
+
+	// Get axis status to find direction and set
+	err = GetAxisStatus(Axis1, CurrentAxisStatus); if (err) return err;
+	sprintf(command, "1%d", CurrentAxisStatus.direction);
+	err = SendSkywatcherCommand(SetMotionMode, Axis1, command, response, SKYWATCHER_MAX_CMD); if (err) return err;
+
+	err = GetAxisStatus(Axis2, CurrentAxisStatus); if (err) return err;
+	sprintf(command, "1%d", CurrentAxisStatus.direction);
+	err = SendSkywatcherCommand(SetMotionMode, Axis2, command, response, SKYWATCHER_MAX_CMD); if (err) return err;
+
+	return SB_OK;
+}
+
+
 
 int Skywatcher::SendSkywatcherCommand(SkywatcherCommand cmd, SkywatcherAxis Axis, char *cmdArgs, char *response, int maxlen)
 {

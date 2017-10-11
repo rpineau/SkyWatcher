@@ -48,7 +48,7 @@ class TickCountInterface;
 
 #ifdef HEQ5_DEBUG
 #if defined(SB_WIN_BUILD)
-#define HEQ5_LOGFILENAME "C:\\Logfile.txt"
+#define HEQ5_LOGFILENAME "C:\\Users\\Colin\\Documents\\X2MountLogfile.txt"
 #elif defined(SB_LINUX_BUILD)
 #define HEQ5_LOGFILENAME "/tmp/Logfile.txt"
 #elif defined (SB_MAC_BUILD)
@@ -151,8 +151,10 @@ public:
 	//AsymmetricalEquatorialInterface
 	virtual bool knowsBeyondThePole() { return true; }
 	virtual int beyondThePole(bool& bYes);
-	virtual double flipHourAngle();
-	virtual int gemLimits(double& dHoursEast, double& dHoursWest);
+
+	// Leave the following functions as virtual since we don't use them - the defaults are fine.
+	// virtual double flipHourAngle();
+	// virtual int gemLimits(double& dHoursEast, double& dHoursWest);
 	
 	//OpenLoopMoveInterface
 	virtual int								startOpenLoopMove(const MountDriverInterface::MoveDir& Dir, const int& nRateIndex);
