@@ -13,7 +13,7 @@
 
 #ifdef SKYW_DEBUG
 #if defined(SB_WIN_BUILD)
-#define SKYW_LOGFILENAME "C:\\SkyLog.txt"
+#define SKYW_LOGFILENAME "C:\\Users\\Colin\\Documents\\SkyLog.txt"
 #elif defined(SB_LINUX_BUILD)
 #define SKYW_LOGFILENAME "/tmp/SkyLog.txt"
 #elif defined(SB_MAC_BUILD)
@@ -22,7 +22,7 @@
 #endif
 
 // Defines below from INDI EQMOD
-#define SKYWATCHER_DRIVER_VERSION 1.14;
+#define SKYWATCHER_DRIVER_VERSION 1.20;
 #define SKYWATCHER_MAX_CMD        16
 #define SKYWATCHER_MAX_TRIES      3
 #define SKYWATCHER_CHAR_BUFFER   1024
@@ -71,7 +71,7 @@ public:
 	int StartOpenSlew(const MountDriverInterface::MoveDir & 	Dir, double rate);
 	int PolarAlignment(double dHAHome, double dDecHome, int HomeIndex, double HaPolaris, double HAOctansSigma);
 	int SetST4GuideRate(int m_ST4GuideRateIndex);
-	
+	int ResetMotions(void);
 	
 private:
 	SerXInterface *m_pSerX;                       // Serial X interface to use to connect to device
@@ -170,7 +170,7 @@ private:
 	
 	int SendSkywatcherCommand(SkywatcherCommand cmd, SkywatcherAxis Axis, char *cmdArgs, char *response, int maxlen);
 	int SendSkywatcherCommandInnerLoop(SkywatcherCommand cmd, SkywatcherAxis Axis, char *cmdArgs, char *response, int maxlen);
-	int ResetMotions(void);
+
 	int ReadMountData(void);              // Read the initial mount data
 	bool IsNotGoto;
 	bool IsBeyondThePole;                    // Is the mount west of the pier?

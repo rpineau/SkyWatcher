@@ -477,8 +477,13 @@ int Skywatcher::GetMountHAandDec(double& dHa, double& dDec)
 		HANow = m_pTSX->hourAngle(m_dGotoRATarget);
 		DeltaHA = (dHa - HANow)*15.0*3600.0;	  // Delta in arcsec
 		
-		if (abs(DeltaHA) > SKYWATCHER_GOTO_ERROR && m_iGotoIterations < SKYWATCHER_MAX_GOTO_ITERATIONS) { // If error bigger than should be iterate again;
+		// Iterate towards the desired HA & DEC unless a newer mount - seems to cause problems.
+		if (abs(DeltaHA) > SKYWATCHER_GOTO_ERROR && m_iGotoIterations < SKYWATCHER_MAX_GOTO_ITERATIONS && MountCode < 0x04) { // If error bigger than should be iterate again;
+
+			// First confirm that the axes have stopped
+			err = StopAxesandWait(); if (err) return err;
 			err = StartSlewTo(m_dGotoRATarget, m_dGotoDECTarget);
+
 #ifdef SKYW_DEBUG
 			ltime = time(NULL);
 			timestamp = asctime(localtime(&ltime));
@@ -1096,6 +1101,16 @@ int Skywatcher::ResetMotions(void)
 	char command[SKYWATCHER_MAX_CMD], response[SKYWATCHER_MAX_CMD];
 	SkywatcherAxisStatus CurrentAxisStatus;
 	int err = SB_OK;
+#ifdef SKYW_DEBUG
+	char *timestamp;
+#endif
+
+#ifdef SKYW_DEBUG
+	ltime = time(NULL);
+	timestamp = asctime(localtime(&ltime));
+	timestamp[strlen(timestamp) - 1] = 0;
+	fprintf(Logfile, "[%s] Skyw::ResetMotions Called\n", timestamp);
+#endif
 
 	// Get axis status to find direction and set
 	err = GetAxisStatus(Axis1, CurrentAxisStatus); if (err) return err;

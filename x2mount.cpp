@@ -218,6 +218,7 @@ int X2Mount::startOpenLoopMove(const MountDriverInterface::MoveDir& Dir, const i
 
 int X2Mount::endOpenLoopMove(void)
 {
+	int err;
 #ifdef HEQ5_DEBUG
 	if (LogFile){
 		time_t ltime = time(NULL);
@@ -227,6 +228,7 @@ int X2Mount::endOpenLoopMove(void)
 	}
 #endif
 	X2MutexLocker ml(GetMutex());
+	err = SkyW.ResetMotions(); if (err) return err;                        // Seems to be required by AstroEQ mounts.
 	return SkyW.SetTrackingRates(true, true, 0.0, 0.0);					   // Starting to track will stop move
 }
 
@@ -888,6 +890,7 @@ int X2Mount::beyondThePole(bool& bYes) {
 
 // Leave the two functions below as virtual functions since we're not setting them explicitly
 
+/* 
 double X2Mount::flipHourAngle() {
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
@@ -917,4 +920,4 @@ int X2Mount::gemLimits(double& dHoursEast, double& dHoursWest)
 	dHoursWest = 0.0;
 	return SB_OK;
 }
-
+*/
