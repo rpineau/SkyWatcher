@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdio>
 #include <time.h>
+#include <string>
 
 #include "../../licensedinterfaces/serxinterface.h"
 #include "../../licensedinterfaces/sberrorx.h"
@@ -11,15 +12,6 @@
 
 // #define SKYW_DEBUG 1   // define this to have log files
 
-#ifdef SKYW_DEBUG
-#if defined(SB_WIN_BUILD)
-#define SKYW_LOGFILENAME "C:\\Users\\Colin\\Documents\\SkyLog.txt"
-#elif defined(SB_LINUX_BUILD)
-#define SKYW_LOGFILENAME "/tmp/SkyLog.txt"
-#elif defined(SB_MAC_BUILD)
-#define SKYW_LOGFILENAME "/tmp/SkyLog.txt"
-#endif
-#endif
 
 // Defines below from INDI EQMOD
 #define SKYWATCHER_DRIVER_VERSION 1.20;
@@ -200,9 +192,11 @@ private:
 	
 	
 #ifdef SKYW_DEBUG
-	// timestamp for logs
-	time_t ltime;
-	FILE *Logfile;	  // LogFile
+    std::string m_sLogfilePath;
+    // timestamp for logs
+    char *timestamp;
+    time_t ltime;
+    FILE *LogFile;      // LogFile
 #endif
 	
 };
