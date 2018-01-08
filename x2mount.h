@@ -1,4 +1,6 @@
 #pragma once
+#include <string>
+
 #include "../../licensedinterfaces/mountdriverinterface.h"
 
 //Optional interfaces, uncomment and implement as required.
@@ -46,15 +48,6 @@ class TickCountInterface;
 
 // #define HEQ5_DEBUG    // Define this to have log files
 
-#ifdef HEQ5_DEBUG
-#if defined(SB_WIN_BUILD)
-#define HEQ5_LOGFILENAME "C:\\Users\\Colin\\Documents\\X2MountLogfile.txt"
-#elif defined(SB_LINUX_BUILD)
-#define HEQ5_LOGFILENAME "/tmp/Logfile.txt"
-#elif defined (SB_MAC_BUILD)
-#define HEQ5_LOGFILENAME "/tmp/Logfile.txt"
-#endif
-#endif
 
 #if defined(SB_WIN_BUILD)
 #define DEFAULT_COMPORT					"COM3"
@@ -238,6 +231,10 @@ private:
 	
 	
 #ifdef HEQ5_DEBUG
+    std::string m_sLogfilePath;
+    // timestamp for logs
+    char *timestamp;
+    time_t ltime;
 	FILE *LogFile;	  // LogFile
 #endif
 	
