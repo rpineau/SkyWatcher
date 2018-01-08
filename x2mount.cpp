@@ -81,6 +81,7 @@ X2Mount::X2Mount(const char* pszDriverSelection,
 	for (i = 0; i < NSLEWSPEEDS; i++) {
 		fprintf(LogFile, "[%s] Slew Speed[%d] %f %s\n", timestamp, i, SlewSpeeds[i], SlewSpeedNames[i]);
 	}
+    fflush(LogFile);
 #endif
 	m_CurrentRateIndex = 3;
 	
@@ -111,6 +112,7 @@ X2Mount::X2Mount(const char* pszDriverSelection,
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] Polaris Alignment: %f %f %d %d %s %d\n", timestamp, m_HomeAlignmentDEC, m_HomeAlignmentHA, m_HomePolarisClock, m_bPolarisHomeAlignmentSet, m_PortName, m_iST4GuideRateIndex);
+        fflush(LogFile);
 	}
 #endif
 	X2MutexLocker ml(GetMutex());  // Mount should not be connected yet, but just in case...
@@ -127,6 +129,7 @@ X2Mount::~X2Mount()
 		char *timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] Polaris Alignment on exit: %f %f %d %d %s %d\n", timestamp, m_HomeAlignmentDEC, m_HomeAlignmentHA, m_HomePolarisClock, m_bPolarisHomeAlignmentSet, m_PortName, m_iST4GuideRateIndex);
+        fflush(LogFile);
 	}
 #endif
 	m_pIniUtil->writeInt(PARENT_KEY, CHILD_KEY_ALIGNMENT_CLOCK_POSITION, m_HomePolarisClock);
@@ -176,6 +179,7 @@ int X2Mount::queryAbstraction(const char* pszName, void** ppVal)
 			timestamp = asctime(localtime(&ltime));
 			timestamp[strlen(timestamp) - 1] = 0;
 			fprintf(LogFile, "[%s] AsymmetricalEquatorialInterface tested \n", timestamp);
+            fflush(LogFile);
 		}
 #endif
 	} 
@@ -208,6 +212,7 @@ int X2Mount::queryAbstraction(const char* pszName, void** ppVal)
         timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] Query Abstraction Called: %s\n", timestamp, pszName);
+        fflush(LogFile);
 	}
 #endif
 	return SB_OK;
@@ -224,6 +229,7 @@ int X2Mount::startOpenLoopMove(const MountDriverInterface::MoveDir& Dir, const i
         timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] startOpenLoopMove called %d %d\n", timestamp, Dir, nRateIndex);
+        fflush(LogFile);
 	}
 #endif
 	return SkyW.StartOpenSlew(Dir, SlewSpeeds[nRateIndex]);
@@ -238,6 +244,7 @@ int X2Mount::endOpenLoopMove(void)
         timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] endOpenLoopMove Called\n", timestamp);
+        fflush(LogFile);
 	}
 #endif
 	X2MutexLocker ml(GetMutex());
@@ -280,6 +287,7 @@ int X2Mount::execModalSettingsDialog(void)
         timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] execModelSettingsDialog called %d\n", timestamp, m_bPolarisHomeAlignmentSet);
+        fflush(LogFile);
 	}
 #endif
 	
@@ -348,6 +356,7 @@ int X2Mount::execModalSettingsDialog(void)
             timestamp = asctime(localtime(&ltime));
             timestamp[strlen(timestamp) - 1] = 0;
 			fprintf(LogFile, "[%s] execModealSetting:: Pressed OK button\n", timestamp);
+            fflush(LogFile);
 		}
 #endif
 		dx->propertyString("lineEdit","text",m_PortName, MAX_PORT_NAME_SIZE);
@@ -364,6 +373,7 @@ int X2Mount::execModalSettingsDialog(void)
             timestamp = asctime(localtime(&ltime));
             timestamp[strlen(timestamp) - 1] = 0;
 			fprintf(LogFile, "[%s] execModealSetting:: Port Name %s\n", timestamp, m_PortName);
+            fflush(LogFile);
 		}
 #endif
 	}
@@ -385,6 +395,7 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] uievent %s\n", timestamp, pszEvent);
+        fflush(LogFile);
 	}
 #endif
 	if (!strcmp(pszEvent, "on_timer")) { // Periodical event - use it to check status of slew
@@ -395,6 +406,7 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 			timestamp = asctime(localtime(&ltime));
 			timestamp[strlen(timestamp) - 1] = 0;
 			fprintf(LogFile, "[%s] uievent %s %d %d\n", timestamp, pszEvent, SkyW.GetIsNotGoto(), m_bPolarisAlignmentSlew);
+            fflush(LogFile);
 		}
 #endif
 		if (!SkyW.GetIsPolarAlignInProgress()) {			// Slewing has finished
@@ -422,6 +434,7 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 			timestamp = asctime(localtime(&ltime));
 			timestamp[strlen(timestamp) - 1] = 0;
 			fprintf(LogFile, "[%s] pushButton_clicked Index %d Ra %f dec%f\n", timestamp, m_HomePolarisClock, m_HomeAlignmentHA, m_HomeAlignmentDEC);
+            fflush(LogFile);
 		}
 #endif
 		m_pIniUtil->writeInt(PARENT_KEY, CHILD_KEY_ALIGNMENT_CLOCK_POSITION, m_HomePolarisClock);
@@ -469,6 +482,7 @@ int X2Mount::establishLink(void)
         timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] Establish Link called\n", timestamp);
+        fflush(LogFile);
 	}
 #endif
 	return SkyW.Connect(m_PortName);
@@ -482,6 +496,7 @@ int X2Mount::terminateLink(void)
         timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] Terminate Link called\n", timestamp);
+        fflush(LogFile);
 	}
 #endif
 	return SkyW.Disconnect();
@@ -497,6 +512,7 @@ bool X2Mount::isLinked(void) const
         pMe->timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] isLinked called\n", timestamp);
+        fflush(LogFile);
 	}
 #endif
 	
@@ -522,6 +538,7 @@ void	X2Mount::driverInfoDetailedInfo(BasicStringInterface& str) const
         pMe->timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] driverInfoDetailedInfo Called\n", timestamp);
+        fflush(LogFile);
 	}
 #endif
 	str = "EQ Direct X2 plugin by Colin McGill";
@@ -536,6 +553,7 @@ double	X2Mount::driverInfoVersion(void) const
         pMe->timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] driverInfoVersion Called\n", timestamp);
+        fflush(LogFile);
 	}
 #endif
 	return SKYWATCHER_DRIVER_VERSION;
@@ -551,6 +569,7 @@ void X2Mount::deviceInfoNameShort(BasicStringInterface& str) const
         pMe->timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] driverInfoNameShort Called\n", timestamp);
+        fflush(LogFile);
 	}
 #endif
 	str = "Doesn't Seem to be used";
@@ -564,6 +583,7 @@ void X2Mount::deviceInfoNameLong(BasicStringInterface& str) const
         pMe->timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] deviceInfoNameLong Called\n", timestamp);
+        fflush(LogFile);
 	}
 #endif
 	str = "Skywatcher EQ Mount";
@@ -578,6 +598,7 @@ void X2Mount::deviceInfoDetailedDescription(BasicStringInterface& str) const
         pMe->timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] driverInfoDetailedDescription Called\n", timestamp);
+        fflush(LogFile);
 	}
 #endif
 	str = "Connects to a Skywatcher equatorial mount through an EQDIR cable - see the EQMOD project for details";
@@ -591,6 +612,7 @@ void X2Mount::deviceInfoFirmwareVersion(BasicStringInterface& str)
         timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] driverInfoFirmwareVersion Called\n", timestamp);
+        fflush(LogFile);
 	}
 #endif
 	if (SkyW.isConnected()) {
@@ -608,6 +630,7 @@ void X2Mount::deviceInfoModel(BasicStringInterface& str)
         timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] driverInfoModel Called\n", timestamp);
+        fflush(LogFile);
 	}
 #endif
 	if (SkyW.isConnected()) {
@@ -631,6 +654,7 @@ int X2Mount::raDec(double& ra, double& dec, const bool& bCached)
         timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] raDec Called\n", timestamp);
+        fflush(LogFile);
 	}
 #endif
 	// Get the HA and DEC from the mount
@@ -651,6 +675,7 @@ int X2Mount::raDec(double& ra, double& dec, const bool& bCached)
         timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] raDec Ra: %f Dec %f\n", timestamp, ra, dec);
+        fflush(LogFile);
 	}
 #endif
 	return err;
@@ -664,6 +689,7 @@ int X2Mount::abort(void)
         timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] abort Called\n", timestamp);
+        fflush(LogFile);
 	}
 #endif
 	X2MutexLocker ml(GetMutex());
@@ -679,6 +705,7 @@ int X2Mount::startSlewTo(const double& dRa, const double& dDec)
         timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] startSlewTo Called %f %f\n", timestamp, dRa, dDec);
+        fflush(LogFile);
 	}
 #endif
 	X2MutexLocker ml(GetMutex());
@@ -703,6 +730,7 @@ int X2Mount::isCompleteSlewTo(bool& bComplete) const
         pMe->timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] isCompleteSlewTo called %d\n", timestamp, bComplete);
+        fflush(LogFile);
 	}
 #endif
 	
@@ -723,6 +751,7 @@ int X2Mount::endSlewTo(void)
         timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] endSlewTo Called\n", timestamp);
+        fflush(LogFile);
 	}
 #endif
 	return SB_OK;
@@ -742,6 +771,7 @@ int X2Mount::syncMount(const double& ra, const double& dec)
         timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] syncMount Called ra %f dec %f\n", timestamp, ra, dec);
+        fflush(LogFile);
 	}
 #endif
 	err = SkyW.SyncTo(ra, dec);
@@ -758,6 +788,7 @@ bool X2Mount::isSynced(void)
         timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] issyncMount Called\n", timestamp);
+        fflush(LogFile);
 	}
 #endif
 	return true;   // As per definition - see X2 Standard for mounts - Mount does not know (or care) if synced.
@@ -772,6 +803,7 @@ int X2Mount::setTrackingRates(const bool& bTrackingOn, const bool& bIgnoreRates,
         timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] setTrackingRates Called Tracking On %d Ignore Rates%d\n", timestamp, bTrackingOn, bIgnoreRates);
+        fflush(LogFile);
 	}
 #endif
 	return SkyW.SetTrackingRates(bTrackingOn, bIgnoreRates, dRaRateArcSecPerSec, dDecRateArcSecPerSec);
@@ -804,6 +836,7 @@ bool X2Mount::isParked(void) {
         timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] isParked Called\n", timestamp);
+        fflush(LogFile);
 	}
 #endif
 	return m_bParked;
@@ -823,6 +856,7 @@ int X2Mount::startPark(const double& dAz, const double& dAlt)
         timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] startPark Called Alt %f Az %f Ra %f Dec %f\n", timestamp, dAz, dAlt, dRa, dDec);
+        fflush(LogFile);
 	}
 #endif
 	if (fabs(dDec - 90.0) < 0.1 || fabs (dDec+90) < 0.1) {
@@ -833,6 +867,7 @@ int X2Mount::startPark(const double& dAz, const double& dAlt)
             timestamp = asctime(localtime(&ltime));
             timestamp[strlen(timestamp) - 1] = 0;
 			fprintf(LogFile, "[%s] startPark Called SkyW.StartPark() %d\n", timestamp, err);
+            fflush(LogFile);
 		}
 #endif
 	}
@@ -844,6 +879,7 @@ int X2Mount::startPark(const double& dAz, const double& dAlt)
             timestamp = asctime(localtime(&ltime));
             timestamp[strlen(timestamp) - 1] = 0;
 			fprintf(LogFile, "[%s] startPark Called SkyW.StartSlewTo Err %d Ra %f Dec %f \n", timestamp, err, dRa, dDec);
+            fflush(LogFile);
 		}
 #endif
 	}
@@ -861,6 +897,7 @@ int X2Mount::isCompletePark(bool& bComplete) const
         pMe->timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] isCompletePark Called\n", timestamp);
+        fflush(LogFile);
 	}
 #endif
 	bComplete = SkyW.GetIsParkingComplete();
@@ -876,6 +913,7 @@ int X2Mount::endPark(void)
         timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] endPark Called\n", timestamp);
+        fflush(LogFile);
 	}
 #endif
 	err = setTrackingRates(false, true, 0.0, 0.0); if (err) return err;
@@ -917,6 +955,7 @@ double X2Mount::flipHourAngle() {
         timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] flipHourAngle called\n", timestamp);
+        fflush(LogFile);
 	}
 #endif
 
@@ -932,6 +971,7 @@ int X2Mount::gemLimits(double& dHoursEast, double& dHoursWest)
         timestamp = asctime(localtime(&ltime));
         timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] gemLimits called\n", timestamp);
+        fflush(LogFile);
 	}
 #endif
 
