@@ -49,21 +49,58 @@ Source: "SkyWatcher.ui"; DestDir: "{app}\Plugins\MountPlugIns"; Flags: ignorever
 ; msgBox('Do you want to install MyProg.exe to ' + ExtractFilePath(CurrentFileName) + '?', mbConfirmation, MB_YESNO)
 
 [Code]
-{* Below is a function to read TheSkyXInstallPath.txt and confirm that the directory does exist
+{* Below are functions to read TheSkyXInstallPath.txt and confirm that the directory does exist
    This is then used in the DefaultDirName above
    *}
-var
-  Location: String;
-  LoadResult: Boolean;
+function FindFile(RootPath: string; FileName: string): string;
+ var
+  FindRec: TFindRec;
+  FilePath: string;
+begin
+  Log(Format('Searching %s for %s', [RootPath, FileName]));
+  if FindFirst(RootPath + '\*', FindRec) then
+  begin
+    try
+      repeat
+        if (FindRec.Name <> '.') and (FindRec.Name <> '..') then
+        begin
+          FilePath := RootPath + '\' + FindRec.Name;
+          if FindRec.Attributes and FILE_ATTRIBUTE_DIRECTORY <> 0 then
+          begin
+            Result := FindFile(FilePath, FileName);
+            if Result <> '' then Exit;
+          end
+            else
+          if CompareText(FindRec.Name, FileName) = 0 then
+          begin
+            Log(Format('Found %s', [FilePath]));
+            Result := FilePath;
+            Exit;
+          end;
+        end;
+      until not FindNext(FindRec);
+    finally
+      FindClose(FindRec);
+    end;
+  end
+    else
+  begin
+    Log(Format('Failed to list %s', [RootPath]));
+  end;
+end;
+
 
 function TSXInstallDir(Param: String) : String;
+ var
+  Location: String;
+  LoadResult: Boolean;
 begin
-  LoadResult := LoadStringFromFile(ExpandConstant('{userdocs}') + '\Software Bisque\TheSkyX Professional Edition\TheSkyXInstallPath.txt', Location);
+   Location := FindFile(ExpandConstant('{userdocs}') + '\Software Bisque', 'TheSkyXInstallPath.txt');
   { Check that could open the file}
-  if not LoadResult then
-    RaiseException('Unable to find the installation path for The Sky X');
+  if Length(Location)=0 then
+    RaiseException('Unable to find the installation path for The Sky X :' + Location);
   {Check that the file exists}
-  if not DirExists(Location) then
+  if not FileExists(Location) then
     RaiseException('The SkyX installation directory ' + Location + ' does not exist');
   Result := Location;
 end;
