@@ -39,13 +39,13 @@ X2Mount::X2Mount(const char* pszDriverSelection,
 #if defined(SB_WIN_BUILD)
     m_sLogfilePath = getenv("HOMEDRIVE");
     m_sLogfilePath += getenv("HOMEPATH");
-    m_sLogfilePath += "\\X2SkywatcherLog.txt"";
+    m_sLogfilePath += "\\X2SkywatcherLog.txt";
 #elif defined(SB_LINUX_BUILD)
     m_sLogfilePath = getenv("HOME");
-    m_sLogfilePath += "/X2SkywatcherLog.txt"";
+    m_sLogfilePath += "/X2SkywatcherLog.txt";
 #elif defined(SB_MAC_BUILD)
     m_sLogfilePath = getenv("HOME");
-    m_sLogfilePath += "/X2SkywatcherLog.txt"";
+    m_sLogfilePath += "/X2SkywatcherLog.txt";
 #endif
     LogFile = fopen(m_sLogfilePath.c_str(), "w");
 #endif

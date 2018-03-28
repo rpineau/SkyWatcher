@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <cstdio>
 
 #include "../../licensedinterfaces/mountdriverinterface.h"
 
@@ -44,9 +45,8 @@ class TickCountInterface;
 #define MAXSLEWNAMESIZE 20
 #define NGUIDESPEEDS 4
 
-#include <cstdio>
 
-// #define HEQ5_DEBUG    // Define this to have log files
+#define HEQ5_DEBUG    // Define this to have log files
 
 
 #if defined(SB_WIN_BUILD)
