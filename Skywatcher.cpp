@@ -24,18 +24,24 @@ Skywatcher::Skywatcher(SerXInterface *pSerX, SleeperInterface *pSleeper, TheSkyX
 	// Will be updated and refined after each slew.
 	m_dDeltaHASteps = 70.0;		// Opposite direction in Northern Hemisphere
 
+
 #ifdef	SKYW_DEBUG
 #if defined(SB_WIN_BUILD)
     m_sLogfilePath = getenv("HOMEDRIVE");
     m_sLogfilePath += getenv("HOMEPATH");
     m_sLogfilePath += "\\SkyLog.txt";
 #elif defined(SB_LINUX_BUILD)
-    m_sLogfilePath = "/tmp/SkyLog.txt";
+    m_sLogfilePath = getenv("HOME");
+    m_sLogfilePath += "/SkyLog.txt";
 #elif defined(SB_MAC_BUILD)
-    m_sLogfilePath = "/tmp/SkyLog.txt";
+    m_sLogfilePath = getenv("HOME");
+    m_sLogfilePath += "/SkyLog.txt";
+#endif
+    LogFile = fopen(m_sLogfilePath.c_str(), "w");
 #endif
 
-    LogFile = fopen(m_sLogfilePath.c_str(), "w");
+
+#ifdef    SKYW_DEBUG
     ltime = time(NULL);
     timestamp = asctime(localtime(&ltime));
     timestamp[strlen(timestamp) - 1] = 0;

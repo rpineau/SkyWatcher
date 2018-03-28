@@ -198,6 +198,6 @@ private:
     time_t ltime;
     FILE *LogFile;      // LogFile
 #endif
-	
+
 };
 
