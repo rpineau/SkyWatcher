@@ -1,18 +1,32 @@
 #pragma once
+#include <string.h>
+#include <math.h>
+#include <stdlib.h>
+#include "../../licensedinterfaces/sberrorx.h"
+#include "../../licensedinterfaces/basicstringinterface.h"
+#include "../../licensedinterfaces/serxinterface.h"
+#include "../../licensedinterfaces/basiciniutilinterface.h"
+#include "../../licensedinterfaces/theskyxfacadefordriversinterface.h"
+#include "../../licensedinterfaces/sleeperinterface.h"
+#include "../../licensedinterfaces/loggerinterface.h"
+#include "../../licensedinterfaces/basiciniutilinterface.h"
+#include "../../licensedinterfaces/mutexinterface.h"
+#include "../../licensedinterfaces/tickcountinterface.h"
+#include "../../licensedinterfaces/mount/asymmetricalequatorialinterface.h"
+#include "../../licensedinterfaces/mount/needsrefractioninterface.h"
 #include "../../licensedinterfaces/mountdriverinterface.h"
 
 //Optional interfaces, uncomment and implement as required.
 #include "../../licensedinterfaces/mount/slewtointerface.h"
 #include "../../licensedinterfaces/mount/syncmountinterface.h"
-#include "../../licensedinterfaces/mount/asymmetricalequatorialinterface.h"
 #include "../../licensedinterfaces/mount/openloopmoveinterface.h"
-#include "../../licensedinterfaces/mount/needsrefractioninterface.h"
 //#include "../../licensedinterfaces/mount/linkfromuithreadinterface.h"
 #include "../../licensedinterfaces/mount/trackingratesinterface.h"
 #include "../../licensedinterfaces/parkinterface.h"
 #include "../../licensedinterfaces/unparkinterface.h"
 #include "../../licensedinterfaces/modalsettingsdialoginterface.h"
 #include "../../licensedinterfaces/x2guiinterface.h"
+#include "../../licensedinterfaces/serialportparams2interface.h"
 
 // Forward declare the interfaces that the this driver is "given" by TheSkyX
 class SerXInterface;
@@ -50,11 +64,11 @@ class TickCountInterface;
 // #define HEQ5_DEBUG    // Define this to have log files
 
 #if defined(SB_WIN_BUILD)
-#define DEFAULT_COMPORT					"COM3"
+#define DEF_PORT_NAME					"COM3"
 #elif defined(SB_LINUX_BUILD)
-#define DEFAULT_COMPORT					"/dev/mount"
+#define DEF_PORT_NAME					"/dev/mount"
 #elif defined (SB_MAC_BUILD)
-#define DEFAULT_COMPORT					"/dev/cu.KeySerial1"
+#define DEF_PORT_NAME					"/dev/cu.KeySerial1"
 #endif
 
 
@@ -76,7 +90,10 @@ class X2Mount : public MountDriverInterface
 						,public TrackingRatesInterface 
 						,public ParkInterface
 						,public UnparkInterface
-						,public ModalSettingsDialogInterface, public X2GUIEventInterface
+						,public ModalSettingsDialogInterface
+                        ,public X2GUIEventInterface
+                        ,public SerialPortParams2Interface
+
 {
 public:
 	/*!Standard X2 constructor*/
@@ -179,7 +196,18 @@ public:
 	int								isCompleteUnpark(bool& bComplete) const;
 	/*!Called once the unpark is complete.  This is called once for every corresponding startUnpark() allowing software implementations of unpark.*/
 	int								endUnpark(void);
-	
+
+    //SerialPortParams2Interface
+    virtual void            portName(BasicStringInterface& str) const            ;
+    virtual void            setPortName(const char* szPort)                        ;
+    virtual unsigned int    baudRate() const            {return 115200;};
+    virtual void            setBaudRate(unsigned int)    {};
+    virtual bool            isBaudRateFixed() const        {return true;}
+
+    virtual SerXInterface::Parity    parity() const                {return SerXInterface::B_NOPARITY;}
+    virtual void                    setParity(const SerXInterface::Parity& parity){parity;};
+    virtual bool                    isParityFixed() const        {return true;}
+
 	
 	// GUI Interface
 	virtual int initModalSettingsDialog(void) { return 0; }
@@ -231,7 +259,9 @@ private:
 	char SlewSpeedNames[NSLEWSPEEDS][MAXSLEWNAMESIZE];
 	double SlewSpeeds[NSLEWSPEEDS];
 	char GuideSpeedNames[NGUIDESPEEDS][MAXSLEWNAMESIZE];
-	
+
+    void portNameOnToCharPtr(char* pszPort, const unsigned int& nMaxSize) const;
+
 #ifdef HEQ5_DEBUG
 	char m_sLogfilePath[SKYWATCHER_CHAR_BUFFER];
 	// timestamp for logs

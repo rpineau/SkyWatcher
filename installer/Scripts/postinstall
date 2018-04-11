@@ -19,7 +19,7 @@ fi
 echo "Installing to $TheSkyX_Path"
 
 if [ ! -d "$TheSkyX_Path" ]; then
-    echo Coudln't find TheSkyX application location
+    echo "Coudln't find TheSkyX application location"
     exit 1
 fi
 

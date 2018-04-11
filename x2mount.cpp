@@ -1,19 +1,4 @@
-#include <string.h>
-#include <math.h>
-#include <stdlib.h>
 #include "x2mount.h"
-#include "../../licensedinterfaces/sberrorx.h"
-#include "../../licensedinterfaces/basicstringinterface.h"
-#include "../../licensedinterfaces/serxinterface.h"
-#include "../../licensedinterfaces/basiciniutilinterface.h"
-#include "../../licensedinterfaces/theskyxfacadefordriversinterface.h"
-#include "../../licensedinterfaces/sleeperinterface.h"
-#include "../../licensedinterfaces/loggerinterface.h"
-#include "../../licensedinterfaces/basiciniutilinterface.h"
-#include "../../licensedinterfaces/mutexinterface.h"
-#include "../../licensedinterfaces/tickcountinterface.h"
-#include "../../licensedinterfaces/mount/asymmetricalequatorialinterface.h"
-#include "../../licensedinterfaces/mount/needsrefractioninterface.h"
 
 X2Mount::X2Mount(const char* pszDriverSelection,
 				 const int& nInstanceIndex,
@@ -83,7 +68,6 @@ X2Mount::X2Mount(const char* pszDriverSelection,
 		m_HomePolarisClock = m_pIniUtil->readInt(PARENT_KEY, CHILD_KEY_ALIGNMENT_CLOCK_POSITION, -1);
 		m_HomeAlignmentDEC = m_pIniUtil->readDouble(PARENT_KEY, CHILD_KEY_ALIGNMENT_DEC, -1000.0);
 		m_HomeAlignmentHA = m_pIniUtil->readDouble(PARENT_KEY, CHILD_KEY_ALIGNMENT_HA, -1000.0);
-		m_pIniUtil->readString(PARENT_KEY, CHILD_KEY_PORT_NAME,DEFAULT_COMPORT, m_PortName, MAX_PORT_NAME_SIZE);
 		m_iST4GuideRateIndex = m_pIniUtil->readInt(PARENT_KEY, CHILD_KEY_GUIDERATE, 2);
 		m_iPostSlewDelay =  m_pIniUtil->readInt(PARENT_KEY, CHILD_KEY_SLEWDELAY, 0);
 		m_bParked = m_pIniUtil->readInt(PARENT_KEY, CHILD_KEY_ISPARKED, 0);
@@ -114,7 +98,7 @@ X2Mount::X2Mount(const char* pszDriverSelection,
 		ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] Polaris Alignment: %f %f %d %d %s %d\n", timestamp, m_HomeAlignmentDEC, m_HomeAlignmentHA, m_HomePolarisClock, m_bPolarisHomeAlignmentSet, m_PortName, m_iST4GuideRateIndex);
+		fprintf(LogFile, "[%s] Polaris Alignment: %f %f %d %d %d\n", timestamp, m_HomeAlignmentDEC, m_HomeAlignmentHA, m_HomePolarisClock, m_bPolarisHomeAlignmentSet, m_iST4GuideRateIndex);
 	}
 #endif
 	X2MutexLocker ml(GetMutex());  // Mount should not be connected yet, but just in case...
@@ -130,13 +114,12 @@ X2Mount::~X2Mount()
 		time_t ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] Polaris Alignment on exit: %f %f %d %d %s %d\n", timestamp, m_HomeAlignmentDEC, m_HomeAlignmentHA, m_HomePolarisClock, m_bPolarisHomeAlignmentSet, m_PortName, m_iST4GuideRateIndex);
+		fprintf(LogFile, "[%s] Polaris Alignment on exit: %f %f %d %d %d\n", timestamp, m_HomeAlignmentDEC, m_HomeAlignmentHA, m_HomePolarisClock, m_bPolarisHomeAlignmentSet, m_iST4GuideRateIndex);
 	}
 #endif
 	m_pIniUtil->writeInt(PARENT_KEY, CHILD_KEY_ALIGNMENT_CLOCK_POSITION, m_HomePolarisClock);
 	m_pIniUtil->writeDouble(PARENT_KEY, CHILD_KEY_ALIGNMENT_DEC, m_HomeAlignmentDEC);
 	m_pIniUtil->writeDouble(PARENT_KEY, CHILD_KEY_ALIGNMENT_HA, m_HomeAlignmentHA);
-	m_pIniUtil->writeString(PARENT_KEY, CHILD_KEY_PORT_NAME, m_PortName);
 	m_pIniUtil->writeInt(PARENT_KEY, CHILD_KEY_GUIDERATE, m_iST4GuideRateIndex);
 	m_pIniUtil->writeInt(PARENT_KEY, CHILD_KEY_SLEWDELAY, m_iPostSlewDelay);
 	m_pIniUtil->writeInt(PARENT_KEY, CHILD_KEY_ISPARKED, m_bParked);
@@ -191,7 +174,9 @@ int X2Mount::queryAbstraction(const char* pszName, void** ppVal)
 		*ppVal = dynamic_cast<ParkInterface*>(this);
 	else if (!strcmp(pszName, UnparkInterface_Name))
 		*ppVal = dynamic_cast<UnparkInterface*>(this);
-	
+    else if (!strcmp(pszName, SerialPortParams2Interface_Name))
+        *ppVal = dynamic_cast<SerialPortParams2Interface*>(this);
+
 	//Add support for the optional LoggerInterface
 	/* if (!strcmp(pszName, LoggerInterface_Name)) {
 		*ppVal = GetLogger();
@@ -289,9 +274,7 @@ int X2Mount::execModalSettingsDialog(void)
 	}
 	
 	// Set values in the userinterface
-	
-	dx->setPropertyString("lineEdit", "text", m_PortName);
-	
+
 	dx->comboBoxAppendString("comboBox", "12 O'Clock");
 	dx->comboBoxAppendString("comboBox", "3 O'Clock");
 	dx->comboBoxAppendString("comboBox", "6 O'Clock");
@@ -349,23 +332,12 @@ int X2Mount::execModalSettingsDialog(void)
 			fprintf(LogFile, "[%s] execModealSetting:: Pressed OK button\n", timestamp);
 		}
 #endif
-		dx->propertyString("lineEdit","text",m_PortName, MAX_PORT_NAME_SIZE);
-		m_pIniUtil->writeString(PARENT_KEY, CHILD_KEY_PORT_NAME, m_PortName);
 		m_iST4GuideRateIndex = dx->currentIndex("comboBox_2");
 		m_pIniUtil->writeInt(PARENT_KEY, CHILD_KEY_GUIDERATE, m_iST4GuideRateIndex);
 		SkyW.SetST4GuideRate(m_iST4GuideRateIndex);
 		dx->propertyInt("spinBox", "value", m_iPostSlewDelay);
 		m_pIniUtil->writeInt(PARENT_KEY, CHILD_KEY_SLEWDELAY, m_iPostSlewDelay);
-		
-#ifdef HEQ5_DEBUG
-		if (LogFile){
-			ltime = time(NULL);
-			timestamp = asctime(localtime(&ltime));
-			timestamp[strlen(timestamp) - 1] = 0;
-			fprintf(LogFile, "[%s] execModealSetting:: Port Name %s\n", timestamp, m_PortName);
-		}
-#endif
-	}
+    }
 	return nErr;
 }
 
@@ -478,6 +450,8 @@ int X2Mount::establishLink(void)
 		fprintf(LogFile, "[%s] Establish Link called\n", timestamp);
 	}
 #endif
+    portNameOnToCharPtr(m_PortName,DRIVER_MAX_STRING);
+
 	err = SkyW.Connect(m_PortName); 
 
 #ifdef HEQ5_DEBUG
@@ -968,3 +942,35 @@ int X2Mount::gemLimits(double& dHoursEast, double& dHoursWest)
 	return SB_OK;
 }
 */
+
+#pragma mark - SerialPortParams2Interface
+
+void X2Mount::portName(BasicStringInterface& str) const
+{
+    char szPortName[DRIVER_MAX_STRING];
+
+    portNameOnToCharPtr(szPortName, DRIVER_MAX_STRING);
+
+    str = szPortName;
+
+}
+
+void X2Mount::setPortName(const char* pszPort)
+{
+    if (m_pIniUtil)
+        m_pIniUtil->writeString(PARENT_KEY, CHILD_KEY_PORT_NAME, pszPort);
+
+}
+
+
+void X2Mount::portNameOnToCharPtr(char* pszPort, const unsigned int& nMaxSize) const
+{
+    if (NULL == pszPort)
+        return;
+
+    snprintf(pszPort, nMaxSize,DEF_PORT_NAME);
+
+    if (m_pIniUtil)
+        m_pIniUtil->readString(PARENT_KEY, CHILD_KEY_PORT_NAME, pszPort, pszPort, nMaxSize);
+
+}
