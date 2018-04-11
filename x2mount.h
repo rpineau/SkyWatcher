@@ -1,7 +1,4 @@
 #pragma once
-#include <string>
-#include <cstdio>
-
 #include "../../licensedinterfaces/mountdriverinterface.h"
 
 //Optional interfaces, uncomment and implement as required.
@@ -39,15 +36,18 @@ class TickCountInterface;
 #define CHILD_KEY_ALIGNMENT_HA "AlignmentHA"
 #define CHILD_KEY_GUIDERATE "GuideRate"
 #define CHILD_KEY_SLEWDELAY "SlewDelay"
+#define CHILD_KEY_ISPARKED  "IsParked"
+#define CHILD_KEY_RAPARKENCODER "RaParkEncoder"
+#define CHILD_KEY_DECPARKENCODER "DecParkEncoder"
 #define MAX_PORT_NAME_SIZE 120
 
 #define NSLEWSPEEDS 7
 #define MAXSLEWNAMESIZE 20
 #define NGUIDESPEEDS 4
 
+#include <cstdio>
 
-#define HEQ5_DEBUG    // Define this to have log files
-
+// #define HEQ5_DEBUG    // Define this to have log files
 
 #if defined(SB_WIN_BUILD)
 #define DEFAULT_COMPORT					"COM3"
@@ -223,19 +223,21 @@ private:
 	bool m_bPolarisAlignmentSlew;
 	int m_iST4GuideRateIndex;
 	int m_iPostSlewDelay;
+
+	unsigned long m_lRaParkEncoder;
+	unsigned long m_lDecParkEncoder;
 	
 	int m_CurrentRateIndex;
 	char SlewSpeedNames[NSLEWSPEEDS][MAXSLEWNAMESIZE];
 	double SlewSpeeds[NSLEWSPEEDS];
 	char GuideSpeedNames[NGUIDESPEEDS][MAXSLEWNAMESIZE];
 	
-	
 #ifdef HEQ5_DEBUG
-    std::string m_sLogfilePath;
-    // timestamp for logs
-    char *timestamp;
-    time_t ltime;
-	FILE *LogFile;	  // LogFile
+	char m_sLogfilePath[SKYWATCHER_CHAR_BUFFER];
+	// timestamp for logs
+	char *timestamp;
+	time_t ltime;
+	FILE *LogFile;      // LogFile
 #endif
 	
 	
