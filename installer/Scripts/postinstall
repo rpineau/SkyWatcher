@@ -33,6 +33,9 @@ if [ ! -z "$app_owner" ]; then
 	chown $app_owner "$TheSkyX_Path/Resources/Common/PlugIns/MountPlugIns/Skywatcher.ui"
 	chown $app_owner "$TheSkyX_Path/Resources/Common/PlugIns/MountPlugIns/libSkywatcher.dylib"
 fi
+chmod 644 "$TheSkyX_Path/Resources/Common/Miscellaneous Files/mountlist Skywatcher.txt"
+chmod 644 "$TheSkyX_Path/Resources/Common/PlugIns/MountPlugIns/Skywatcher.ui"
+chmod 755 "$TheSkyX_Path/Resources/Common/PlugIns/MountPlugIns/libSkywatcher.dylib"
 
 rm -rf /tmp/Skywatcher_X2
 
