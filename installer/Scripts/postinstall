@@ -1,19 +1,25 @@
 #!/bin/bash
 
-TheSkyX_Install=~/Library/Application\ Support/Software\ Bisque/TheSkyX\ Professional\ Edition/TheSkyXInstallPath.txt
+TheSkyX_Install=`/usr/bin/find ~/Library/Application\ Support/Software\ Bisque/ -name TheSkyXInstallPath.txt`
 echo "TheSkyX_Install = $TheSkyX_Install"
 
 if [ ! -f "$TheSkyX_Install" ]; then
     echo TheSkyXInstallPath.txt not found
-    exit 1
+    TheSkyX_Path=`/usr/bin/find /Applications -maxdepth 3 -name TheSkyX\*.app`
+    if [ -d "$TheSkyX_Path" ]; then
+		TheSkyX_Path="${TheSkyX_Path}/Contents"
+    else
+	   echo TheSkyX application was not found.
+    	exit 1
+	 fi
+else
+	TheSkyX_Path=$(<"$TheSkyX_Install")
 fi
 
-
-TheSkyX_Path=$(<"$TheSkyX_Install")
 echo "Installing to $TheSkyX_Path"
 
 if [ ! -d "$TheSkyX_Path" ]; then
-    echo TheSkyX Install dir not exist
+    echo "Coudln't find TheSkyX application location"
     exit 1
 fi
 
@@ -27,6 +33,9 @@ if [ ! -z "$app_owner" ]; then
 	chown $app_owner "$TheSkyX_Path/Resources/Common/PlugIns/MountPlugIns/Skywatcher.ui"
 	chown $app_owner "$TheSkyX_Path/Resources/Common/PlugIns/MountPlugIns/libSkywatcher.dylib"
 fi
+chmod 644 "$TheSkyX_Path/Resources/Common/Miscellaneous Files/mountlist Skywatcher.txt"
+chmod 644 "$TheSkyX_Path/Resources/Common/PlugIns/MountPlugIns/Skywatcher.ui"
+chmod 755 "$TheSkyX_Path/Resources/Common/PlugIns/MountPlugIns/libSkywatcher.dylib"
 
 rm -rf /tmp/Skywatcher_X2
 

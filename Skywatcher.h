@@ -12,9 +12,8 @@
 
 // #define SKYW_DEBUG 1   // define this to have log files
 
-
 // Defines below from INDI EQMOD
-#define SKYWATCHER_DRIVER_VERSION 1.20;
+#define SKYWATCHER_DRIVER_VERSION 2.0
 #define SKYWATCHER_MAX_CMD        16
 #define SKYWATCHER_MAX_TRIES      3
 #define SKYWATCHER_CHAR_BUFFER   1024
@@ -30,8 +29,8 @@
 
 #define SKYWATCHER_BREAKSTEPS 3500
 
-#define SKYWATCHER_MAX_GOTO_ITERATIONS 5  // How many times to attempt an iterative goto
-#define SKYWATCHER_GOTO_ERROR          5 // Permitted arcseconds of error in goto target
+#define SKYWATCHER_MAX_GOTO_ITERATIONS 5   // How many times to attempt an iterative goto
+#define SKYWATCHER_GOTO_ERROR          5.0 // Permitted arcseconds of error in goto target
 
 
 // Next turns string charcter representing a HEX code into a number
@@ -50,7 +49,9 @@ public:
 	char *GetMCVersionName() { return MCVersionName;  }
 	char *GetMountName() { return MountName;  }
 	int StartSlewTo(const double& dRa, const double& dDec);
-	int SyncTo(const double& dRa, const double& dDec);
+	int SyncToRAandDec(const double& dRa, const double& dDec);
+	int SyncToEncoder(unsigned long& RaEncoder, unsigned long& DecEncoder, bool b_tracking_on);
+	int GetMountEncoderValues(unsigned long& RaEncoderValue, unsigned long& DecEncoderValue);
 	int GetMountHAandDec(double& dHa, double &dDec);
 	bool GetIsNotGoto() const { return !m_bGotoInProgress; }
 	bool GetIsParkingComplete() const { return !m_bGotoInProgress; }
@@ -64,6 +65,8 @@ public:
 	int PolarAlignment(double dHAHome, double dDecHome, int HomeIndex, double HaPolaris, double HAOctansSigma);
 	int SetST4GuideRate(int m_ST4GuideRateIndex);
 	int ResetMotions(void);
+	int GetTrackingRates(bool& bTrackingOn, double& dRaRateArcSecPerSec, double& dDecRateArcSecPerSec);
+	int GetIsTracking() const { return m_bTracking; }
 	
 private:
 	SerXInterface *m_pSerX;                       // Serial X interface to use to connect to device
@@ -72,6 +75,7 @@ private:
 	
 	bool m_bLinked;                               // Connected to the mount?
 	int m_ST4GuideRate;	                          // Guide Rate
+	
 	bool NorthHemisphere;					      // Located in the Northern Hemisphere?
 	unsigned long MCVersion;                      // Motor Controller Version
 	char MCVersionName[SKYWATCHER_MAX_CMD];       // String version of Mount Controller
@@ -99,7 +103,12 @@ private:
 	bool m_bGotoInProgress;						  // Is GOTO in progress?
 	double m_dDeltaHASteps;						  // Error from previous slew when at low speed slew
 	bool m_bParkInProgress;						  // Is a park in progress?
-	
+
+	// Variables for Tracking
+	bool m_bTracking;							  // Is the telescope tracking?
+	double m_dRATrackingRate;					  // RA Tracking rate in arcsec/sec
+	double m_dDETrackingRate;	                  // DEC Tracking Rate in arcsec/sec
+			
 	// Types
 	enum SkywatcherCommand {
 		Initialize = 'F',
@@ -190,14 +199,14 @@ private:
 	void long2Revu24str(unsigned long, char *); // Converts long number to character string
 	long abs(long value); //Utility function since not in math.h in Unix
 	
-	
+
 #ifdef SKYW_DEBUG
-    std::string m_sLogfilePath;
-    // timestamp for logs
-    char *timestamp;
-    time_t ltime;
-    FILE *LogFile;      // LogFile
+	char m_sLogfilePath[SKYWATCHER_CHAR_BUFFER];
+	// timestamp for logs
+	char *timestamp;
+	time_t ltime;
+	FILE *LogFile;      // LogFile
 #endif
-	
+
 };
 
