@@ -63,9 +63,6 @@ int Skywatcher::Connect(char *portName)
 	char response[SKYWATCHER_MAX_CMD];
 	
 #ifdef SKYW_DEBUG
-	char *timestamp;
-#endif
-#ifdef SKYW_DEBUG
 	ltime = time(NULL);
 	timestamp = asctime(localtime(&ltime));
 	timestamp[strlen(timestamp) - 1] = 0;
@@ -194,10 +191,7 @@ int Skywatcher::StopAxesandWait(void)
 	int err = 0, count = 0;
 	unsigned long currentRAStep, currentDEStep;
 	char response[SKYWATCHER_MAX_CMD];
-#ifdef SKYW_DEBUG
-	char *timestamp;
-#endif
-	
+
 	// First, stop both axes
 	err = SendSkywatcherCommand(NotInstantAxisStop, Axis1, NULL, response, SKYWATCHER_MAX_CMD); if (err) return err;
 	err = SendSkywatcherCommand(NotInstantAxisStop, Axis2, NULL, response, SKYWATCHER_MAX_CMD); if (err) return err;
@@ -327,10 +321,7 @@ int Skywatcher::SetTrackingRateAxis(SkywatcherAxis Axis, double Rate, unsigned l
 	int Speedmode;
 	unsigned long Period;
 	int err = 0;
-#ifdef SKYW_DEBUG
-	char *timestamp;
-#endif
-	
+
 #ifdef SKYW_DEBUG
 	ltime = time(NULL);
 	timestamp = asctime(localtime(&ltime));
@@ -486,11 +477,8 @@ int Skywatcher::GetMountHAandDec(double& dHa, double& dDec)
 	double DeltaHAPostTracking;
 	int err = InquireMountAxisStepPositions(); // Get Axis Positions in class members RAStep and DEStep
 	if (err) return err;
-#ifdef SKYW_DEBUG
-	char *timestamp;
-#endif
-	
-	// Now convert to HA and Dec
+
+    // Now convert to HA and Dec
 	HAandDECfromEncoderValues(RAStep, DEStep, dHa, dDec);
 	
 	// Also take opportunity to update Mount Axes Status
@@ -715,10 +703,7 @@ int Skywatcher::PolarAlignment(double dHAHome, double dDecHome, int HomeIndex, d
 	int err;
 	err = StopAxesandWait(); if (err) return err;				  // Ensure no motion before starting a slew
 	err = InquireMountAxisStepPositions(); if (err) return err;	  // Get Axis Positions in class members RAStep and DEStep	int err;
-#ifdef SKYW_DEBUG
-	char *timestamp;
-#endif
-	
+
 	// Calculate target RA and DEC step locations for the Alignment Home Position
 	EncoderValuesfromHAanDEC(dHAHome, dDecHome, TargetRaStep, TargetDeStep);
 	
@@ -936,11 +921,8 @@ int Skywatcher::StartTargetSlew(SkywatcherAxis Axis, long CurrentStep, long Targ
 	double SlowSlewSpeed = StepsPerSecSiderial * SKYWATCHER_LOWSPEED_RATE;
 	double FastSlewSpeed = StepsPerSecSiderial * SKYWATCHER_HIGHSPEED_RATE;
 	double Sign = 0.0;	 // Need to add time for the move - sign used to determine whether to add or subtract steps to make this happen
-#ifdef SKYW_DEBUG
-	char *timestamp;
-#endif
-	
-	// First determine if moving backwards or forwards
+
+    // First determine if moving backwards or forwards
 	MovingSteps = TargetStep - CurrentStep;
 #ifdef SKYW_DEBUG
 	ltime = time(NULL);
@@ -1039,11 +1021,8 @@ int Skywatcher::ReadMountData(void)
 	char command[SKYWATCHER_MAX_CMD];
 	unsigned long tmpMCVersion = 0;
 	int err;
-#ifdef SKYW_DEBUG
-	char *timestamp;
-#endif
-	
-	// Get Mount Status - find out if this has been initialised already
+
+    // Get Mount Status - find out if this has been initialised already
 	err = GetAxesStatus(); if (err) return err;
 	
 	// Read the mount and software version
@@ -1171,10 +1150,6 @@ int Skywatcher::ResetMotions(void)
 	char command[SKYWATCHER_MAX_CMD], response[SKYWATCHER_MAX_CMD];
 	SkywatcherAxisStatus CurrentAxisStatus;
 	int err = SB_OK;
-
-#ifdef SKYW_DEBUG
-	char *timestamp;
-#endif
 
 #ifdef SKYW_DEBUG
 	ltime = time(NULL);
