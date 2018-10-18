@@ -1,0 +1,16 @@
+﻿  main.cpp
+  Skywatcher.cpp
+..\Skywatcher.cpp(523): warning C4244: 'argument': conversion from 'double' to 'long', possible loss of data
+..\Skywatcher.cpp(969): warning C4244: '+=': conversion from 'double' to 'long', possible loss of data
+..\Skywatcher.cpp(974): warning C4244: '+=': conversion from 'double' to 'long', possible loss of data
+..\Skywatcher.cpp(978): warning C4244: '+=': conversion from 'double' to 'long', possible loss of data
+..\Skywatcher.cpp(1247): warning C4267: 'argument': conversion from 'size_t' to 'const unsigned long', possible loss of data
+..\Skywatcher.cpp(1266): warning C4018: '<': signed/unsigned mismatch
+  x2mount.cpp
+..\x2mount.cpp(73): warning C4800: 'int': forcing value to bool 'true' or 'false' (performance warning)
+..\x2mount.cpp(946): warning C4068: unknown pragma
+  Generating code
+  All 175 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  libSkywatcher.vcxproj -> C:\Users\Colin\Source\Repos\rpineau\Skywatcher\libSkywatcher\x64\Release\libSkywatcher.dll
+  libSkywatcher.vcxproj -> C:\Users\Colin\Source\Repos\rpineau\Skywatcher\libSkywatcher\x64\Release\libSkywatcher.pdb (Full PDB)
