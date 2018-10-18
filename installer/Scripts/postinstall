@@ -23,19 +23,27 @@ if [ ! -d "$TheSkyX_Path" ]; then
     exit 1
 fi
 
+if [ -d "$TheSkyX_Path/Resources/Common/PlugIns64" ]; then
+	PLUGINS_DIR="PlugIns64"
+else
+	PLUGINS_DIR="PlugIns"
+fi
+
+echo "installing in $TheSkyX_Path/Resources/Common/$PLUGINS_DIR/MountPlugIns/"
+
 cp -f "/tmp/Skywatcher_X2/mountlist Skywatcher.txt" "$TheSkyX_Path/Resources/Common/Miscellaneous Files/"
-cp -f "/tmp/Skywatcher_X2/Skywatcher.ui" "$TheSkyX_Path/Resources/Common/PlugIns/MountPlugIns/"
-cp -f "/tmp/Skywatcher_X2/libSkywatcher.dylib" "$TheSkyX_Path/Resources/Common/PlugIns/MountPlugIns/"
+cp -f "/tmp/Skywatcher_X2/Skywatcher.ui" "$TheSkyX_Path/Resources/Common/$PLUGINS_DIR/MountPlugIns/"
+cp -f "/tmp/Skywatcher_X2/libSkywatcher.dylib" "$TheSkyX_Path/Resources/Common/$PLUGINS_DIR/MountPlugIns/"
 
 app_owner=`/usr/bin/stat -n -f "%u" "$TheSkyX_Path" | xargs id -n -u`
 if [ ! -z "$app_owner" ]; then
 	chown $app_owner "$TheSkyX_Path/Resources/Common/Miscellaneous Files/mountlist Skywatcher.txt"
-	chown $app_owner "$TheSkyX_Path/Resources/Common/PlugIns/MountPlugIns/Skywatcher.ui"
-	chown $app_owner "$TheSkyX_Path/Resources/Common/PlugIns/MountPlugIns/libSkywatcher.dylib"
+	chown $app_owner "$TheSkyX_Path/Resources/Common/PlugIns/$PLUGINS_DIR/Skywatcher.ui"
+	chown $app_owner "$TheSkyX_Path/Resources/Common/PlugIns/$PLUGINS_DIR/libSkywatcher.dylib"
 fi
 chmod 644 "$TheSkyX_Path/Resources/Common/Miscellaneous Files/mountlist Skywatcher.txt"
-chmod 644 "$TheSkyX_Path/Resources/Common/PlugIns/MountPlugIns/Skywatcher.ui"
-chmod 755 "$TheSkyX_Path/Resources/Common/PlugIns/MountPlugIns/libSkywatcher.dylib"
+chmod 644 "$TheSkyX_Path/Resources/Common/PlugIns/$PLUGINS_DIR/Skywatcher.ui"
+chmod 755 "$TheSkyX_Path/Resources/Common/PlugIns/$PLUGINS_DIR/libSkywatcher.dylib"
 
 rm -rf /tmp/Skywatcher_X2
 
