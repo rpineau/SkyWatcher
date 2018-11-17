@@ -111,7 +111,7 @@ X2Mount::~X2Mount()
 	// Write the stored values
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
+		ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] Polaris Alignment on exit: %f %f %d %d %d\n", timestamp, m_HomeAlignmentDEC, m_HomeAlignmentHA, m_HomePolarisClock, m_bPolarisHomeAlignmentSet, m_iST4GuideRateIndex);
@@ -186,7 +186,7 @@ int X2Mount::queryAbstraction(const char* pszName, void** ppVal)
 #ifdef HEQ5_DEBUG
 #ifdef VERBOSE
 	if (LogFile) {
-		time_t ltime = time(NULL);
+		ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] Query Abstraction Called: %s\n", timestamp, pszName);
@@ -203,10 +203,11 @@ int X2Mount::startOpenLoopMove(const MountDriverInterface::MoveDir& Dir, const i
 	m_CurrentRateIndex = nRateIndex;
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
-		timestamp = asctime(localtime(&ltime));
-		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] startOpenLoopMove called %d %d\n", timestamp, Dir, nRateIndex);
+        X2Mount* pMe = (X2Mount*)this;
+		pMe->ltime = time(NULL);
+		pMe->timestamp = asctime(localtime(&pMe->ltime));
+		pMe->timestamp[strlen(pMe->timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] startOpenLoopMove called %d %d\n", pMe->timestamp, Dir, nRateIndex);
 	}
 #endif
 	return SkyW.StartOpenSlew(Dir, SlewSpeeds[nRateIndex]);
@@ -217,7 +218,7 @@ int X2Mount::endOpenLoopMove(void)
 	int err;
 #ifdef HEQ5_DEBUG
 	if (LogFile){
-		time_t ltime = time(NULL);
+		ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] endOpenLoopMove Called\n", timestamp);
@@ -254,7 +255,7 @@ int X2Mount::execModalSettingsDialog(void)
 	int i;
 	
 #ifdef HEQ5_DEBUG
-	time_t ltime;
+	ltime;
 	char *timestamp;
 	if (LogFile) {
 		ltime = time(NULL);
@@ -351,7 +352,7 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 	X2MutexLocker ml(GetMutex());
 	
 #ifdef HEQ5_DEBUG
-	time_t ltime;
+	ltime;
 	char *timestamp;
 	if (LogFile) {
 		ltime = time(NULL);
@@ -444,7 +445,7 @@ int X2Mount::establishLink(void)
 	// get serial port device name
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
+		ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] Establish Link called\n", timestamp);
@@ -456,7 +457,7 @@ int X2Mount::establishLink(void)
 
 #ifdef HEQ5_DEBUG
 		if (LogFile) {
-			time_t ltime = time(NULL);
+			ltime = time(NULL);
 			timestamp = asctime(localtime(&ltime));
 			timestamp[strlen(timestamp) - 1] = 0;
 			fprintf(LogFile, "[%s] Establish Link - connected to port %s err %d\n", timestamp, m_PortName, err);
@@ -471,7 +472,7 @@ int X2Mount::establishLink(void)
 
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
+		ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] Establish Link - Park %d Dec Encoder %u, Ra Encloder %u err %d\n", timestamp, m_bParked, m_lRaParkEncoder, m_lDecParkEncoder, err);
@@ -487,7 +488,7 @@ int X2Mount::terminateLink(void)
 	X2MutexLocker ml(GetMutex());
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
+		ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] Terminate Link called\n", timestamp);
@@ -501,10 +502,11 @@ bool X2Mount::isLinked(void) const
 	bool temp;
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
-		timestamp = asctime(localtime(&ltime));
-		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] isLinked called\n", timestamp);
+        X2Mount* pMe = (X2Mount*)this;
+        pMe->ltime = time(NULL);
+        pMe->timestamp = asctime(localtime(&pMe->ltime));
+        pMe->timestamp[strlen(pMe->timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] isLinked called\n", pMe->timestamp);
 	}
 #endif
 	
@@ -525,10 +527,11 @@ void	X2Mount::driverInfoDetailedInfo(BasicStringInterface& str) const
 {
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
-		timestamp = asctime(localtime(&ltime));
-		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] driverInfoDetailedInfo Called\n", timestamp);
+        X2Mount* pMe = (X2Mount*)this;
+        pMe->ltime = time(NULL);
+        pMe->timestamp = asctime(localtime(&pMe->ltime));
+        pMe->timestamp[strlen(pMe->timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] driverInfoDetailedInfo Called\n", pMe->timestamp);
 	}
 #endif
 	str = "EQ Direct X2 plugin by Colin McGill";
@@ -538,10 +541,11 @@ double	X2Mount::driverInfoVersion(void) const
 {
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
-		timestamp = asctime(localtime(&ltime));
-		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] driverInfoVersion Called\n", timestamp);
+        X2Mount* pMe = (X2Mount*)this;
+        pMe->ltime = time(NULL);
+        pMe->timestamp = asctime(localtime(&pMe->ltime));
+        pMe->timestamp[strlen(pMe->timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] driverInfoVersion Called\n", pMe->timestamp);
 	}
 #endif
 	return SKYWATCHER_DRIVER_VERSION;
@@ -552,10 +556,11 @@ void X2Mount::deviceInfoNameShort(BasicStringInterface& str) const
 {
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
-		timestamp = asctime(localtime(&ltime));
-		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] driverInfoNameShort Called\n", timestamp);
+        X2Mount* pMe = (X2Mount*)this;
+        pMe->ltime = time(NULL);
+        pMe->timestamp = asctime(localtime(&pMe->ltime));
+        pMe->timestamp[strlen(pMe->timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] driverInfoNameShort Called\n", pMe->timestamp);
 	}
 #endif
 	str = "Doesn't Seem to be used";
@@ -564,10 +569,11 @@ void X2Mount::deviceInfoNameLong(BasicStringInterface& str) const
 {
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
-		timestamp = asctime(localtime(&ltime));
-		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] deviceInfoNameLong Called\n", timestamp);
+        X2Mount* pMe = (X2Mount*)this;
+        pMe->ltime = time(NULL);
+        pMe->timestamp = asctime(localtime(&pMe->ltime));
+        pMe->timestamp[strlen(pMe->timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] deviceInfoNameLong Called\n", pMe->timestamp);
 	}
 #endif
 	str = "Skywatcher EQ Mount";
@@ -577,10 +583,11 @@ void X2Mount::deviceInfoDetailedDescription(BasicStringInterface& str) const
 {
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
-		timestamp = asctime(localtime(&ltime));
-		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] driverInfoDetailedDescription Called\n", timestamp);
+        X2Mount* pMe = (X2Mount*)this;
+        pMe->ltime = time(NULL);
+        pMe->timestamp = asctime(localtime(&pMe->ltime));
+        pMe->timestamp[strlen(pMe->timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] driverInfoDetailedDescription Called\n", pMe->timestamp);
 	}
 #endif
 	str = "Connects to a Skywatcher equatorial mount through an EQDIR cable - see the EQMOD project for details";
@@ -590,10 +597,11 @@ void X2Mount::deviceInfoFirmwareVersion(BasicStringInterface& str)
 {
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
-		timestamp = asctime(localtime(&ltime));
-		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] driverInfoFirmwareVersion Called\n", timestamp);
+        X2Mount* pMe = (X2Mount*)this;
+        pMe->ltime = time(NULL);
+        pMe->timestamp = asctime(localtime(&pMe->ltime));
+        pMe->timestamp[strlen(pMe->timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] driverInfoFirmwareVersion Called\n", pMe->timestamp);
 	}
 #endif
 	if (SkyW.isConnected()) {
@@ -607,7 +615,7 @@ void X2Mount::deviceInfoModel(BasicStringInterface& str)
 {
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
+		ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] driverInfoModel Called\n", timestamp);
@@ -630,7 +638,7 @@ int X2Mount::raDec(double& ra, double& dec, const bool& bCached)
 	
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
+		ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] raDec Called\n", timestamp);
@@ -650,7 +658,7 @@ int X2Mount::raDec(double& ra, double& dec, const bool& bCached)
 	}
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
+		ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] raDec Ra: %f Dec %f\n", timestamp, ra, dec);
@@ -663,7 +671,7 @@ int X2Mount::abort(void)
 {
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
+		ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] abort Called\n", timestamp);
@@ -678,7 +686,7 @@ int X2Mount::startSlewTo(const double& dRa, const double& dDec)
 	int err;
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
+		ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] startSlewTo Called %f %f\n", timestamp, dRa, dDec);
@@ -701,10 +709,11 @@ int X2Mount::isCompleteSlewTo(bool& bComplete) const
 	
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
-		timestamp = asctime(localtime(&ltime));
-		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] isCompleteSlewTo called %d\n", timestamp, bComplete);
+        X2Mount* pMe = (X2Mount*)this;
+        pMe->ltime = time(NULL);
+        pMe->timestamp = asctime(localtime(&pMe->ltime));
+        pMe->timestamp[strlen(pMe->timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] isCompleteSlewTo called %d\n", pMe->timestamp, bComplete);
 	}
 #endif
 	
@@ -721,7 +730,7 @@ int X2Mount::endSlewTo(void)
 	
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
+		ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] endSlewTo Called\n", timestamp);
@@ -740,7 +749,7 @@ int X2Mount::syncMount(const double& ra, const double& dec)
 
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
+		ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] syncMount Called ra %f dec %f\n", timestamp, ra, dec);
@@ -756,7 +765,7 @@ bool X2Mount::isSynced(void)
 {
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
+		ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] issyncMount Called\n", timestamp);
@@ -770,7 +779,7 @@ int X2Mount::setTrackingRates(const bool& bTrackingOn, const bool& bIgnoreRates,
 	X2MutexLocker ml(GetMutex());
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
+		ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] setTrackingRates Called Tracking On %d Ignore Rates %d RARate %f DERate %f\n", timestamp, bTrackingOn, bIgnoreRates, dRaRateArcSecPerSec, dDecRateArcSecPerSec);
@@ -791,7 +800,7 @@ int X2Mount::trackingRates(bool& bTrackingOn, double& dRaRateArcSecPerSec, doubl
 	err = SkyW.GetTrackingRates(bTrackingOn, dRaRateArcSecPerSec, dDecRateArcSecPerSec);
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
+		ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] trackingRates Called Tracking On %d RARate %f DERate %f\n", timestamp, bTrackingOn, dRaRateArcSecPerSec, dDecRateArcSecPerSec);
@@ -812,7 +821,7 @@ bool X2Mount::isParked(void) {
 	
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
+		ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] isParked Called\n", timestamp);
@@ -825,7 +834,7 @@ int X2Mount::startPark(const double& dAz, const double& dAlt)
 {
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
+		ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] startParked Called\n", timestamp);
@@ -840,10 +849,11 @@ int X2Mount::isCompletePark(bool& bComplete) const
 {
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
-		timestamp = asctime(localtime(&ltime));
-		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] isCompletePark Called\n", timestamp);
+        X2Mount* pMe = (X2Mount*)this;
+        pMe->ltime = time(NULL);
+        pMe->timestamp = asctime(localtime(&pMe->ltime));
+        pMe->timestamp[strlen(pMe->timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] isCompletePark Called\n", pMe->timestamp);
 	}
 #endif
 	bComplete = SkyW.GetIsParkingComplete();
@@ -856,7 +866,7 @@ int X2Mount::endPark(void)
 	X2MutexLocker ml(GetMutex());
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
+		ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] endPark Called\n", timestamp);
@@ -873,7 +883,7 @@ int X2Mount::endPark(void)
 
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
+		ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] endPark Encoder Values: Parked %d Ra %u Dec %u\n", timestamp, m_bParked, m_lRaParkEncoder, m_lDecParkEncoder);
@@ -915,7 +925,7 @@ int X2Mount::beyondThePole(bool& bYes) {
 double X2Mount::flipHourAngle() {
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
+		ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] flipHourAngle called\n", timestamp);
@@ -930,7 +940,7 @@ int X2Mount::gemLimits(double& dHoursEast, double& dHoursWest)
 {
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
+		ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] gemLimits called\n", timestamp);

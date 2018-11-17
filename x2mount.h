@@ -61,7 +61,7 @@ class TickCountInterface;
 
 #include <cstdio>
 
-// #define HEQ5_DEBUG    // Define this to have log files
+#define HEQ5_DEBUG    // Define this to have log files
 
 #if defined(SB_WIN_BUILD)
 #define DEF_PORT_NAME					"COM3"

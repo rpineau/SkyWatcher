@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TheSkyX_Install=`/usr/bin/find ~/Library/Application\ Support/Software\ Bisque/ -name TheSkyXInstallPath.txt`
+TheSkyX_Install=~/Library/Application\ Support/Software\ Bisque/TheSkyX\ Professional\ Edition/TheSkyXInstallPath.txt
 echo "TheSkyX_Install = $TheSkyX_Install"
 
 if [ ! -f "$TheSkyX_Install" ]; then
