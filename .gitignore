@@ -1,3 +1,14 @@
 *.xcuserdatad
+*.xcworkspace
 .DS_Store
 build
+*.opensdf
+*.sdf
+.vs
+Release
+Debug
+x64
+*.pkg
+*.so
+*.pkg
+*.VC.db
