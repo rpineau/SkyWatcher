@@ -53,6 +53,11 @@ class TickCountInterface;
 #define CHILD_KEY_ISPARKED  "IsParked"
 #define CHILD_KEY_RAPARKENCODER "RaParkEncoder"
 #define CHILD_KEY_DECPARKENCODER "DecParkEncoder"
+#define CHILD_KEY_EASTSLEWLIM "EastSlewLimit"
+#define CHILD_KEY_WESTSLEWLIM "WestSlewLimit"
+#define CHILD_KEY_FLIPHOURANGLE "FlipHourAngle"
+#define CHILD_KEY_ANGLEABOVEHORIZON "AngleAboveHorizon"
+
 #define MAX_PORT_NAME_SIZE 120
 
 #define NSLEWSPEEDS 7
@@ -205,7 +210,7 @@ public:
     virtual bool            isBaudRateFixed() const        {return true;}
 
     virtual SerXInterface::Parity    parity() const                {return SerXInterface::B_NOPARITY;}
-    virtual void                    setParity(const SerXInterface::Parity& parity){parity;};
+    virtual void                    setParity(const SerXInterface::Parity& parity){};
     virtual bool                    isParityFixed() const        {return true;}
 
 	
@@ -213,7 +218,10 @@ public:
 	virtual int initModalSettingsDialog(void) { return 0; }
 	virtual int execModalSettingsDialog(void);
 	void uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent); // Process a UI event
-	
+
+	// Asymetrical Mount Interface
+	int gemLimits(double & dHoursEast, double & dHoursWest);
+	double flipHourAngle();
 	
 	// Implementation
 private:
@@ -260,12 +268,24 @@ private:
 	double SlewSpeeds[NSLEWSPEEDS];
 	char GuideSpeedNames[NGUIDESPEEDS][MAXSLEWNAMESIZE];
 
+	// Slew Limit Data
+	double m_dEastSlewLim;
+	double m_dWestSlewLim;
+	double m_dFlipHourAngle;
+	double m_dMinAngleAboveHorizon;
+
+
+	// Temp slew limit data for 
+	double m_dTempEastSlewLim;
+	double m_dTempWestSlewLim;
+	double m_dTempFlipHourAngle;
+
     void portNameOnToCharPtr(char* pszPort, const unsigned int& nMaxSize) const;
 
 #ifdef HEQ5_DEBUG
 	char m_sLogfilePath[SKYWATCHER_CHAR_BUFFER];
 	// timestamp for logs
-	char *timestamp;
+	char *timestamp = "";
 	time_t ltime;
 	FILE *LogFile;      // LogFile
 #endif

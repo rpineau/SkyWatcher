@@ -63,9 +63,6 @@ int Skywatcher::Connect(char *portName)
 	char response[SKYWATCHER_MAX_CMD];
 	
 #ifdef SKYW_DEBUG
-	char *timestamp;
-#endif
-#ifdef SKYW_DEBUG
 	ltime = time(NULL);
 	timestamp = asctime(localtime(&ltime));
 	timestamp[strlen(timestamp) - 1] = 0;
@@ -194,10 +191,7 @@ int Skywatcher::StopAxesandWait(void)
 	int err = 0, count = 0;
 	unsigned long currentRAStep, currentDEStep;
 	char response[SKYWATCHER_MAX_CMD];
-#ifdef SKYW_DEBUG
-	char *timestamp;
-#endif
-	
+
 	// First, stop both axes
 	err = SendSkywatcherCommand(NotInstantAxisStop, Axis1, NULL, response, SKYWATCHER_MAX_CMD); if (err) return err;
 	err = SendSkywatcherCommand(NotInstantAxisStop, Axis2, NULL, response, SKYWATCHER_MAX_CMD); if (err) return err;
@@ -327,10 +321,7 @@ int Skywatcher::SetTrackingRateAxis(SkywatcherAxis Axis, double Rate, unsigned l
 	int Speedmode;
 	unsigned long Period;
 	int err = 0;
-#ifdef SKYW_DEBUG
-	char *timestamp;
-#endif
-	
+
 #ifdef SKYW_DEBUG
 	ltime = time(NULL);
 	timestamp = asctime(localtime(&ltime));
@@ -486,11 +477,8 @@ int Skywatcher::GetMountHAandDec(double& dHa, double& dDec)
 	double DeltaHAPostTracking;
 	int err = InquireMountAxisStepPositions(); // Get Axis Positions in class members RAStep and DEStep
 	if (err) return err;
-#ifdef SKYW_DEBUG
-	char *timestamp;
-#endif
-	
-	// Now convert to HA and Dec
+
+    // Now convert to HA and Dec
 	HAandDECfromEncoderValues(RAStep, DEStep, dHa, dDec);
 	
 	// Also take opportunity to update Mount Axes Status
@@ -524,7 +512,7 @@ int Skywatcher::GetMountHAandDec(double& dHa, double& dDec)
 
 			// First confirm that the axes have stopped
 			err = StopAxesandWait(); if (err) return err;
-			err = StartSlewTo(m_dGotoRATarget, m_dGotoDECTarget);
+			err = StartSlewTo(m_dGotoRATarget, m_dGotoDECTarget,0.0);
 
 #ifdef SKYW_DEBUG
 			ltime = time(NULL);
@@ -573,10 +561,11 @@ int Skywatcher::GetMountHAandDec(double& dHa, double& dDec)
 }
 
 
-void Skywatcher::EncoderValuesfromHAanDEC(double dHa, double dDec, unsigned long &RAEncoder, unsigned long &DEEncoder)
+void Skywatcher::EncoderValuesfromHAanDEC(double dHa, double dDec, unsigned long &RAEncoder, unsigned long &DEEncoder, bool bUseBTP)
 {
+	// If bUseBTP is true, take value from current state of BTP to determine which side of the merdian we are on - only used to sync the mount
 	if (NorthHemisphere) {
-		if (dHa < 0) {	 //	 Pre-Meridian
+		if ((bUseBTP && IsBeyondThePole) || (!bUseBTP && dHa < m_dFlipHour)) {	 //	 Pre-Meridian
 			DEEncoder = (int)(DEStepInit + (dDec - 90.0)*DESteps360 / 360.0);
 			RAEncoder = (int)(RAStepInit + (dHa + 6.0)*RASteps360 / 24.0);
 		}
@@ -586,7 +575,7 @@ void Skywatcher::EncoderValuesfromHAanDEC(double dHa, double dDec, unsigned long
 		}
 	}
 	else {
-		if (dHa < 0) {	 //	 Pre-Meridian
+		if ((bUseBTP && IsBeyondThePole) || (!bUseBTP && dHa < m_dFlipHour)) {	 //	 Pre-Meridian
 			DEEncoder = (int)(DEStepInit + (dDec + 90.0)*DESteps360 / 360.0);
 			RAEncoder = (int)(RAStepInit - (dHa + 6.0)*RASteps360 / 24.0);
 		}
@@ -595,6 +584,12 @@ void Skywatcher::EncoderValuesfromHAanDEC(double dHa, double dDec, unsigned long
 			RAEncoder = (int)(RAStepInit - (dHa - 6.0)*RASteps360 / 24.0);
 		}
 	}
+#ifdef SKYW_DEBUG
+	ltime = time(NULL);
+	timestamp = asctime(localtime(&ltime));
+	timestamp[strlen(timestamp) - 1] = 0;
+	fprintf(LogFile, "[%s] Skyw::EncodervaluefromHAandDec called %lu %lu %f %f bUseBTP %d IsBeyondThePole %d\n", timestamp, RAEncoder, DEEncoder,  dHa, dDec, bUseBTP, IsBeyondThePole);
+#endif
 }
 
 void Skywatcher::HAandDECfromEncoderValues(unsigned long RAEncoder, unsigned long DEEncoder, double &dHa, double &dDec)
@@ -715,12 +710,10 @@ int Skywatcher::PolarAlignment(double dHAHome, double dDecHome, int HomeIndex, d
 	int err;
 	err = StopAxesandWait(); if (err) return err;				  // Ensure no motion before starting a slew
 	err = InquireMountAxisStepPositions(); if (err) return err;	  // Get Axis Positions in class members RAStep and DEStep	int err;
-#ifdef SKYW_DEBUG
-	char *timestamp;
-#endif
-	
+
 	// Calculate target RA and DEC step locations for the Alignment Home Position
-	EncoderValuesfromHAanDEC(dHAHome, dDecHome, TargetRaStep, TargetDeStep);
+	m_dFlipHour = 0.0;   // Set flip our angle to zero to avoid problems polaraligning.
+	EncoderValuesfromHAanDEC(dHAHome, dDecHome, TargetRaStep, TargetDeStep, false);
 	
 #ifdef SKYW_DEBUG
 	ltime = time(NULL);
@@ -765,10 +758,10 @@ int Skywatcher::PolarAlignment(double dHAHome, double dDecHome, int HomeIndex, d
 	}
 	
 	// Set Slews in Train - add on time taken for slew to RA position
-	err = StartTargetSlew(Axis1, RAStep, TargetRaStep, RASteps360, MaxStep);
+	err = StartTargetSlew(Axis1, RAStep, TargetRaStep, RASteps360, MaxStep); if (err) return err;
 	if (err)return err;
 	// In this case MaxStep=0 - no time dependency for DEC
-	err = StartTargetSlew(Axis2, DEStep, TargetDeStep, DESteps360, 0);
+	err = StartTargetSlew(Axis2, DEStep, TargetDeStep, DESteps360, 0); if (err) return err;
 	
 	// Update axes status
 	err = GetAxesStatus();
@@ -776,7 +769,7 @@ int Skywatcher::PolarAlignment(double dHAHome, double dDecHome, int HomeIndex, d
 	return err;
 }
 
-int Skywatcher::StartSlewTo(const double& dRa, const double& dDec)
+int Skywatcher::StartSlewTo(const double& dRa, const double& dDec, const double& dFlipHourAngle)
 {
 	unsigned long TargetRaStep, TargetDeStep, MaxStep;
 	int err;
@@ -789,6 +782,7 @@ int Skywatcher::StartSlewTo(const double& dRa, const double& dDec)
 		m_dGotoDECTarget = dDec;
 		m_iGotoIterations = 1;
 		m_bGotoInProgress = true;
+		m_dFlipHour = dFlipHourAngle;
 	}
 	else {
 		m_iGotoIterations++;
@@ -799,7 +793,7 @@ int Skywatcher::StartSlewTo(const double& dRa, const double& dDec)
 
 	// Calculate target RA and DEC step locations
 	err = InquireMountAxisStepPositions(); if (err) return err;	  // Get Axis Positions in class members RAStep and DEStep
-	EncoderValuesfromHAanDEC(HA, dDec, TargetRaStep, TargetDeStep);
+	EncoderValuesfromHAanDEC(HA, dDec, TargetRaStep, TargetDeStep, false);
 
 	// Detemine max step in either RA or DEC - used to calculate time of slew to get more accurate RA position
 	if (abs(TargetRaStep - RAStep) > abs(TargetDeStep - DEStep)) {
@@ -844,7 +838,6 @@ int Skywatcher::SyncToRAandDec(const double& dRa, const double& dDec)
 {
 
 	unsigned long TargetRaStep = 0, TargetDeStep = 0;
-	int err = SB_OK;
 	double HA = 0;
 
 #ifdef SKYW_DEBUG
@@ -854,12 +847,12 @@ int Skywatcher::SyncToRAandDec(const double& dRa, const double& dDec)
 	// Determine HA from RA
 	HA = m_pTSX->hourAngle(dRa);
 
-	// Calculate encoder values from HA and DEC
-	EncoderValuesfromHAanDEC(HA, dDec, TargetRaStep, TargetDeStep);
+	// Calculate encoder values from HA and DEC - set the UseBTP flag to true - ignore flip hour angle and use current side of mount to determine whether pre or post meridian
+	EncoderValuesfromHAanDEC(HA, dDec, TargetRaStep, TargetDeStep, true);
 
 	// Set Mount axis to this location
 #ifdef SKYW_DEBUG
-	fprintf(LogFile, "Skyw::SyncToTo called RA %f Dec %f HA %f TargetRAStep %lu TargetDEStep %lu\n", dRa, dDec, HA, TargetRaStep, TargetDeStep);
+	fprintf(LogFile, "Skyw::SyncToTo called RA %f Dec %f HA %f TargetRAStep %lu TargetDEStep %lu RAStep %lu DeStep %lu\n", dRa, dDec, HA, TargetRaStep, TargetDeStep, RAStep, DEStep);
 #endif
 
 	return SyncToEncoder(TargetRaStep, TargetDeStep, true);
@@ -912,6 +905,7 @@ int Skywatcher::StartPark(void)
 	err = InquireMountAxisStepPositions(); if (err) return err;	  // Get Axis Positions in class members RAStep and DEStep
 	m_bParkInProgress = true;									  // Set state of parking to be true.
 	m_bGotoInProgress = true;									  // And goto since used Goto to get to the parking location.
+	m_bTracking = false;										  // No longer tracking since about to start a slew.
 	
 	
 	// Slew to default parking position for RA
@@ -936,11 +930,8 @@ int Skywatcher::StartTargetSlew(SkywatcherAxis Axis, long CurrentStep, long Targ
 	double SlowSlewSpeed = StepsPerSecSiderial * SKYWATCHER_LOWSPEED_RATE;
 	double FastSlewSpeed = StepsPerSecSiderial * SKYWATCHER_HIGHSPEED_RATE;
 	double Sign = 0.0;	 // Need to add time for the move - sign used to determine whether to add or subtract steps to make this happen
-#ifdef SKYW_DEBUG
-	char *timestamp;
-#endif
-	
-	// First determine if moving backwards or forwards
+
+    // First determine if moving backwards or forwards
 	MovingSteps = TargetStep - CurrentStep;
 #ifdef SKYW_DEBUG
 	ltime = time(NULL);
@@ -1012,7 +1003,9 @@ int Skywatcher::StartTargetSlew(SkywatcherAxis Axis, long CurrentStep, long Targ
 	
 	// Finally, start the slew
 	err = SendSkywatcherCommand(StartMotion, Axis, NULL, response, SKYWATCHER_MAX_CMD); if (err) return err;
-	
+
+	m_bTracking = false; // Now now longer tracking
+
 	return err;
 	
 }
@@ -1039,11 +1032,8 @@ int Skywatcher::ReadMountData(void)
 	char command[SKYWATCHER_MAX_CMD];
 	unsigned long tmpMCVersion = 0;
 	int err;
-#ifdef SKYW_DEBUG
-	char *timestamp;
-#endif
-	
-	// Get Mount Status - find out if this has been initialised already
+
+    // Get Mount Status - find out if this has been initialised already
 	err = GetAxesStatus(); if (err) return err;
 	
 	// Read the mount and software version
@@ -1171,10 +1161,6 @@ int Skywatcher::ResetMotions(void)
 	char command[SKYWATCHER_MAX_CMD], response[SKYWATCHER_MAX_CMD];
 	SkywatcherAxisStatus CurrentAxisStatus;
 	int err = SB_OK;
-
-#ifdef SKYW_DEBUG
-	char *timestamp;
-#endif
 
 #ifdef SKYW_DEBUG
 	ltime = time(NULL);
