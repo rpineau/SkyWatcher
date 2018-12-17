@@ -73,6 +73,11 @@ X2Mount::X2Mount(const char* pszDriverSelection,
 		m_bParked = m_pIniUtil->readInt(PARENT_KEY, CHILD_KEY_ISPARKED, 0);
 		m_lDecParkEncoder = (unsigned long) m_pIniUtil->readDouble(PARENT_KEY, CHILD_KEY_DECPARKENCODER, 0.0);
 		m_lRaParkEncoder = (unsigned long) m_pIniUtil->readDouble(PARENT_KEY, CHILD_KEY_RAPARKENCODER, 0.0);
+		m_dEastSlewLim = m_pIniUtil->readDouble(PARENT_KEY, CHILD_KEY_EASTSLEWLIM, 0.0);
+		m_dWestSlewLim = m_pIniUtil->readDouble(PARENT_KEY, CHILD_KEY_WESTSLEWLIM, 0.0);
+		m_dFlipHourAngle = m_pIniUtil->readDouble(PARENT_KEY, CHILD_KEY_FLIPHOURANGLE, 0.0);
+		m_dMinAngleAboveHorizon = m_pIniUtil->readDouble(PARENT_KEY, CHILD_KEY_ANGLEABOVEHORIZON, 0.0);
+
 	}
 
 #ifdef HEQ5_DEBUG
@@ -111,7 +116,7 @@ X2Mount::~X2Mount()
 	// Write the stored values
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		ltime = time(NULL);
+		time_t ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] Polaris Alignment on exit: %f %f %d %d %d\n", timestamp, m_HomeAlignmentDEC, m_HomeAlignmentHA, m_HomePolarisClock, m_bPolarisHomeAlignmentSet, m_iST4GuideRateIndex);
@@ -186,7 +191,7 @@ int X2Mount::queryAbstraction(const char* pszName, void** ppVal)
 #ifdef HEQ5_DEBUG
 #ifdef VERBOSE
 	if (LogFile) {
-		ltime = time(NULL);
+		time_t ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] Query Abstraction Called: %s\n", timestamp, pszName);
@@ -203,11 +208,10 @@ int X2Mount::startOpenLoopMove(const MountDriverInterface::MoveDir& Dir, const i
 	m_CurrentRateIndex = nRateIndex;
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-        X2Mount* pMe = (X2Mount*)this;
-		pMe->ltime = time(NULL);
-		pMe->timestamp = asctime(localtime(&pMe->ltime));
-		pMe->timestamp[strlen(pMe->timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] startOpenLoopMove called %d %d\n", pMe->timestamp, Dir, nRateIndex);
+		time_t ltime = time(NULL);
+		timestamp = asctime(localtime(&ltime));
+		timestamp[strlen(timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] startOpenLoopMove called %d %d\n", timestamp, Dir, nRateIndex);
 	}
 #endif
 	return SkyW.StartOpenSlew(Dir, SlewSpeeds[nRateIndex]);
@@ -218,7 +222,7 @@ int X2Mount::endOpenLoopMove(void)
 	int err;
 #ifdef HEQ5_DEBUG
 	if (LogFile){
-		ltime = time(NULL);
+		time_t ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] endOpenLoopMove Called\n", timestamp);
@@ -255,7 +259,7 @@ int X2Mount::execModalSettingsDialog(void)
 	int i;
 	
 #ifdef HEQ5_DEBUG
-	ltime;
+	time_t ltime;
 	char *timestamp;
 	if (LogFile) {
 		ltime = time(NULL);
@@ -298,9 +302,6 @@ int X2Mount::execModalSettingsDialog(void)
 		dx->setEnabled("pushButton_2", false);				 // Cannot move while parked, not connected or haven't aligned the reticule yet
 	}
 	
-	if (SkyW.isConnected()) {
-		dx->setEnabled("lineEdit", false);					 // Cannot edit the port name while connected.
-	}
 	if (!SkyW.isConnected() || m_bParked) {
 		dx->setEnabled("pushButton", false);				 // Must be conneected and not parked to set polar alignment home location
 		dx->setEnabled("comboBox", false);
@@ -318,6 +319,28 @@ int X2Mount::execModalSettingsDialog(void)
 		dx->setPropertyString("label_4", "text", "Tracking off");
 	}
 	
+	// Now set the values for the tracking limits.
+	dx->setPropertyDouble("doubleSpinBox", "value", m_dEastSlewLim);
+	dx->setPropertyDouble("doubleSpinBox_2", "value", m_dWestSlewLim);
+	dx->setPropertyDouble("doubleSpinBox_3", "value", m_dFlipHourAngle);
+	dx->setPropertyDouble("doubleSpinBox_4", "value", m_dMinAngleAboveHorizon);
+
+	// Store the values in the temp variables to allow comparison and checking the uievent function.
+	m_dTempEastSlewLim = m_dEastSlewLim;
+	m_dTempWestSlewLim = m_dWestSlewLim;
+	m_dTempFlipHourAngle = m_dFlipHourAngle;
+
+	// Slew limits should be OK - and if not, will get checked in any event
+	dx->setPropertyString("label_12", "text", "Slew limits OK");
+#ifdef HEQ5_DEBUG
+	if (LogFile) {
+		ltime = time(NULL);
+		timestamp = asctime(localtime(&ltime));
+		timestamp[strlen(timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] execModealSetting::  Input Slew Limits %02f %02f %02f %02f\n", timestamp, m_dEastSlewLim, m_dWestSlewLim, m_dFlipHourAngle, m_dMinAngleAboveHorizon);
+	}
+#endif
+
 	//Display the user interface
 	if ((nErr = ui->exec(bPressedOK)))
 		return nErr;
@@ -338,6 +361,25 @@ int X2Mount::execModalSettingsDialog(void)
 		SkyW.SetST4GuideRate(m_iST4GuideRateIndex);
 		dx->propertyInt("spinBox", "value", m_iPostSlewDelay);
 		m_pIniUtil->writeInt(PARENT_KEY, CHILD_KEY_SLEWDELAY, m_iPostSlewDelay);
+
+		// Now read and store the values for the tracking and slewing limits
+		dx->propertyDouble("doubleSpinBox_2", "value", m_dWestSlewLim);
+		dx->propertyDouble("doubleSpinBox", "value", m_dEastSlewLim);
+
+		dx->propertyDouble("doubleSpinBox_3", "value", m_dFlipHourAngle);
+		dx->propertyDouble("doubleSpinBox_4", "value", m_dMinAngleAboveHorizon);
+		m_pIniUtil->writeDouble(PARENT_KEY, CHILD_KEY_EASTSLEWLIM, m_dEastSlewLim);
+		m_pIniUtil->writeDouble(PARENT_KEY, CHILD_KEY_WESTSLEWLIM, m_dWestSlewLim);
+		m_pIniUtil->writeDouble(PARENT_KEY, CHILD_KEY_FLIPHOURANGLE, m_dFlipHourAngle);
+		m_pIniUtil->writeDouble(PARENT_KEY, CHILD_KEY_ANGLEABOVEHORIZON, m_dMinAngleAboveHorizon);
+#ifdef HEQ5_DEBUG
+		if (LogFile) {
+			ltime = time(NULL);
+			timestamp = asctime(localtime(&ltime));
+			timestamp[strlen(timestamp) - 1] = 0;
+			fprintf(LogFile, "[%s] execModealSetting::  Output Slew Limits %02f %02f %02f %02f\n", timestamp, m_dEastSlewLim, m_dWestSlewLim, m_dFlipHourAngle, m_dMinAngleAboveHorizon);
+		}
+#endif
     }
 	return nErr;
 }
@@ -347,12 +389,15 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 	double HAPolaris, HAOctansSigma;
 	double const RAPolaris = 2.879280694;							// Calculated on 12/2/2017
 	double const RAOctansSigma = 21.36480556;						// Calculated on 24/2/2017
+	double readtemp;												// For reading current slew variables
+	bool ichange = false;											// Have the slew variables changed?
+	bool slewerr = false;											// Is there an error in the slew variables?
 	
 	int err;
 	X2MutexLocker ml(GetMutex());
 	
 #ifdef HEQ5_DEBUG
-	ltime;
+	time_t ltime;
 	char *timestamp;
 	if (LogFile) {
 		ltime = time(NULL);
@@ -361,7 +406,62 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 		fprintf(LogFile, "[%s] uievent %s\n", timestamp, pszEvent);
 	}
 #endif
-	if (!strcmp(pszEvent, "on_timer")) { // Periodical event - use it to check status of slew
+	if (!strcmp(pszEvent, "on_timer")) { // Periodical event - use it to check status of slew and form
+
+		// First read the slew limits values and see if any have changed
+		uiex->propertyDouble("doubleSpinBox", "value", readtemp);
+		if (fabs(readtemp - m_dTempEastSlewLim) > 0.0001) {
+			m_dTempEastSlewLim = readtemp;
+			ichange = true;
+		}
+
+		uiex->propertyDouble("doubleSpinBox_2", "value", readtemp);
+		if (fabs(readtemp - m_dTempWestSlewLim) > 0.0001) {
+			m_dTempWestSlewLim = readtemp;
+			ichange = true;
+		}
+
+		uiex->propertyDouble("doubleSpinBox_3", "value", readtemp);
+		if (fabs(readtemp - m_dTempFlipHourAngle) > 0.0001) {
+			m_dTempFlipHourAngle = readtemp;
+			ichange = true;
+		}
+
+#ifdef HEQ5_DEBUG
+		if (LogFile) {
+			ltime = time(NULL);
+			timestamp = asctime(localtime(&ltime));
+			timestamp[strlen(timestamp) - 1] = 0;
+			fprintf(LogFile, "[%s] uiEvent::  Input Slew Limits %02f %02f %02f\n", timestamp, m_dTempEastSlewLim, m_dTempWestSlewLim, m_dTempFlipHourAngle);
+		}
+#endif
+		// Check the variables if the slew limits have changed
+		if (ichange) {
+			if (m_dTempEastSlewLim > m_dTempWestSlewLim) {
+				uiex->setPropertyString("label_12", "text", "West Limit set equal to East Limit: West limit must be >= East Limit");
+				m_dTempWestSlewLim = m_dTempEastSlewLim;
+				uiex->setPropertyDouble("doubleSpinBox_2", "value", m_dTempWestSlewLim);
+				slewerr = true;
+			}
+			if (m_dTempFlipHourAngle < m_dTempEastSlewLim) {
+				uiex->setPropertyString("label_12", "text", "Flip hour angle set equal to East Limit: must be >= East Limit");
+				m_dTempFlipHourAngle = m_dTempEastSlewLim;
+				uiex->setPropertyDouble("doubleSpinBox_3", "value", m_dTempFlipHourAngle);
+				slewerr = true;
+			}
+			if (m_dTempFlipHourAngle > m_dTempWestSlewLim) {
+				uiex->setPropertyString("label_12", "text", "Flip hour angle set to West Limit: must be <= West Limit");
+				m_dTempFlipHourAngle = m_dTempWestSlewLim;
+				uiex->setPropertyDouble("doubleSpinBox_3", "value", m_dTempFlipHourAngle);
+				slewerr = true;
+			}
+			// If no errors, say slew limits are OK.
+			if (!slewerr) {
+				uiex->setPropertyString("label_12", "text", "Slew limits OK");
+			}
+		}
+
+		// Now see if need to 
 		if (!m_bPolarisAlignmentSlew) return; // No need to do anything unless slewing
 #ifdef HEQ5_DEBUG
 		if (LogFile) {
@@ -445,7 +545,7 @@ int X2Mount::establishLink(void)
 	// get serial port device name
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		ltime = time(NULL);
+		time_t ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] Establish Link called\n", timestamp);
@@ -457,7 +557,7 @@ int X2Mount::establishLink(void)
 
 #ifdef HEQ5_DEBUG
 		if (LogFile) {
-			ltime = time(NULL);
+			time_t ltime = time(NULL);
 			timestamp = asctime(localtime(&ltime));
 			timestamp[strlen(timestamp) - 1] = 0;
 			fprintf(LogFile, "[%s] Establish Link - connected to port %s err %d\n", timestamp, m_PortName, err);
@@ -472,7 +572,7 @@ int X2Mount::establishLink(void)
 
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		ltime = time(NULL);
+		time_t ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] Establish Link - Park %d Dec Encoder %u, Ra Encloder %u err %d\n", timestamp, m_bParked, m_lRaParkEncoder, m_lDecParkEncoder, err);
@@ -488,7 +588,7 @@ int X2Mount::terminateLink(void)
 	X2MutexLocker ml(GetMutex());
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		ltime = time(NULL);
+		time_t ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] Terminate Link called\n", timestamp);
@@ -502,11 +602,10 @@ bool X2Mount::isLinked(void) const
 	bool temp;
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-        X2Mount* pMe = (X2Mount*)this;
-        pMe->ltime = time(NULL);
-        pMe->timestamp = asctime(localtime(&pMe->ltime));
-        pMe->timestamp[strlen(pMe->timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] isLinked called\n", pMe->timestamp);
+		time_t ltime = time(NULL);
+//		timestamp = asctime(localtime(&ltime));
+//		timestamp[strlen(timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] isLinked called\n", timestamp);
 	}
 #endif
 	
@@ -527,11 +626,10 @@ void	X2Mount::driverInfoDetailedInfo(BasicStringInterface& str) const
 {
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-        X2Mount* pMe = (X2Mount*)this;
-        pMe->ltime = time(NULL);
-        pMe->timestamp = asctime(localtime(&pMe->ltime));
-        pMe->timestamp[strlen(pMe->timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] driverInfoDetailedInfo Called\n", pMe->timestamp);
+		time_t ltime = time(NULL);
+//		timestamp = asctime(localtime(&ltime));
+//		timestamp[strlen(timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] driverInfoDetailedInfo Called\n", timestamp);
 	}
 #endif
 	str = "EQ Direct X2 plugin by Colin McGill";
@@ -541,11 +639,10 @@ double	X2Mount::driverInfoVersion(void) const
 {
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-        X2Mount* pMe = (X2Mount*)this;
-        pMe->ltime = time(NULL);
-        pMe->timestamp = asctime(localtime(&pMe->ltime));
-        pMe->timestamp[strlen(pMe->timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] driverInfoVersion Called\n", pMe->timestamp);
+		time_t ltime = time(NULL);
+//		timestamp = asctime(localtime(&ltime));
+//		timestamp[strlen(timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] driverInfoVersion Called\n", timestamp);
 	}
 #endif
 	return SKYWATCHER_DRIVER_VERSION;
@@ -556,11 +653,10 @@ void X2Mount::deviceInfoNameShort(BasicStringInterface& str) const
 {
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-        X2Mount* pMe = (X2Mount*)this;
-        pMe->ltime = time(NULL);
-        pMe->timestamp = asctime(localtime(&pMe->ltime));
-        pMe->timestamp[strlen(pMe->timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] driverInfoNameShort Called\n", pMe->timestamp);
+		time_t ltime = time(NULL);
+//		timestamp = asctime(localtime(&ltime));
+//		timestamp[strlen(timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] driverInfoNameShort Called\n", timestamp);
 	}
 #endif
 	str = "Doesn't Seem to be used";
@@ -569,11 +665,10 @@ void X2Mount::deviceInfoNameLong(BasicStringInterface& str) const
 {
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-        X2Mount* pMe = (X2Mount*)this;
-        pMe->ltime = time(NULL);
-        pMe->timestamp = asctime(localtime(&pMe->ltime));
-        pMe->timestamp[strlen(pMe->timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] deviceInfoNameLong Called\n", pMe->timestamp);
+		time_t ltime = time(NULL);
+//		timestamp = asctime(localtime(&ltime));
+//		timestamp[strlen(timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] deviceInfoNameLong Called\n", timestamp);
 	}
 #endif
 	str = "Skywatcher EQ Mount";
@@ -583,11 +678,10 @@ void X2Mount::deviceInfoDetailedDescription(BasicStringInterface& str) const
 {
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-        X2Mount* pMe = (X2Mount*)this;
-        pMe->ltime = time(NULL);
-        pMe->timestamp = asctime(localtime(&pMe->ltime));
-        pMe->timestamp[strlen(pMe->timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] driverInfoDetailedDescription Called\n", pMe->timestamp);
+		time_t ltime = time(NULL);
+//		timestamp = asctime(localtime(&ltime));
+//		timestamp[strlen(timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] driverInfoDetailedDescription Called\n", timestamp);
 	}
 #endif
 	str = "Connects to a Skywatcher equatorial mount through an EQDIR cable - see the EQMOD project for details";
@@ -597,11 +691,10 @@ void X2Mount::deviceInfoFirmwareVersion(BasicStringInterface& str)
 {
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-        X2Mount* pMe = (X2Mount*)this;
-        pMe->ltime = time(NULL);
-        pMe->timestamp = asctime(localtime(&pMe->ltime));
-        pMe->timestamp[strlen(pMe->timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] driverInfoFirmwareVersion Called\n", pMe->timestamp);
+		time_t ltime = time(NULL);
+		timestamp = asctime(localtime(&ltime));
+		timestamp[strlen(timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] driverInfoFirmwareVersion Called\n", timestamp);
 	}
 #endif
 	if (SkyW.isConnected()) {
@@ -615,7 +708,7 @@ void X2Mount::deviceInfoModel(BasicStringInterface& str)
 {
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		ltime = time(NULL);
+		time_t ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] driverInfoModel Called\n", timestamp);
@@ -634,18 +727,19 @@ int X2Mount::raDec(double& ra, double& dec, const bool& bCached)
 {
 	int err = 0;
 	double Ha = 0.0;
+	double dAz, dAlt;	// To get Azimuth and Altitude later
 	X2MutexLocker ml(GetMutex());
 	
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		ltime = time(NULL);
+		time_t ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] raDec Called\n", timestamp);
 	}
 #endif
 	// Get the HA and DEC from the mount
-	err = SkyW.GetMountHAandDec(Ha, dec);
+	err = SkyW.GetMountHAandDec(Ha, dec); if (err) return (err);
 	// Subtract HA from lst to get ra;
 	ra = m_pTheSkyXForMounts->lst()-Ha;
 	
@@ -658,12 +752,27 @@ int X2Mount::raDec(double& ra, double& dec, const bool& bCached)
 	}
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		ltime = time(NULL);
+		time_t ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] raDec Ra: %f Dec %f\n", timestamp, ra, dec);
 	}
 #endif
+
+	// Now check if have exceeded the tracking limits
+	// First tracking beyond the meridian. Must be beyond the pole (pointing east of horizon) for this to occur.
+	if (SkyW.GetIsBeyondThePole() && SkyW.GetIsTracking() && Ha > m_dWestSlewLim) {
+		err = setTrackingRates(false, true, 0.0, 0.0);	// Stop tracking since these have been exceeded
+		if (err) return err;
+		return ERR_LIMITSEXCEEDED;
+	}
+
+	// Now check to see if above the horizon
+	err = m_pTheSkyXForMounts->EqToHz(ra, dec, dAz, dAlt); if (err) return err;
+	if (!SkyW.GetIsBeyondThePole() && SkyW.GetIsTracking() && dAlt < m_dMinAngleAboveHorizon) {
+		err = setTrackingRates(false, true, 0.0, 0.0);	if (err) return err; // Stop tracking since now to low and setting
+		return ERR_LIMITSEXCEEDED;
+	}
 	return err;
 }
 
@@ -671,7 +780,7 @@ int X2Mount::abort(void)
 {
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		ltime = time(NULL);
+		time_t ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] abort Called\n", timestamp);
@@ -686,7 +795,7 @@ int X2Mount::startSlewTo(const double& dRa, const double& dDec)
 	int err;
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		ltime = time(NULL);
+		time_t ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] startSlewTo Called %f %f\n", timestamp, dRa, dDec);
@@ -697,7 +806,7 @@ int X2Mount::startSlewTo(const double& dRa, const double& dDec)
 		err = SkyW.StartPark();
 	}
 	else {
-		err = SkyW.StartSlewTo(dRa, dDec);
+		err = SkyW.StartSlewTo(dRa, dDec, m_dFlipHourAngle);
 	}
 	m_wasslewing = true;
 	return err;
@@ -709,11 +818,10 @@ int X2Mount::isCompleteSlewTo(bool& bComplete) const
 	
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-        X2Mount* pMe = (X2Mount*)this;
-        pMe->ltime = time(NULL);
-        pMe->timestamp = asctime(localtime(&pMe->ltime));
-        pMe->timestamp[strlen(pMe->timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] isCompleteSlewTo called %d\n", pMe->timestamp, bComplete);
+		time_t ltime = time(NULL);
+//		timestamp = asctime(localtime(&ltime));
+//		timestamp[strlen(timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] isCompleteSlewTo called %d\n", timestamp, bComplete);
 	}
 #endif
 	
@@ -730,7 +838,7 @@ int X2Mount::endSlewTo(void)
 	
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		ltime = time(NULL);
+		time_t ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] endSlewTo Called\n", timestamp);
@@ -749,7 +857,7 @@ int X2Mount::syncMount(const double& ra, const double& dec)
 
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		ltime = time(NULL);
+		time_t ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] syncMount Called ra %f dec %f\n", timestamp, ra, dec);
@@ -765,7 +873,7 @@ bool X2Mount::isSynced(void)
 {
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		ltime = time(NULL);
+		time_t ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] issyncMount Called\n", timestamp);
@@ -779,7 +887,7 @@ int X2Mount::setTrackingRates(const bool& bTrackingOn, const bool& bIgnoreRates,
 	X2MutexLocker ml(GetMutex());
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		ltime = time(NULL);
+		time_t ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] setTrackingRates Called Tracking On %d Ignore Rates %d RARate %f DERate %f\n", timestamp, bTrackingOn, bIgnoreRates, dRaRateArcSecPerSec, dDecRateArcSecPerSec);
@@ -800,7 +908,7 @@ int X2Mount::trackingRates(bool& bTrackingOn, double& dRaRateArcSecPerSec, doubl
 	err = SkyW.GetTrackingRates(bTrackingOn, dRaRateArcSecPerSec, dDecRateArcSecPerSec);
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		ltime = time(NULL);
+		time_t ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] trackingRates Called Tracking On %d RARate %f DERate %f\n", timestamp, bTrackingOn, dRaRateArcSecPerSec, dDecRateArcSecPerSec);
@@ -821,7 +929,7 @@ bool X2Mount::isParked(void) {
 	
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		ltime = time(NULL);
+		time_t ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] isParked Called\n", timestamp);
@@ -834,7 +942,7 @@ int X2Mount::startPark(const double& dAz, const double& dAlt)
 {
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		ltime = time(NULL);
+		time_t ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] startParked Called\n", timestamp);
@@ -849,11 +957,10 @@ int X2Mount::isCompletePark(bool& bComplete) const
 {
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-        X2Mount* pMe = (X2Mount*)this;
-        pMe->ltime = time(NULL);
-        pMe->timestamp = asctime(localtime(&pMe->ltime));
-        pMe->timestamp[strlen(pMe->timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] isCompletePark Called\n", pMe->timestamp);
+		time_t ltime = time(NULL);
+//		timestamp = asctime(localtime(&ltime));
+//		timestamp[strlen(timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] isCompletePark Called\n", timestamp);
 	}
 #endif
 	bComplete = SkyW.GetIsParkingComplete();
@@ -866,7 +973,7 @@ int X2Mount::endPark(void)
 	X2MutexLocker ml(GetMutex());
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		ltime = time(NULL);
+		time_t ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] endPark Called\n", timestamp);
@@ -883,7 +990,7 @@ int X2Mount::endPark(void)
 
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		ltime = time(NULL);
+		time_t ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] endPark Encoder Values: Parked %d Ra %u Dec %u\n", timestamp, m_bParked, m_lRaParkEncoder, m_lDecParkEncoder);
@@ -919,20 +1026,18 @@ int X2Mount::beyondThePole(bool& bYes) {
 }
 
 
-// Leave the two functions below as virtual functions since we're not setting them explicitly
 
-/* 
 double X2Mount::flipHourAngle() {
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		ltime = time(NULL);
+		time_t ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] flipHourAngle called\n", timestamp);
 	}
 #endif
 
-	return 0.0;
+	return m_dFlipHourAngle;
 }
 
 
@@ -940,18 +1045,18 @@ int X2Mount::gemLimits(double& dHoursEast, double& dHoursWest)
 {
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		ltime = time(NULL);
+		time_t ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
 		fprintf(LogFile, "[%s] gemLimits called\n", timestamp);
 	}
 #endif
 
-	dHoursEast = 0.0;
-	dHoursWest = 0.0;
+	dHoursEast = m_dEastSlewLim;
+	dHoursWest = m_dWestSlewLim;
 	return SB_OK;
 }
-*/
+
 
 #pragma mark - SerialPortParams2Interface
 

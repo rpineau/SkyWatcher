@@ -13,7 +13,7 @@
 // #define SKYW_DEBUG 1   // define this to have log files
 
 // Defines below from INDI EQMOD
-#define SKYWATCHER_DRIVER_VERSION 2.0
+#define SKYWATCHER_DRIVER_VERSION 2.5
 #define SKYWATCHER_MAX_CMD        16
 #define SKYWATCHER_MAX_TRIES      3
 #define SKYWATCHER_CHAR_BUFFER   1024
@@ -48,7 +48,7 @@ public:
 	bool isConnected() const { return m_bLinked; }
 	char *GetMCVersionName() { return MCVersionName;  }
 	char *GetMountName() { return MountName;  }
-	int StartSlewTo(const double& dRa, const double& dDec);
+	int StartSlewTo(const double& dRa, const double& dDec, const double& dFlipHourAngle);
 	int SyncToRAandDec(const double& dRa, const double& dDec);
 	int SyncToEncoder(unsigned long& RaEncoder, unsigned long& DecEncoder, bool b_tracking_on);
 	int GetMountEncoderValues(unsigned long& RaEncoderValue, unsigned long& DecEncoderValue);
@@ -99,6 +99,7 @@ private:
 	
 	double m_dGotoRATarget;						  // Current Target RA;
 	double m_dGotoDECTarget;                      // Current Goto Target Dec;
+	double m_dFlipHour;							  // Flip hour angle for calculations.
 	int m_iGotoIterations;					      // Iterations to goto target
 	bool m_bGotoInProgress;						  // Is GOTO in progress?
 	double m_dDeltaHASteps;						  // Error from previous slew when at low speed slew
@@ -182,7 +183,7 @@ private:
 	int StopAxisandWait(SkywatcherAxis Axis);
 	int GetAxisStatus(SkywatcherAxis Axis, SkywatcherAxisStatus &AxisStatus);
 	void HAandDECfromEncoderValues(unsigned long RAEncoder, unsigned long DEEncoder, double &dHA, double &dDec);
-	void EncoderValuesfromHAanDEC(double dHa, double dDec, unsigned long &RAEncoder, unsigned long &DEEncoder);
+	void EncoderValuesfromHAanDEC(double dHa, double dDec, unsigned long &RAEncoder, unsigned long &DEEncoder, bool bUseBTP);
 	
 	
 	// Official Skywatcher Protocol
