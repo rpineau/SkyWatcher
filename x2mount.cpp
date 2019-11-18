@@ -567,8 +567,12 @@ int X2Mount::establishLink(void)
 	if (err) return err;
 
 	// If mount was previously parked, set the encoders to the parked values
-	if (m_bParked && m_lDecParkEncoder > 0 && m_lRaParkEncoder > 0)
-		err =  SkyW.SyncToEncoder(m_lRaParkEncoder, m_lDecParkEncoder, false);
+	if (m_bParked && m_lDecParkEncoder > 0 && m_lRaParkEncoder > 0) {
+		err = SkyW.SyncToEncoder(m_lRaParkEncoder, m_lDecParkEncoder, false);
+		if (err) return err;
+		// Behave like a Paramount - unpark the mount on connection
+		endUnpark();
+	}
 
 #ifdef HEQ5_DEBUG
 	if (LogFile) {

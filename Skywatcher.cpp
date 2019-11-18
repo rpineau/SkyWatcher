@@ -1056,7 +1056,16 @@ int Skywatcher::ReadMountData(void)
 		case 0x04: strcpy(MountName, "EQ8"); break;
 		case 0x05: strcpy(MountName, "AZEQ6"); break;
 		case 0x06: strcpy(MountName, "AZEQ5"); break;
+
+		// Next set of mountcodes are from Frank Liu at Skywatcher with more recent control boards
+		case 0x20: strcpy(MountName, "EQ-R/EQ8-RH"); break;
+		case 0x21: strcpy(MountName, "EQ-8"); break;
+		case 0x22: strcpy(MountName, "AZ-EQ6"); break;
+		case 0x23: strcpy(MountName, "EQ6-R"); break;
+		case 0x24: strcpy(MountName, "EQ6"); break;
+
 		default: // Unrecognised mount
+			strcpy(MountName, "Unknown"); 
 			err = ERR_DEVICENOTSUPPORTED;
 			return err;
 	}
@@ -1070,8 +1079,8 @@ int Skywatcher::ReadMountData(void)
 	fprintf(LogFile, "[%s] Skyw::ReadMountData Mount %s\n", timestamp, MountName);
 #endif
 	
-	// If the mount is AZWQ5 or 6, turn off the encoders
-	if (MountCode == 0x05 || MountCode == 0x06) {
+	// If the mount has encoders, turn them off
+	if (MountCode == 0x04 || MountCode == 0x05 || MountCode == 0x06 || MountCode == 0x21 || MountCode == 0x22 ) {
 #ifdef SKYW_DEBUG
 		ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));

@@ -24,6 +24,10 @@ fi
 
 if [ -d "$TheSkyX_Path/Resources/Common/PlugIns64" ]; then
 	PLUGINS_DIR="PlugIns64"
+elif [ -d "$TheSkyX_Path/Resources/Common/PlugInsARM32" ]; then
+	PLUGINS_DIR="PlugInsARM32"
+elif [ -d "$TheSkyX_Path/Resources/Common/PlugInsARM64" ]; then
+	PLUGINS_DIR="PlugInsARM64"
 else
 	PLUGINS_DIR="PlugIns"
 fi
