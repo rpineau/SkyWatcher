@@ -10,14 +10,14 @@
 #include "../../licensedinterfaces/mountdriverinterface.h"
 #include "../../licensedinterfaces/loggerinterface.h"
 
-// #define SKYW_DEBUG 1   // define this to have log files
+//#define SKYW_DEBUG 1   // define this to have log files
 
 // Defines below from INDI EQMOD
 #define SKYWATCHER_DRIVER_VERSION 2.7
 #define SKYWATCHER_MAX_CMD        16
 #define SKYWATCHER_MAX_TRIES      3
 #define SKYWATCHER_CHAR_BUFFER   1024
-#define SKYWATCHER_MAX_TIMEOUT 500
+#define SKYWATCHER_MAX_TIMEOUT 200
 
 #define SKYWATCHER_SIDEREAL_DAY 86164.09053083288
 #define SKYWATCHER_SIDEREAL_SPEED 15.04106864
