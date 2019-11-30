@@ -10,10 +10,10 @@
 #include "../../licensedinterfaces/mountdriverinterface.h"
 #include "../../licensedinterfaces/loggerinterface.h"
 
-//#define SKYW_DEBUG 1   // define this to have log files
+// #define SKYW_DEBUG 1   // define this to have log files
 
 // Defines below from INDI EQMOD
-#define SKYWATCHER_DRIVER_VERSION 2.7
+#define SKYWATCHER_DRIVER_VERSION 2.8
 #define SKYWATCHER_MAX_CMD        16
 #define SKYWATCHER_MAX_TRIES      3
 #define SKYWATCHER_CHAR_BUFFER   1024
@@ -64,6 +64,8 @@ public:
 	int StartOpenSlew(const MountDriverInterface::MoveDir & 	Dir, double rate);
 	int PolarAlignment(double dHAHome, double dDecHome, int HomeIndex, double HaPolaris, double HAOctansSigma);
 	int SetST4GuideRate(int m_ST4GuideRateIndex);
+	void SetBaudRate(int BaudRate) { m_iBaudRate = BaudRate; }
+	int GetBaudRate(void) { return m_iBaudRate; }            
 	int ResetMotions(void);
 	int GetTrackingRates(bool& bTrackingOn, double& dRaRateArcSecPerSec, double& dDecRateArcSecPerSec);
 	int GetIsTracking() const { return m_bTracking; }
@@ -75,6 +77,7 @@ private:
 	
 	bool m_bLinked;                               // Connected to the mount?
 	int m_ST4GuideRate;	                          // Guide Rate
+	int m_iBaudRate;							  // Baud Rate
 	
 	bool NorthHemisphere;					      // Located in the Northern Hemisphere?
 	unsigned long MCVersion;                      // Motor Controller Version
@@ -109,35 +112,50 @@ private:
 	bool m_bTracking;							  // Is the telescope tracking?
 	double m_dRATrackingRate;					  // RA Tracking rate in arcsec/sec
 	double m_dDETrackingRate;	                  // DEC Tracking Rate in arcsec/sec
+
+	// Store portname
+	char m_cPortname[SKYWATCHER_CHAR_BUFFER];	  // Portname in case it has to be reopened.
 			
 	// Types
 	enum SkywatcherCommand {
-		Initialize = 'F',
-		InquireMotorBoardVersion = 'e',
-		InquireGridPerRevolution = 'a',
-		InquireTimerInterruptFreq = 'b',
-		InquireHighSpeedRatio = 'g',
-		InquirePECPeriod = 's',
-		InstantAxisStop = 'L',
-		NotInstantAxisStop = 'K',
 		SetAxisPositionCmd = 'E',
-		GetAxisPosition = 'j',
-		InquireAxisStatus = 'f',
-		SetSwitch = 'O',
+		Initialize = 'F',
 		SetMotionMode = 'G',
 		SetGotoTargetIncrement = 'H',
 		SetBreakPointIncrement = 'M',
 		SetGotoTarget = 'S',
-		SetBreakStep = 'U',
 		SetStepPeriod = 'I',
+		SetLongGotoStepPeriod = 'T',
+		SetBreakStep = 'U',
 		StartMotion = 'J',
-		GetStepPeriod = 'D', // See Merlin protocol http://www.papywizard.org/wiki/DevelopGuide
-		ActivateMotor = 'B', // See eq6direct implementation http://pierre.nerzic.free.fr/INDI/
-		SetGuideRate = 'P',  // See EQASCOM driver
-		GetHomePosition = 'd',    // Get Home position encoder count (default at startup)
+		NotInstantAxisStop = 'K',
+		InstantAxisStop = 'L',
+		ActivateMotor = 'B',
+		SetSwitch = 'O',
+		SetGuideRate = 'P',
+		RunBootLoaderMode = 'Q',
+		SetPolarScopeLEDBrightness = 'V',
+
+		InquireGridPerRevolution = 'a',
+		InquireTimerInterruptFreq = 'b',
+		InquireBrakeSteps = 'c',
+		InquireGotoTargetPosition = 'h',
+		InquireStepPeriod = 'i',
+		GetAxisPosition = 'j',
+		InquireIncrement = 'k',
+		InquireBreakPoint = 'm',
+		InquireAxisStatus = 'f',
+		InquireHighSpeedRatio = 'g',
+		GetStepPeriod = 'D',
+		GetHomePosition = 'd',
+		InquireMotorBoardVersion = 'e',
+		InquirePECPeriod = 's',
+		SetDebugFlag = 'z',
+
+
 		SetFeatureCmd = 'W', // EQ8/AZEQ6/AZEQ5 only
 		GetFeatureCmd = 'q', // EQ8/AZEQ6/AZEQ5 only
-		InquireAuxEncoder = 'd', // EQ8/AZEQ6/AZEQ5 only
+
 		NUMBER_OF_SkywatcherCommand
 	};
 	
