@@ -33,6 +33,8 @@ X2Mount::X2Mount(const char* pszDriverSelection,
 	sprintf(m_sLogfilePath, "%s%s", getenv("HOME"), "/X2Mountlog.txt");
 #endif
 	LogFile = fopen(m_sLogfilePath, "w");
+
+	setbuf(LogFile, NULL);
 #endif
 
 	// Set Slew Speeds and Names
@@ -77,7 +79,7 @@ X2Mount::X2Mount(const char* pszDriverSelection,
 		m_dWestSlewLim = m_pIniUtil->readDouble(PARENT_KEY, CHILD_KEY_WESTSLEWLIM, 0.0);
 		m_dFlipHourAngle = m_pIniUtil->readDouble(PARENT_KEY, CHILD_KEY_FLIPHOURANGLE, 0.0);
 		m_dMinAngleAboveHorizon = m_pIniUtil->readDouble(PARENT_KEY, CHILD_KEY_ANGLEABOVEHORIZON, 0.0);
-
+		m_iBaudRate = m_pIniUtil->readInt(PARENT_KEY, CHILD_KEY_BAUDRATE, 9600);
 	}
 
 #ifdef HEQ5_DEBUG
@@ -108,6 +110,7 @@ X2Mount::X2Mount(const char* pszDriverSelection,
 #endif
 	X2MutexLocker ml(GetMutex());  // Mount should not be connected yet, but just in case...
 	SkyW.SetST4GuideRate(m_iST4GuideRateIndex);
+	SkyW.SetBaudRate(m_iBaudRate);
 	
 }
 
@@ -543,24 +546,28 @@ int X2Mount::establishLink(void)
 	X2MutexLocker ml(GetMutex());
 
 	// get serial port device name
+	portNameOnToCharPtr(m_PortName, DRIVER_MAX_STRING);
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
 		time_t ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] Establish Link called\n", timestamp);
+		fprintf(LogFile, "[%s] Establish Link called Portname %s\n", timestamp, m_PortName);
 	}
 #endif
-    portNameOnToCharPtr(m_PortName,DRIVER_MAX_STRING);
 
-	err = SkyW.Connect(m_PortName); 
+	err = SkyW.Connect(m_PortName);
+
+	// Retrieve and store successful baud rate
+	m_iBaudRate = SkyW.GetBaudRate();
+	m_pIniUtil->writeInt(PARENT_KEY, CHILD_KEY_BAUDRATE, m_iBaudRate);
 
 #ifdef HEQ5_DEBUG
 		if (LogFile) {
 			time_t ltime = time(NULL);
 			timestamp = asctime(localtime(&ltime));
 			timestamp[strlen(timestamp) - 1] = 0;
-			fprintf(LogFile, "[%s] Establish Link - connected to port %s err %d\n", timestamp, m_PortName, err);
+			fprintf(LogFile, "[%s] Establish Link - connected to port %s Baud Rate %d err %d\n", timestamp, m_PortName, m_iBaudRate ,err);
 		}
 #endif
 		
@@ -614,6 +621,14 @@ bool X2Mount::isLinked(void) const
 #endif
 	
 	temp = SkyW.isConnected();
+#ifdef HEQ5_DEBUG
+	if (LogFile) {
+		time_t ltime = time(NULL);
+		//		timestamp = asctime(localtime(&ltime));
+		//		timestamp[strlen(timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] isLinked called returning %d\n", timestamp, temp);
+	}
+#endif
 	return temp;
 }
 
@@ -743,7 +758,19 @@ int X2Mount::raDec(double& ra, double& dec, const bool& bCached)
 	}
 #endif
 	// Get the HA and DEC from the mount
-	err = SkyW.GetMountHAandDec(Ha, dec); if (err) return (err);
+	err = SkyW.GetMountHAandDec(Ha, dec); 
+
+#ifdef HEQ5_DEBUG
+	if (LogFile) {
+		time_t ltime = time(NULL);
+		timestamp = asctime(localtime(&ltime));
+		timestamp[strlen(timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] raDec Called Error: %d\n", timestamp, err);
+	}
+#endif
+
+	if (err) return (err);
+
 	// Subtract HA from lst to get ra;
 	ra = m_pTheSkyXForMounts->lst()-Ha;
 	
@@ -806,7 +833,10 @@ int X2Mount::startSlewTo(const double& dRa, const double& dDec)
 	}
 #endif
 	X2MutexLocker ml(GetMutex());
-	if (dDec > 89.8 || dDec < -89.8) { // Special case - assume is parking to Skywatcher home location - catch and send to correct HA
+	if (dDec > 89.8 || dDec < -89.8) { 
+		// Special case - if sent close to the pole, this is likely to be to the Skywatcher home location (at NCP, weights down).
+		// However, at Dec = 90 deg, any RA is possible, so if parking can be at a random angle instead of weights down.
+		// So, close to the pole, assume this is to the home location and park at the weights down position.
 		err = SkyW.StartPark();
 	}
 	else {

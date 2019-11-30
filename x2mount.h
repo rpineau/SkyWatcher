@@ -16,6 +16,8 @@
 #include "../../licensedinterfaces/mount/needsrefractioninterface.h"
 #include "../../licensedinterfaces/mountdriverinterface.h"
 
+
+
 //Optional interfaces, uncomment and implement as required.
 #include "../../licensedinterfaces/mount/slewtointerface.h"
 #include "../../licensedinterfaces/mount/syncmountinterface.h"
@@ -57,6 +59,7 @@ class TickCountInterface;
 #define CHILD_KEY_WESTSLEWLIM "WestSlewLimit"
 #define CHILD_KEY_FLIPHOURANGLE "FlipHourAngle"
 #define CHILD_KEY_ANGLEABOVEHORIZON "AngleAboveHorizon"
+#define CHILD_KEY_BAUDRATE "BaudRate"
 
 #define MAX_PORT_NAME_SIZE 120
 
@@ -66,7 +69,7 @@ class TickCountInterface;
 
 #include <cstdio>
 
-//#define HEQ5_DEBUG    // Define this to have log files
+// #define HEQ5_DEBUG    // Define this to have log files
 
 #if defined(SB_WIN_BUILD)
 #define DEF_PORT_NAME					"COM3"
@@ -267,6 +270,7 @@ private:
 	char SlewSpeedNames[NSLEWSPEEDS][MAXSLEWNAMESIZE];
 	double SlewSpeeds[NSLEWSPEEDS];
 	char GuideSpeedNames[NGUIDESPEEDS][MAXSLEWNAMESIZE];
+	int m_iBaudRate;
 
 	// Slew Limit Data
 	double m_dEastSlewLim;
@@ -275,7 +279,7 @@ private:
 	double m_dMinAngleAboveHorizon;
 
 
-	// Temp slew limit data for 
+	// Temp slew limit data 
 	double m_dTempEastSlewLim;
 	double m_dTempWestSlewLim;
 	double m_dTempFlipHourAngle;

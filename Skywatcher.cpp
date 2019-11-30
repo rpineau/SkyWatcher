@@ -33,6 +33,9 @@ Skywatcher::Skywatcher(SerXInterface *pSerX, SleeperInterface *pSleeper, TheSkyX
 #endif
 
 	LogFile = fopen(m_sLogfilePath, "w");
+	// Turn off buffering for the log file
+	setbuf(LogFile, NULL);
+
 	ltime = time(NULL);
 	timestamp = asctime(localtime(&ltime));
 	timestamp[strlen(timestamp) - 1] = 0;
@@ -61,14 +64,17 @@ int Skywatcher::Connect(char *portName)
 {
 	int err;
 	char response[SKYWATCHER_MAX_CMD];
+	strncpy(m_cPortname, portName, SKYWATCHER_CHAR_BUFFER);
+	int AltBaudRate;
 	
 #ifdef SKYW_DEBUG
 	ltime = time(NULL);
 	timestamp = asctime(localtime(&ltime));
 	timestamp[strlen(timestamp) - 1] = 0;
-	fprintf(LogFile, "[%s] Skyw::Connect Called %s using 9600bps\n", timestamp, portName);
+	fprintf(LogFile, "[%s] Skyw::Connect Called %s using %d bps\n", timestamp, portName, m_iBaudRate);
 #endif
-	if(m_pSerX->open(portName, 9600, SerXInterface::B_NOPARITY, "-DTR_CONTROL 1") == 0) {
+	// Try to connect at stored baud rate first
+	if(m_pSerX->open(portName, m_iBaudRate, SerXInterface::B_NOPARITY, "-DTR_CONTROL 1") == 0) {
 		m_bLinked = true;
 #ifdef SKYW_DEBUG
 		ltime = time(NULL);
@@ -90,17 +96,23 @@ int Skywatcher::Connect(char *portName)
 	
 	err = ReadMountData();
 	
-	//Error reading the Mount Data, try to connect using 115200bps for bulit-in USB port. It runs at 115200bps only.
+	//Error reading the Mount Data, try to connect using alterntive baud rate
 	if (err) {
-		m_pSerX->close();			// Close serial port prior re-open it using 115200bps.
+		m_pSerX->close();			// Close serial port prior to trying to reopen
+		if (m_iBaudRate == 9600) {
+			m_iBaudRate = 115200;
+		}
+		else {
+			m_iBaudRate = 9600;
+		}
 
 #ifdef SKYW_DEBUG
 		ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] Skyw::Connect Called %s using 115200bps\n", timestamp, portName);
+		fprintf(LogFile, "[%s] Skyw::Connect Called %s using %d bps\n", timestamp, portName, m_iBaudRate);
 #endif
-		if (m_pSerX->open(portName, 115200, SerXInterface::B_NOPARITY, "-DTR_CONTROL 1") == 0) {
+		if (m_pSerX->open(portName, m_iBaudRate, SerXInterface::B_NOPARITY, "-DTR_CONTROL 1") == 0) {
 			m_bLinked = true;
 #ifdef SKYW_DEBUG
 			ltime = time(NULL);
@@ -124,9 +136,16 @@ int Skywatcher::Connect(char *portName)
 
 	}
 	
-	//Error reading the Mount Data, so Disconnect and return error.
+	//Error reading the Mount Data. Close serial port and set to unlinked then return error. Restore baud rate to initial value
 	if (err) {
-		Disconnect();
+		m_bLinked = false;
+		m_pSerX->close();
+		if (m_iBaudRate == 9600) {
+			m_iBaudRate = 115200;
+		}
+		else {
+			m_iBaudRate = 9600;
+		}
 		return err;
 	}
 
@@ -134,16 +153,22 @@ int Skywatcher::Connect(char *portName)
 	err = SendSkywatcherCommand(Initialize, Axis1, NULL, response, SKYWATCHER_MAX_CMD); if (err) return err;
 	err = SendSkywatcherCommand(Initialize, Axis2, NULL, response, SKYWATCHER_MAX_CMD); if (err) return err;
 
-	// Turn tracking off just in case was on
-	err = SetTrackingRates(false, true, 0.0, 0.0);
-
 	if (m_ST4GuideRate >= 0 && m_ST4GuideRate < 10) {
 		SetST4GuideRate(m_ST4GuideRate);
 	}
 	
+	// See if Mount is motion. If so, assume that this is tracking and set rates.
+	// If not in motion, then set rates to zero.
+	err = GetAxesStatus(); if (err) return err;
+	if (AxisStatus[RA].motionmode == STOPPED) {
+		err = SetTrackingRates(false, true, 0.0, 0.0); if (err) return err;
+	}
+	else if (AxisStatus[RA].motionmode != GOTO) {
+		err = SetTrackingRates(true, true, 0.0, 0.0); if (err) return err;
+	}
+
 	// Set flat to indicate whether north or south latitude
 	NorthHemisphere = (m_pTSX->latitude() > 0);
-	
 #ifdef	SKYW_DEBUG
 	ltime = time(NULL);
 	timestamp = asctime(localtime(&ltime));
@@ -542,7 +567,7 @@ int Skywatcher::GetMountHAandDec(double& dHa, double& dDec)
 		DeltaHA = (dHa - HANow)*15.0*3600.0;	  // Delta in arcsec
 		
 		// Iterate towards the desired HA & DEC unless a newer mount - seems to cause problems.
-		if (abs(DeltaHA) > SKYWATCHER_GOTO_ERROR && m_iGotoIterations < SKYWATCHER_MAX_GOTO_ITERATIONS && MountCode < 0x04) { // If error bigger than should be iterate again;
+		if (abs(DeltaHA) > SKYWATCHER_GOTO_ERROR && m_iGotoIterations < SKYWATCHER_MAX_GOTO_ITERATIONS) { // If error bigger than should be iterate again;
 
 			// First confirm that the axes have stopped
 			err = StopAxesandWait(); if (err) return err;
@@ -1001,6 +1026,25 @@ int Skywatcher::StartTargetSlew(SkywatcherAxis Axis, long CurrentStep, long Targ
 	
 	// Subtract m_dDeltaHASteps which is error in last slew in steps
 	MovingSteps += Sign* m_dDeltaHASteps;
+
+	// Possible that moving steps could now have changed sign! If so, trap change sign and direction.
+	if (MovingSteps < 0) {
+		if (Direction == FORWARD) {
+			Direction = BACKWARD;
+		}
+		else {
+			Direction = FORWARD;
+		}
+		MovingSteps = -MovingSteps;
+#ifdef SKYW_DEBUG
+		ltime = time(NULL);
+		timestamp = asctime(localtime(&ltime));
+		timestamp[strlen(timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] Skyw::StartTargetSlew: Trapped Negative Move. Now Movingsteps: %d Direction %d\n", timestamp, MovingSteps, Direction);
+#endif
+
+	}
+
 	
 	// Tell mount to do goto with speed and direction
 	sprintf(command, "%d%d", lowspeed, Direction);
@@ -1238,11 +1282,33 @@ int Skywatcher::SendSkywatcherCommand(SkywatcherCommand cmd, SkywatcherAxis Axis
 {
 	int itries;
 	int err = SB_OK;
+	char temp[SKYWATCHER_CHAR_BUFFER];
+
+	// Ensure that the mount is connected. If not, try to connect:
+	if (!m_bLinked) {
+		strncpy(temp, m_cPortname, SKYWATCHER_CHAR_BUFFER);
+		err = Connect(temp); if (err) return err;
+	}
 	
 	// Try SKYWATCHER_MAX_TRIES times until failure
 	for (itries = 0; itries < SKYWATCHER_MAX_TRIES; itries++) {
 		err = SendSkywatcherCommandInnerLoop(cmd, Axis, cmdArgs, response, maxlen);
 		if (err == SB_OK) break;
+
+		// When the usb cable is unplugged, then get err = 5. In this case, the mount will have to be reconnected.
+		// So, close the port and return error
+		if (err == 5) {
+#ifdef SKYW_DEBUG
+			ltime = time(NULL);
+			timestamp = asctime(localtime(&ltime));
+			timestamp[strlen(timestamp) - 1] = 0;
+			fprintf(LogFile, "[%s] Skyw::SendSkywatcherCommand Error 5 - mount disconnected.\n", timestamp);
+#endif
+			m_pSerX->close();
+			m_bLinked = false;
+			return ERR_AUTOTERMINATE;
+
+		}
 	}
 	
 #ifdef SKYW_DEBUG
@@ -1284,6 +1350,12 @@ int Skywatcher::SendSkywatcherCommandInnerLoop(SkywatcherCommand cmd, Skywatcher
 	err = m_pSerX->writeFile((void *)command, strlen(command), NBytesWrite);
 	m_pSerX->flushTx();
 	
+#ifdef SKYW_DEBUG
+	ltime = time(NULL);
+	timestamp = asctime(localtime(&ltime));
+	timestamp[strlen(timestamp) - 1] = 0;
+	fprintf(LogFile, "[%s] Skyw::SendSkywatcherCommand Write Command: %c Error Code :%d\n", timestamp, cmd, err);
+#endif
 	if (err) return err;
 	
 	//Now Read the response
