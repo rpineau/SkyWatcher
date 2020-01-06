@@ -29,6 +29,7 @@ elif [ -d "$TheSkyX_Path/Resources/Common/PlugIns64" ]; then
 	PLUGINS_DIR="$TheSkyX_Path/Resources/Common/PlugIns64"
 else
 	PLUGINS_DIR="$TheSkyX_Path/Resources/Common/PlugIns"
+fi
 
 echo "Installing in $PLUGINS_DIR/MountPlugIns/"
 
