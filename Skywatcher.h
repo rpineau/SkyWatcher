@@ -1,7 +1,21 @@
 #pragma once
+#ifdef SB_WIN_BUILD
+#include <WinSock2.h>
+#else
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#endif
+
 #include <cstdio>
 #include <time.h>
 #include <string>
+
 
 #include "../../licensedinterfaces/serxinterface.h"
 #include "../../licensedinterfaces/sberrorx.h"
@@ -13,7 +27,7 @@
 // #define SKYW_DEBUG 1   // define this to have log files
 
 // Defines below from INDI EQMOD
-#define SKYWATCHER_DRIVER_VERSION 2.8
+#define SKYWATCHER_DRIVER_VERSION 3.0
 #define SKYWATCHER_MAX_CMD        16
 #define SKYWATCHER_MAX_TRIES      3
 #define SKYWATCHER_CHAR_BUFFER   1024
@@ -43,7 +57,7 @@ public:
 	Skywatcher(SerXInterface *pSerX, SleeperInterface *pSleeper, TheSkyXFacadeForDriversInterface *pTSX);
 	~Skywatcher();
 	
-	int Connect(char *portName);
+	int Connect(void);
 	int Disconnect();
 	bool isConnected() const { return m_bLinked; }
 	char *GetMCVersionName() { return MCVersionName;  }
@@ -57,6 +71,16 @@ public:
 	bool GetIsParkingComplete() const { return !m_bGotoInProgress; }
 	bool GetIsBeyondThePole() const { return IsBeyondThePole; }
 	bool GetIsPolarAlignInProgress() const { return !IsNotGoto; }
+	bool GetIsPecTrainingOn();
+	bool GetIsPecTrackingOn() const { return m_bPECTrackingOn;  }
+	bool GetIsPecSupported() const { return m_bSupportPEC; }
+	bool GetDoesMountHaveValidPecData() const { return m_bValidPECData;  }
+	bool GetDoesMountHavePolarScope() const { return m_bPolarScope;  }
+	int TurnOnPec();
+	int TurnOffPec();
+	int StartPecTraining();
+	int CancelPecTraining();
+
 	int Abort(void);
 	int SetTrackingRates(const bool& bTrackingOn, const bool& bIgnoreRates, const double& dRaRateArcSecPerSec, const double& dDecRateArcSecPerSec);
 	int GetAxesStatus(void);
@@ -64,11 +88,16 @@ public:
 	int StartOpenSlew(const MountDriverInterface::MoveDir & 	Dir, double rate);
 	int PolarAlignment(double dHAHome, double dDecHome, int HomeIndex, double HaPolaris, double HAOctansSigma);
 	int SetST4GuideRate(int m_ST4GuideRateIndex);
+	void SetWiFiEnabled(bool enabled) { m_bWiFi = enabled; }
+	bool GetWiFiEnabled(void) { return m_bWiFi; }
 	void SetBaudRate(int BaudRate) { m_iBaudRate = BaudRate; }
 	int GetBaudRate(void) { return m_iBaudRate; }            
 	int ResetMotions(void);
 	int GetTrackingRates(bool& bTrackingOn, double& dRaRateArcSecPerSec, double& dDecRateArcSecPerSec);
 	int GetIsTracking() const { return m_bTracking; }
+	int SetPolarScopeIllumination(int Brightness);
+	void SetConnectionData(char *portname, char *IPAddress, int port, bool wifi);
+	int WiFiCheck(void);
 	
 private:
 	SerXInterface *m_pSerX;                       // Serial X interface to use to connect to device
@@ -80,6 +109,8 @@ private:
 	int m_iBaudRate;							  // Baud Rate
 	
 	bool NorthHemisphere;					      // Located in the Northern Hemisphere?
+
+	// Data to be read from mount
 	unsigned long MCVersion;                      // Motor Controller Version
 	char MCVersionName[SKYWATCHER_MAX_CMD];       // String version of Mount Controller
 	unsigned long MountCode;                      // Mount code
@@ -90,6 +121,16 @@ private:
 	unsigned long DEInteruptFreq;                 // DEC Stepper motor frequency
 	unsigned long RAHighspeedRatio;               // Motor controller multiplies speed values by this ratio when in low speed mode
 	unsigned long DEHighspeedRatio;               // This is a reflect of either using a timer interrupt with an interrupt count greater than 1 for low speed
+
+	// Extended data to be read from mount
+	bool m_bExtendedCmds;						  // Can read extended commands
+	bool m_bPECTrainingOn;						  // Is PEC Training On?
+	bool m_bPECTrackingOn;						  // Ditto PEC tracking
+	bool m_bSupportDualEncoder;					  // Does mount have dual encoders?
+	bool m_bSupportPEC;							  // Does Mount Support PEC?
+	bool m_bValidPECData;						  // Does Mount have Valid PEC data?
+	bool m_bPolarScope;							  // Has polar scope that can be altered by commands.
+
 	// or of using microstepping only for low speeds and half/full stepping for high speeds
 	unsigned long RAStep;                         // Current RA encoder position in step
 	unsigned long DEStep;                         // Current DE encoder position in step
@@ -112,9 +153,6 @@ private:
 	bool m_bTracking;							  // Is the telescope tracking?
 	double m_dRATrackingRate;					  // RA Tracking rate in arcsec/sec
 	double m_dDETrackingRate;	                  // DEC Tracking Rate in arcsec/sec
-
-	// Store portname
-	char m_cPortname[SKYWATCHER_CHAR_BUFFER];	  // Portname in case it has to be reopened.
 			
 	// Types
 	enum SkywatcherCommand {
@@ -168,6 +206,10 @@ private:
 		RESET_HOME_INDEXER_CMD = 0x08
 	};
 	
+	enum SkywatcherGetFeatureCmd {
+		INDEX_POSITION = 0x00,
+		INQUIRE_STATUS = 0x01
+	};
 	
 	enum SkywatcherAxis {
 		Axis1 = '1',       // RA/AZ
@@ -186,8 +228,7 @@ private:
 	enum SkywatcherSpeedMode { LOWSPEED = 0, HIGHSPEED = 1 };
 	enum SkywatcherInitialised {INITIALISED=0, NOTINITIALISED = 1};
 	typedef struct SkywatcherAxisStatus { SkywatcherDirection direction; SkywatcherMotionMode motionmode; SkywatcherSpeedMode speedmode; SkywatcherInitialised initialised; } SkywatcherAxisStatus;
-	enum SkywatcherError { NO_ERROR, ER_1, ER_2, ER_3 };
-	
+
 	int SendSkywatcherCommand(SkywatcherCommand cmd, SkywatcherAxis Axis, char *cmdArgs, char *response, int maxlen);
 	int SendSkywatcherCommandInnerLoop(SkywatcherCommand cmd, SkywatcherAxis Axis, char *cmdArgs, char *response, int maxlen);
 
@@ -213,12 +254,31 @@ private:
 	SkywatcherAxisStatus AxisStatus[2];
 	
 	// Convenience functions from INDI EQMOD which convert from/to a hex string <=>long value
-	unsigned long Revu24str2long(char *); // Converts 4 character HEX number encoded as string to a long value
+	unsigned long Revu24str2long(char *); // Converts 6 character HEX number encoded as string to a long value
+	void long2Revu8str(unsigned long, char *); // Converts long number to 2 character string
 	unsigned long Highstr2long(char *);   // Converts 2 character HEX number encoded as string to a long value
 	void long2Revu24str(unsigned long, char *); // Converts long number to character string
 	long abs(long value); //Utility function since not in math.h in Unix
 	
+	// Connection Data
+	char m_cPortname[SKYWATCHER_CHAR_BUFFER];	  // Serial Port Name
+	char m_cIPAddress[SKYWATCHER_CHAR_BUFFER];	  // WiFi IP Address
+	int  m_iWiFiPortNumber;                           // WiFi Port Number
+	bool m_bWiFi;                                     // Are we using WiFi or not?
 
+	// Lets try this for all builds
+//#if defined SB_LINUX_BUILD || defined SB_WIN_BUILD
+	// WIFI UDP Socet Data
+	int m_isockfd;     // Socket id
+	int m_iserverlen;  // Length of server address
+	struct sockaddr_in m_serveraddr; // Struct for server address
+//#endif
+
+#ifdef SB_WIN_BUILD
+	WSADATA wsadata;
+#endif
+
+	
 #ifdef SKYW_DEBUG
 	char m_sLogfilePath[SKYWATCHER_CHAR_BUFFER];
 	// timestamp for logs

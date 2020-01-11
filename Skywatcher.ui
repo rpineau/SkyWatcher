@@ -10,25 +10,19 @@
     <x>0</x>
     <y>0</y>
     <width>464</width>
-    <height>500</height>
+    <height>681</height>
    </rect>
-  </property>
-  <property name="sizePolicy">
-   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-    <horstretch>0</horstretch>
-    <verstretch>0</verstretch>
-   </sizepolicy>
   </property>
   <property name="minimumSize">
    <size>
     <width>464</width>
-    <height>500</height>
+    <height>681</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
     <width>464</width>
-    <height>500</height>
+    <height>681</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -37,9 +31,6 @@
   <layout class="QVBoxLayout" name="verticalLayout_6">
    <item>
     <widget class="X2Form" name="X2Form">
-     <property name="enabled">
-      <bool>true</bool>
-     </property>
      <property name="minimumSize">
       <size>
        <width>1</width>
@@ -87,7 +78,7 @@
         <x>8</x>
         <y>0</y>
         <width>424</width>
-        <height>191</height>
+        <height>231</height>
        </rect>
       </property>
       <property name="maximumSize">
@@ -170,23 +161,24 @@ Requires home position to have been set previously.</string>
          <x>224</x>
          <y>120</y>
          <width>176</width>
-         <height>51</height>
+         <height>61</height>
         </rect>
        </property>
        <property name="text">
         <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt; font-weight:600; color:#ff0000;&quot;&gt;BEWARE:&lt;/span&gt;&lt;span style=&quot; font-size:12pt; color:#ff0000;&quot;&gt; May move&lt;/span&gt;&lt;/p&gt;
-&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt; color:#ff0000;&quot;&gt;counterweights above scope!&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt; color:#ff0000;&quot;&gt;counterweights above &lt;/span&gt;&lt;/p&gt;
+&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt; color:#ff0000;&quot;&gt;scope!&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
       </widget>
       <widget class="QLabel" name="label_3">
        <property name="geometry">
         <rect>
-         <x>16</x>
-         <y>120</y>
+         <x>20</x>
+         <y>130</y>
          <width>48</width>
          <height>16</height>
         </rect>
@@ -198,22 +190,67 @@ p, li { white-space: pre-wrap; }
       <widget class="QLabel" name="label_4">
        <property name="geometry">
         <rect>
-         <x>40</x>
-         <y>150</y>
+         <x>70</x>
+         <y>130</y>
+         <width>131</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#00aa00;&quot;&gt;TextLabel&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+      </widget>
+      <widget class="QSlider" name="horizontalSlider">
+       <property name="geometry">
+        <rect>
+         <x>220</x>
+         <y>190</y>
+         <width>181</width>
+         <height>22</height>
+        </rect>
+       </property>
+       <property name="toolTip">
+        <string>Controls brightness of Polar Illuminator LED</string>
+       </property>
+       <property name="maximum">
+        <number>255</number>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_5">
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>190</y>
          <width>141</width>
          <height>16</height>
         </rect>
        </property>
        <property name="text">
-        <string>TextLabel</string>
+        <string>Polar Illuminator Brightness</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_17">
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>160</y>
+         <width>181</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Clock Location</string>
        </property>
       </widget>
      </widget>
      <widget class="QPushButton" name="pushButtonOK">
       <property name="geometry">
        <rect>
-        <x>264</x>
-        <y>440</y>
+        <x>250</x>
+        <y>630</y>
         <width>80</width>
         <height>24</height>
        </rect>
@@ -225,8 +262,8 @@ p, li { white-space: pre-wrap; }
      <widget class="QPushButton" name="pushButtonCancel">
       <property name="geometry">
        <rect>
-        <x>352</x>
-        <y>440</y>
+        <x>350</x>
+        <y>630</y>
         <width>80</width>
         <height>24</height>
        </rect>
@@ -235,78 +272,13 @@ p, li { white-space: pre-wrap; }
        <string>Cancel</string>
       </property>
      </widget>
-     <widget class="QGroupBox" name="groupBox_2">
-      <property name="geometry">
-       <rect>
-        <x>8</x>
-        <y>200</y>
-        <width>191</width>
-        <height>71</height>
-       </rect>
-      </property>
-      <property name="title">
-       <string>Guide Rate</string>
-      </property>
-      <widget class="QComboBox" name="comboBox_2">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>32</y>
-         <width>170</width>
-         <height>22</height>
-        </rect>
-       </property>
-      </widget>
-     </widget>
-     <widget class="QGroupBox" name="groupBox_3">
-      <property name="geometry">
-       <rect>
-        <x>232</x>
-        <y>200</y>
-        <width>200</width>
-        <height>71</height>
-       </rect>
-      </property>
-      <property name="title">
-       <string>Post Slew Delay</string>
-      </property>
-      <widget class="QSpinBox" name="spinBox">
-       <property name="geometry">
-        <rect>
-         <x>20</x>
-         <y>32</y>
-         <width>80</width>
-         <height>22</height>
-        </rect>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-       <property name="maximum">
-        <number>3600</number>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_5">
-       <property name="geometry">
-        <rect>
-         <x>110</x>
-         <y>32</y>
-         <width>60</width>
-         <height>22</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Seconds</string>
-       </property>
-      </widget>
-     </widget>
      <widget class="QGroupBox" name="groupBox_5">
       <property name="geometry">
        <rect>
-        <x>8</x>
-        <y>280</y>
+        <x>10</x>
+        <y>315</y>
         <width>424</width>
-        <height>152</height>
+        <height>131</height>
        </rect>
       </property>
       <property name="maximumSize">
@@ -323,8 +295,8 @@ p, li { white-space: pre-wrap; }
         <rect>
          <x>10</x>
          <y>30</y>
-         <width>200</width>
-         <height>85</height>
+         <width>141</width>
+         <height>93</height>
         </rect>
        </property>
        <layout class="QFormLayout" name="formLayout">
@@ -364,6 +336,22 @@ p, li { white-space: pre-wrap; }
           </property>
          </widget>
         </item>
+        <item row="1" column="1">
+         <widget class="QDoubleSpinBox" name="doubleSpinBox_2">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sets limit of mount slewing when the OTA is west of the meridian - how far can the mount track beyond the merdian. If positive, indicates that the mount can go slightly into the weights up position. The West Limit must be greater than or equal to the East Limit.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="minimum">
+           <double>-2.000000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>2.000000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>0.100000000000000</double>
+          </property>
+         </widget>
+        </item>
         <item row="2" column="0">
          <widget class="QLabel" name="label_8">
           <property name="toolTip">
@@ -390,35 +378,19 @@ p, li { white-space: pre-wrap; }
           </property>
          </widget>
         </item>
-        <item row="1" column="1">
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_2">
-          <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sets limit of mount slewing when the OTA is west of the meridian - how far can the mount track beyond the merdian. If positive, indicates that the mount can go slightly into the weights up position. The West Limit must be greater than or equal to the East Limit.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-          </property>
-          <property name="minimum">
-           <double>-2.000000000000000</double>
-          </property>
-          <property name="maximum">
-           <double>2.000000000000000</double>
-          </property>
-          <property name="singleStep">
-           <double>0.100000000000000</double>
-          </property>
-         </widget>
-        </item>
        </layout>
       </widget>
       <widget class="QLabel" name="label_9">
        <property name="geometry">
         <rect>
-         <x>232</x>
-         <y>72</y>
+         <x>160</x>
+         <y>31</y>
          <width>64</width>
-         <height>21</height>
+         <height>20</height>
         </rect>
        </property>
        <property name="toolTip">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sets limit of mount slewing to east of meridian - used to move mount east of meridian to avoid having to complete a meridian flip like the paramount.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="text">
         <string>Hours</string>
@@ -427,9 +399,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QWidget" name="formLayoutWidget_2">
        <property name="geometry">
         <rect>
-         <x>232</x>
+         <x>210</x>
          <y>30</y>
-         <width>176</width>
+         <width>125</width>
          <height>32</height>
         </rect>
        </property>
@@ -465,30 +437,324 @@ p, li { white-space: pre-wrap; }
       <widget class="QLabel" name="label_11">
        <property name="geometry">
         <rect>
-         <x>328</x>
-         <y>72</y>
+         <x>340</x>
+         <y>30</y>
          <width>64</width>
          <height>21</height>
         </rect>
        </property>
        <property name="toolTip">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sets limit of mount slewing to east of meridian - used to move mount east of meridian to avoid having to complete a meridian flip like the paramount.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="text">
         <string>Degrees</string>
        </property>
       </widget>
+      <widget class="QLabel" name="label_14">
+       <property name="geometry">
+        <rect>
+         <x>160</x>
+         <y>57</y>
+         <width>64</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+       <property name="text">
+        <string>Hours</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_15">
+       <property name="geometry">
+        <rect>
+         <x>160</x>
+         <y>83</y>
+         <width>64</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+       <property name="text">
+        <string>Hours</string>
+       </property>
+      </widget>
       <widget class="QLabel" name="label_12">
        <property name="geometry">
         <rect>
-         <x>10</x>
-         <y>120</y>
-         <width>401</width>
-         <height>24</height>
+         <x>210</x>
+         <y>70</y>
+         <width>201</width>
+         <height>51</height>
         </rect>
        </property>
        <property name="text">
         <string>TextLabel</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </widget>
+     <widget class="QGroupBox" name="groupBox_6">
+      <property name="geometry">
+       <rect>
+        <x>232</x>
+        <y>237</y>
+        <width>200</width>
+        <height>71</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Post Slew Delay</string>
+      </property>
+      <widget class="QSpinBox" name="spinBox">
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>32</y>
+         <width>80</width>
+         <height>22</height>
+        </rect>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+       <property name="maximum">
+        <number>3600</number>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_13">
+       <property name="geometry">
+        <rect>
+         <x>110</x>
+         <y>32</y>
+         <width>60</width>
+         <height>22</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Seconds</string>
+       </property>
+      </widget>
+     </widget>
+     <widget class="QGroupBox" name="groupBox_7">
+      <property name="geometry">
+       <rect>
+        <x>8</x>
+        <y>237</y>
+        <width>191</width>
+        <height>71</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Guide Rate</string>
+      </property>
+      <widget class="QComboBox" name="comboBox_2">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>32</y>
+         <width>170</width>
+         <height>22</height>
+        </rect>
+       </property>
+      </widget>
+     </widget>
+     <widget class="QGroupBox" name="groupBox">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>450</y>
+        <width>421</width>
+        <height>81</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>PPEC Training</string>
+      </property>
+      <widget class="QCheckBox" name="checkBox">
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>60</y>
+         <width>81</width>
+         <height>17</height>
+        </rect>
+       </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If PPEC data is stored in the mount, PPEC is enabled by default. It can be disabled manually here if required.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+       <property name="text">
+        <string>Enable PPEC</string>
+       </property>
+       <property name="tristate">
+        <bool>false</bool>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushButton_3">
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>30</y>
+         <width>101</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Start PPEC training. Can take up to 20 minutes depending on the mount.&lt;span style=&quot; color:#aa0000;&quot;&gt; Ensure autoguiding is turned&lt;/span&gt; on before traing.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+       <property name="text">
+        <string>Start PPEC Training</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_16">
+       <property name="geometry">
+        <rect>
+         <x>210</x>
+         <y>30</y>
+         <width>201</width>
+         <height>41</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>TextLabel</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </widget>
+     <widget class="QGroupBox" name="groupBox_2">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>536</y>
+        <width>421</width>
+        <height>81</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Synscan Wifi </string>
+      </property>
+      <widget class="QLabel" name="label_18">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>27</y>
+         <width>71</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>IP Address</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="lineEdit">
+       <property name="geometry">
+        <rect>
+         <x>70</x>
+         <y>23</y>
+         <width>141</width>
+         <height>24</height>
+        </rect>
+       </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enter IP address of synscan wifi dongle&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+       <property name="inputMethodHints">
+        <set>Qt::ImhNone</set>
+       </property>
+       <property name="text">
+        <string>192.168.4.1</string>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="lineEdit_2">
+       <property name="geometry">
+        <rect>
+         <x>70</x>
+         <y>53</y>
+         <width>141</width>
+         <height>24</height>
+        </rect>
+       </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enter port for Synscan dongle&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+       <property name="inputMethodHints">
+        <set>Qt::ImhDigitsOnly</set>
+       </property>
+       <property name="text">
+        <string>11880</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_19">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>57</y>
+         <width>71</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Port</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="checkBox_2">
+       <property name="geometry">
+        <rect>
+         <x>250</x>
+         <y>20</y>
+         <width>161</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Check box to connect over wifi&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+       <property name="text">
+        <string>Enable Wifi Connection</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_20">
+       <property name="geometry">
+        <rect>
+         <x>250</x>
+         <y>44</y>
+         <width>161</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>TextLabel</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
        </property>
       </widget>
      </widget>

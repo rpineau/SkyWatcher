@@ -80,6 +80,11 @@ X2Mount::X2Mount(const char* pszDriverSelection,
 		m_dFlipHourAngle = m_pIniUtil->readDouble(PARENT_KEY, CHILD_KEY_FLIPHOURANGLE, 0.0);
 		m_dMinAngleAboveHorizon = m_pIniUtil->readDouble(PARENT_KEY, CHILD_KEY_ANGLEABOVEHORIZON, 0.0);
 		m_iBaudRate = m_pIniUtil->readInt(PARENT_KEY, CHILD_KEY_BAUDRATE, 9600);
+		m_iLEDBrightness = m_pIniUtil->readInt(PARENT_KEY, CHILD_KEY_LEDBRIGHTNESS, 128);
+		m_bPecEnabled = m_pIniUtil->readInt(PARENT_KEY, CHILD_KEY_PECENABLED, 0);
+		m_bWiFiEnabled = m_pIniUtil->readInt(PARENT_KEY, CHILD_KEY_WIFIENABLED, 0);
+		m_pIniUtil->readString(PARENT_KEY, CHILD_KEY_WIFIIP, "192.168.4.1", m_cWiFiIPAddress, MAX_PORT_NAME_SIZE);
+		m_iWiFiPort = m_pIniUtil->readInt(PARENT_KEY, CHILD_KEY_WIFIPORT, 11880);
 	}
 
 #ifdef HEQ5_DEBUG
@@ -87,6 +92,7 @@ X2Mount::X2Mount(const char* pszDriverSelection,
 	timestamp = asctime(localtime(&ltime));
 	timestamp[strlen(timestamp) - 1] = 0;
 	fprintf(LogFile, "[%s] Park Encoder Values: Parked %d RA %u Dec %u\n", timestamp, m_bParked, m_lRaParkEncoder, m_lDecParkEncoder);
+	fprintf(LogFile, "[%s] PEC Setting:  PecEnabled %d\n", timestamp, m_bPecEnabled);
 #endif
 
 	// Set the guiderate index
@@ -131,6 +137,7 @@ X2Mount::~X2Mount()
 	m_pIniUtil->writeInt(PARENT_KEY, CHILD_KEY_GUIDERATE, m_iST4GuideRateIndex);
 	m_pIniUtil->writeInt(PARENT_KEY, CHILD_KEY_SLEWDELAY, m_iPostSlewDelay);
 	m_pIniUtil->writeInt(PARENT_KEY, CHILD_KEY_ISPARKED, m_bParked);
+	m_pIniUtil->writeInt(PARENT_KEY, CHILD_KEY_LEDBRIGHTNESS, m_iLEDBrightness);
 
 	if (m_pSerX)
 		delete m_pSerX;
@@ -256,10 +263,12 @@ int X2Mount::execModalSettingsDialog(void)
 {
 	int nErr = SB_OK;
 	X2ModalUIUtil uiutil(this, m_pTheSkyXForMounts);
-	X2GUIInterface*					ui = uiutil.X2UI();
-	X2GUIExchangeInterface*			dx = NULL;//Comes after ui is loaded
+	X2GUIInterface*	ui = uiutil.X2UI();
+	X2GUIExchangeInterface* dx = NULL;		//Comes after ui is loaded
 	bool bPressedOK = false;
 	int i;
+	char ColourLabel[400];					// String to use to change colour of label.
+	char WiFiPortString[MAX_PORT_NAME_SIZE];	// String to use for wifi port
 	
 #ifdef HEQ5_DEBUG
 	time_t ltime;
@@ -310,16 +319,20 @@ int X2Mount::execModalSettingsDialog(void)
 		dx->setEnabled("comboBox", false);
 	}
 	if (!SkyW.isConnected()) {
-		dx->setPropertyString("label_4", "text", "Disconnected");
+		sprintf(ColourLabel, "%sDisconnected", QTRED);
+		dx->setPropertyString("label_4", "text", ColourLabel);;
 	}
 	else if (m_bParked) {
-		dx->setPropertyString("label_4", "text", "Parked");
+		sprintf(ColourLabel, "%sParked", QTGREEN);
+		dx->setPropertyString("label_4", "text", ColourLabel);;
 	}
 	else if (SkyW.GetIsTracking()) {
-		dx->setPropertyString("label_4", "text", "Tracking on");
+		sprintf(ColourLabel, "%sTracking On", QTGREEN);
+		dx->setPropertyString("label_4", "text", ColourLabel);;
 	}
 	else {
-		dx->setPropertyString("label_4", "text", "Tracking off");
+		sprintf(ColourLabel, "%sTracking Off", QTGREEN);
+		dx->setPropertyString("label_4", "text", ColourLabel);;
 	}
 	
 	// Now set the values for the tracking limits.
@@ -333,8 +346,25 @@ int X2Mount::execModalSettingsDialog(void)
 	m_dTempWestSlewLim = m_dWestSlewLim;
 	m_dTempFlipHourAngle = m_dFlipHourAngle;
 
+	// Set the value for the polar LED brightness and set enabled if connected
+	dx->setPropertyInt("horizontalSlider", "value", m_iLEDBrightness);
+	if (SkyW.isConnected()) {
+		if (SkyW.GetDoesMountHavePolarScope()) {
+			dx->setEnabled("horizontalSlider", true);
+		}
+		else {
+			dx->setPropertyString("label_5", "text", "Cannot set LED brightness");
+			dx->setEnabled("horizontalSlider", false);
+		}
+	}
+	else {
+		dx->setEnabled("horizontalSlider", false);
+	}
+
 	// Slew limits should be OK - and if not, will get checked in any event
-	dx->setPropertyString("label_12", "text", "Slew limits OK");
+	sprintf(ColourLabel, "%sSlew limits OK", QTGREEN);
+	dx->setPropertyString("label_12", "text", ColourLabel);;
+
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
 		ltime = time(NULL);
@@ -343,6 +373,90 @@ int X2Mount::execModalSettingsDialog(void)
 		fprintf(LogFile, "[%s] execModealSetting::  Input Slew Limits %02f %02f %02f %02f\n", timestamp, m_dEastSlewLim, m_dWestSlewLim, m_dFlipHourAngle, m_dMinAngleAboveHorizon);
 	}
 #endif
+
+	// Now PEC Interface.
+	if (!SkyW.isConnected()) {
+		dx->setEnabled("pushButton_3", false);
+		dx->setEnabled("checkBox", false);
+		dx->setChecked("checkBox", false);
+		sprintf(ColourLabel, "%sDisconnected", QTRED);
+		dx->setPropertyString("label_16", "text", ColourLabel);
+	}
+	else if (!SkyW.GetIsPecSupported()) {
+		dx->setEnabled("pushButton_3", false);
+		dx->setEnabled("checkBox", false);
+		dx->setPropertyString("label_16", "text", "PEC Not Supported on this mount");
+	}
+	else if (m_bParked) {
+		dx->setEnabled("pushButton_3", false);
+		dx->setEnabled("checkBox", true);
+		dx->setChecked("checkBox", m_bPecEnabled);
+		sprintf(ColourLabel, "%sParked", QTGREEN);
+		dx->setPropertyString("label_16", "text", ColourLabel);
+	} 
+	else {
+		dx->setEnabled("pushButton_3", SkyW.GetIsTracking());
+		if (SkyW.GetDoesMountHaveValidPecData()) {
+			dx->setEnabled("checkBox", true);
+			dx->setChecked("checkBox", m_bPecEnabled);
+			if (m_bPecEnabled) {
+				sprintf(ColourLabel, "%sPPEC Trained and Enabled", QTGREEN);
+			}
+			else {
+				sprintf(ColourLabel, "%sPPEC Trained but disabled", QTRED);
+			}
+			dx->setPropertyString("label_16", "text", ColourLabel);
+		}
+		else {
+			dx->setEnabled("checkBox", false);
+			dx->setChecked("checkBox", false);
+			sprintf(ColourLabel, "%sMount does not have valid PPEC data. Ensure autoguider is running then click \"Start PPEC Training\" to store.", QTRED);
+			dx->setPropertyString("label_16", "text", ColourLabel);
+		}
+	}
+
+	// At start, PPEC training will not be on
+	m_bIsPECTraining = false;
+
+	// Now the Wifi interface
+	dx->setPropertyString("lineEdit", "text", m_cWiFiIPAddress);
+	snprintf(WiFiPortString, MAX_PORT_NAME_SIZE, "%d", m_iWiFiPort);
+	dx->setPropertyString("lineEdit_2", "text", WiFiPortString);
+	dx->setChecked("checkBox_2", m_bWiFiEnabled);
+
+	// Checking box will cause a changed state event. If enabled, will be handled by uievent routine.
+	// Just need to handle the not enabled set up.
+	if (!m_bWiFiEnabled) {
+	  sprintf(ColourLabel, "%sWiFi Disconnected", QTRED);
+	  dx->setPropertyString("label_20", "text", ColourLabel);
+	}
+	  
+#ifdef HEQ5_DEBUG
+	if (LogFile) {
+		ltime = time(NULL);
+		timestamp = asctime(localtime(&ltime));
+		timestamp[strlen(timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] execModelSettingsDialog IsConnected %d\n", timestamp, SkyW.isConnected());
+	}
+#endif
+	// Is the mount connected? If so, disable controls
+	if (SkyW.isConnected()) {
+	  
+	  dx->setEnabled("lineEdit", false);
+	  dx->setEnabled("lineEdit_2", false);
+	  dx->setEnabled("checkBox_2", false);  
+	}
+
+	// Ensure wifi interface is disabled if not on unix
+	/* 
+//#ifndef SB_LINUX_BUILD 
+	dx->setEnabled("lineEdit", false);
+	dx->setEnabled("lineEdit_2", false);
+	dx->setEnabled("checkBox_2", false);
+	sprintf(ColourLabel, "%sOnly enabled under LINUX", QTRED);
+	dx->setPropertyString("label_20", "text", ColourLabel);
+//#endif
+*/
 
 	//Display the user interface
 	if ((nErr = ui->exec(bPressedOK)))
@@ -375,12 +489,34 @@ int X2Mount::execModalSettingsDialog(void)
 		m_pIniUtil->writeDouble(PARENT_KEY, CHILD_KEY_WESTSLEWLIM, m_dWestSlewLim);
 		m_pIniUtil->writeDouble(PARENT_KEY, CHILD_KEY_FLIPHOURANGLE, m_dFlipHourAngle);
 		m_pIniUtil->writeDouble(PARENT_KEY, CHILD_KEY_ANGLEABOVEHORIZON, m_dMinAngleAboveHorizon);
+		m_pIniUtil->writeInt(PARENT_KEY, CHILD_KEY_LEDBRIGHTNESS, m_iLEDBrightness);
+		m_pIniUtil->writeInt(PARENT_KEY, CHILD_KEY_PECENABLED, m_bPecEnabled);
+
+		dx->propertyString("lineEdit", "text", m_cWiFiIPAddress, MAX_PORT_NAME_SIZE);
+		dx->propertyString("lineEdit_2", "text", WiFiPortString, MAX_PORT_NAME_SIZE);
+		m_iWiFiPort = atoi(WiFiPortString);
+		m_bWiFiEnabled = dx->isChecked("checkBox_2");
+
+#ifdef HEQ5_DEBUG
+		if (LogFile) {
+			ltime = time(NULL);
+			timestamp = asctime(localtime(&ltime));
+			timestamp[strlen(timestamp) - 1] = 0;
+			fprintf(LogFile, "[%s] execModealSetting::  IPadd %s port string %s port %d enabled %d\n", timestamp, m_cWiFiIPAddress, WiFiPortString, m_iWiFiPort, m_bWiFiEnabled);
+		}
+#endif
+
+		m_pIniUtil->writeInt(PARENT_KEY, CHILD_KEY_WIFIENABLED, m_bWiFiEnabled);
+		m_pIniUtil->writeString(PARENT_KEY, CHILD_KEY_WIFIIP, m_cWiFiIPAddress);
+		m_pIniUtil->writeInt(PARENT_KEY, CHILD_KEY_WIFIPORT, m_iWiFiPort);
+
 #ifdef HEQ5_DEBUG
 		if (LogFile) {
 			ltime = time(NULL);
 			timestamp = asctime(localtime(&ltime));
 			timestamp[strlen(timestamp) - 1] = 0;
 			fprintf(LogFile, "[%s] execModealSetting::  Output Slew Limits %02f %02f %02f %02f\n", timestamp, m_dEastSlewLim, m_dWestSlewLim, m_dFlipHourAngle, m_dMinAngleAboveHorizon);
+			fprintf(LogFile, "[%s] execModealSetting::  PecEnabled %d\n", timestamp, m_bPecEnabled);
 		}
 #endif
     }
@@ -395,10 +531,18 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 	double readtemp;												// For reading current slew variables
 	bool ichange = false;											// Have the slew variables changed?
 	bool slewerr = false;											// Is there an error in the slew variables?
-	
+	int itemp;														// For reading temporary illuminator data
+	char Orientation[200];											// Label for polris/Octans orientation
+	char *StarName;													// Name of star for orientation
+	double HAStar;													// HA for star for orientation
+	int hours;														// Hour for orientation label
+	int minutes;													// Minutes for orientation label
+	char ColourLabel[400];											// String to use when want to clour a label
+	char WiFiPortString[MAX_PORT_NAME_SIZE];						// String for name of WiFiPort
+
 	int err;
 	X2MutexLocker ml(GetMutex());
-	
+
 #ifdef HEQ5_DEBUG
 	time_t ltime;
 	char *timestamp;
@@ -409,7 +553,53 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 		fprintf(LogFile, "[%s] uievent %s\n", timestamp, pszEvent);
 	}
 #endif
-	if (!strcmp(pszEvent, "on_timer")) { // Periodical event - use it to check status of slew and form
+	if (!strcmp(pszEvent, "on_timer")) { // Periodical event - use it to check status of slew data and polar illuminator data
+
+
+		// Set the orientation label
+		HAPolaris = m_pTheSkyXForMounts->hourAngle(RAPolaris);
+		HAOctansSigma = m_pTheSkyXForMounts->hourAngle(RAOctansSigma);
+
+		// Choose star dependent on latitude.
+		if (m_pTheSkyXForMounts->latitude() > 0) {
+			// Northern Hemisphere
+			StarName = "Polaris";
+			HAStar = m_pTheSkyXForMounts->hourAngle(RAPolaris);
+		}
+		else {
+			StarName = "Octans";
+			HAStar = m_pTheSkyXForMounts->hourAngle(RAOctansSigma);
+		}
+		HAStar += 12.0;						// Allow for inversion
+		if (HAStar > 24.0) HAStar -= 24.0;	// Ensure in right range
+		HAStar = (24 - HAStar) / 2.0;			// Earth goes opposite way to the clock. Also allow for 12 hour display so divide by 2
+
+		// Convert to hours and minutes
+		hours = floor(HAStar);
+		minutes = floor((HAStar - hours) * 60 + 0.5);
+
+		// Format String
+		sprintf(Orientation, "%s clock location:     %02d:%02d", StarName, hours, minutes);
+		uiex->setPropertyString("label_17", "text", Orientation);
+
+		// Read the value of the horizontal slider
+		uiex->propertyInt("horizontalSlider", "value", itemp);
+		if (itemp != m_iLEDBrightness && SkyW.GetDoesMountHavePolarScope()) {
+			m_iLEDBrightness = itemp;
+			m_pIniUtil->writeInt(PARENT_KEY, CHILD_KEY_LEDBRIGHTNESS, m_iLEDBrightness);
+			SkyW.SetPolarScopeIllumination(m_iLEDBrightness);
+#ifdef HEQ5_DEBUG
+			time_t ltime;
+			char *timestamp;
+			if (LogFile) {
+				ltime = time(NULL);
+				timestamp = asctime(localtime(&ltime));
+				timestamp[strlen(timestamp) - 1] = 0;
+				fprintf(LogFile, "[%s] LED Illuminator %d\n", timestamp, m_iLEDBrightness);
+			}
+#endif
+		}
+
 
 		// First read the slew limits values and see if any have changed
 		uiex->propertyDouble("doubleSpinBox", "value", readtemp);
@@ -441,26 +631,65 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 		// Check the variables if the slew limits have changed
 		if (ichange) {
 			if (m_dTempEastSlewLim > m_dTempWestSlewLim) {
-				uiex->setPropertyString("label_12", "text", "West Limit set equal to East Limit: West limit must be >= East Limit");
+				sprintf(ColourLabel, "%sWest Limit set equal to East Limit: West limit must be >= East Limit", QTRED);
+				uiex->setPropertyString("label_12", "text", ColourLabel);
 				m_dTempWestSlewLim = m_dTempEastSlewLim;
 				uiex->setPropertyDouble("doubleSpinBox_2", "value", m_dTempWestSlewLim);
 				slewerr = true;
 			}
 			if (m_dTempFlipHourAngle < m_dTempEastSlewLim) {
-				uiex->setPropertyString("label_12", "text", "Flip hour angle set equal to East Limit: must be >= East Limit");
+				sprintf(ColourLabel, "%sFlip hour angle set equal to East Limit: must be >= East Limit", QTRED);
+				uiex->setPropertyString("label_12", "text", ColourLabel);
 				m_dTempFlipHourAngle = m_dTempEastSlewLim;
 				uiex->setPropertyDouble("doubleSpinBox_3", "value", m_dTempFlipHourAngle);
 				slewerr = true;
 			}
 			if (m_dTempFlipHourAngle > m_dTempWestSlewLim) {
-				uiex->setPropertyString("label_12", "text", "Flip hour angle set to West Limit: must be <= West Limit");
+				sprintf(ColourLabel, "%sFlip hour angle set to West Limit: must be <= West Limit", QTRED);
+				uiex->setPropertyString("label_12", "text", ColourLabel);
 				m_dTempFlipHourAngle = m_dTempWestSlewLim;
 				uiex->setPropertyDouble("doubleSpinBox_3", "value", m_dTempFlipHourAngle);
 				slewerr = true;
 			}
 			// If no errors, say slew limits are OK.
 			if (!slewerr) {
-				uiex->setPropertyString("label_12", "text", "Slew limits OK");
+				sprintf(ColourLabel, "%sSlew limits OK", QTGREEN);
+				uiex->setPropertyString("label_12", "text", ColourLabel);
+			}
+		}
+
+		// Check to see PPEC is running
+		if (m_bIsPECTraining) {  // No need to go further if not running
+			if (!SkyW.GetIsPecTrainingOn()) {  // PPEC Training Now Completed
+				SkyW.TurnOnPec();
+				if (SkyW.GetIsPecTrackingOn()) {
+					uiex->setPropertyString("pushButton_3", "text", "Start PPEC Training"); // Change label to indicate now cancelled.
+					sprintf(ColourLabel, "%sPPEC Training Completed. Data stored and PPEC running.", QTGREEN);
+					uiex->setPropertyString("label_16", "text", ColourLabel);
+					uiex->setEnabled("checkBox", true);
+					if (!uiex->isChecked("checkBox")) m_bCausedCheckBoxStateChange = true;  // See if have changed state of check box - if so, we should ignore next ui event.
+					uiex->setChecked("checkBox", true);
+					m_bPecEnabled = true;
+				}
+				else {
+					uiex->setPropertyString("pushButton_3", "text", "Start PPEC Training"); // Change label to indicate now cancelled.
+					sprintf(ColourLabel, "%sPPEC Training Failed.", QTRED);
+					uiex->setPropertyString("label_16", "text", ColourLabel);
+					uiex->setEnabled("checkBox", false);
+					if (uiex->isChecked("checkBox")) m_bCausedCheckBoxStateChange = true;  // See if have changed state of check box - if so, we should ignore next ui event.
+					uiex->setChecked("checkBox", false);
+					m_bPecEnabled = false;
+				}
+
+				// Re-enable buttons
+				uiex->setEnabled("pushButton", true);  // And all other pushbuttons
+				if (m_bPolarisHomeAlignmentSet) uiex->setEnabled("pushButton_2", true);  // And all other pushbuttons
+				uiex->setEnabled("pushButtonOK", true);  // And all other pushbuttons
+				uiex->setEnabled("pushButtonCancel", true);  // And all other pushbuttons
+
+				// Record that training is now completed
+				m_bIsPECTraining = false;
+				return;
 			}
 		}
 
@@ -478,11 +707,12 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 			uiex->setPropertyString("pushButton_2", "text", "Move to Alignment Position"); // Change label to indicate action taken
 			m_bPolarisAlignmentSlew = false;
 			setTrackingRates(true, true, 0.0, 0.0);        // Start tracking
-			uiex->setPropertyString("label_4", "text", "Tracking on"); // Update Status
+			sprintf(ColourLabel, "%sTracking On", QTGREEN);
+			uiex->setPropertyString("label_4", "text", ColourLabel);
 			return;
 		}
 	}
-	
+
 	if (!strcmp(pszEvent, "on_pushButton_clicked")) { //Set the home polarbutton
 		m_HomePolarisClock = uiex->currentIndex("comboBox");
 		err = SkyW.GetMountHAandDec(m_HomeAlignmentHA, m_HomeAlignmentDEC);
@@ -490,10 +720,10 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 			uiex->messageBox("Error", "Problem getting current HA and DEC. Try again.");
 			return;
 		}
-		
+
 		uiex->setPropertyString("pushButton", "text", "Set"); // Change label to indicate action taken
-		
-		
+
+
 		// Store values in init file
 #ifdef HEQ5_DEBUG
 		if (LogFile) {
@@ -509,19 +739,22 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 		m_bPolarisHomeAlignmentSet = true;
 		// Now permit move to alignement to be on
 		uiex->setEnabled("pushButton_2", true);
-		
+
+
 	}
-	
+
 	if (!strcmp(pszEvent, "on_pushButton_2_clicked")) { //Move to alignment
 		// Calculate current HA of Polaris
 		if (!m_bPolarisAlignmentSlew) {
 			HAPolaris = m_pTheSkyXForMounts->hourAngle(RAPolaris);
 			HAOctansSigma = m_pTheSkyXForMounts->hourAngle(RAOctansSigma);
-			err = SkyW.PolarAlignment(m_HomeAlignmentHA, m_HomeAlignmentDEC, m_HomePolarisClock, HAPolaris,HAOctansSigma);
+			uiex->messageBox("Warning", "May move counterweights above scope");
+			err = SkyW.PolarAlignment(m_HomeAlignmentHA, m_HomeAlignmentDEC, m_HomePolarisClock, HAPolaris, HAOctansSigma);
 			if (err) {
 				uiex->messageBox("Error", "Problem getting current HA and DEC. Connection error?");
 				return;
 			}
+
 			m_bPolarisAlignmentSlew = true;
 			uiex->setPropertyString("pushButton_2", "text", "Abort"); // Change label to indicate action taken
 			uiex->setPropertyString("label_4", "text", "Slewing..."); //Update Status
@@ -530,13 +763,143 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 		else {
 			err = SkyW.Abort();
 			uiex->setPropertyString("pushButton_2", "text", "Move to Alignment Position"); // Change label to indicate action taken
-			uiex->setPropertyString("label_4", "text", "Tracking off"); // Update Status
+			sprintf(ColourLabel, "%sTracking Off", QTRED);
+			uiex->setPropertyString("label_4", "text", ColourLabel);
 			m_bPolarisAlignmentSlew = false;
 			return;
 		}
 	}
+
+	// Now deal with PEC Training data
+	if (!strcmp(pszEvent, "on_pushButton_3_clicked")) { // Start PPEC training
+		if (!m_bIsPECTraining) {
+			uiex->setPropertyString("pushButton_3", "text", "Cancel"); // Change label to indicate action taken
+			sprintf(ColourLabel, "%sPPEC Training Running...", QTGREEN);
+			uiex->setPropertyString("label_16", "text", ColourLabel);
+			uiex->setEnabled("checkBox", false);    // Turn off ability to change PEC
+			uiex->setEnabled("pushButton", false);  // And all other pushbuttons
+			uiex->setEnabled("pushButton_2", false);  // And all other pushbuttons
+			uiex->setEnabled("pushButtonOK", false);  // And all other pushbuttons
+			uiex->setEnabled("pushButtonCancel", false);  // And all other pushbuttons
+
+			SkyW.StartPecTraining();
+			m_bIsPECTraining = true;
+#ifdef HEQ5_DEBUG
+			if (LogFile) {
+				ltime = time(NULL);
+				timestamp = asctime(localtime(&ltime));
+				timestamp[strlen(timestamp) - 1] = 0;
+				fprintf(LogFile, "[%s] pushButton_3_clicked. Started PPEC training\n", timestamp);
+			}
+#endif
+			return;
+		}
+		else {
+			SkyW.CancelPecTraining();
+			// See if PPEC can still be turned on
+			SkyW.TurnOnPec();
+
+			// Now handle UI
+			uiex->setPropertyString("pushButton_3", "text", "Start PPEC Training"); // Change label to indicate now cancelled.
+			if (SkyW.GetDoesMountHaveValidPecData()) {
+				sprintf(ColourLabel, "%sTraining cancelled, old PPEC being used.", QTRED);
+				uiex->setPropertyString("label_16", "text", ColourLabel);
+				uiex->setEnabled("checkBox", true);
+				if (uiex->isChecked("checkBox") != m_bPecEnabled) m_bCausedCheckBoxStateChange = true;  // See if have changed state of check box - if so, we should ignore next ui event.
+				uiex->setChecked("checkBox", m_bPecEnabled);
+			}
+			else {
+				sprintf(ColourLabel, "%sTraining cancelled. Mount does not have valid PPEC data. Ensure autoguider is running then click \"Start PPEC Training\" to store.", QTRED);
+				uiex->setPropertyString("label_16", "text", ColourLabel);
+				uiex->setEnabled("checkBox", false);
+				if (uiex->isChecked("checkBox")) m_bCausedCheckBoxStateChange = true;  // See if have changed state of check box - if so, we should ignore next ui event.
+				uiex->setChecked("checkBox", false);
+				m_bPecEnabled = false;
+			}
+			// Re-enable buttons
+			uiex->setEnabled("pushButton", true);  // And all other pushbuttons
+			if (m_bPolarisHomeAlignmentSet) uiex->setEnabled("pushButton_2", true);  // And all other pushbuttons
+			uiex->setEnabled("pushButtonOK", true);  // And all other pushbuttons
+			uiex->setEnabled("pushButtonCancel", true);  // And all other pushbuttons
+
+			m_bIsPECTraining = false;
+			return;
+		}
+	}
+
+	// Now deal with Enabling/Disabling PPEC
+	if (!strcmp(pszEvent, "on_checkBox_stateChanged")) { // Enabled or disabled box
+		if (m_bCausedCheckBoxStateChange) {
+			m_bCausedCheckBoxStateChange = false;
+		}
+		else {
+			if (uiex->isChecked("checkBox")) {
+				SkyW.TurnOnPec();
+				if (SkyW.GetIsPecTrackingOn()) {
+					sprintf(ColourLabel, "%sPPEC Tracking Enabled", QTGREEN);
+					uiex->setPropertyString("label_16", "text", ColourLabel);
+					m_bPecEnabled = true;
+				}
+				else {
+					sprintf(ColourLabel, "%sUnable to start PPEC", QTRED);
+					uiex->setPropertyString("label_16", "text", ColourLabel);
+					m_bPecEnabled = false;
+				}
+			}
+			else {
+				SkyW.TurnOffPec();
+				sprintf(ColourLabel, "%sPPEC Tracking Disabled", QTRED);
+				uiex->setPropertyString("label_16", "text", ColourLabel);
+				m_bPecEnabled = false;
+			}
+		}
+	}
+
+	// Now deal with Enabling/Disabling WiFi
+	if (!strcmp(pszEvent, "on_checkBox_2_stateChanged")) { // Enabled or disabled box
+#ifdef HEQ5_DEBUG
+	  if (LogFile) {
+	    ltime = time(NULL);
+	    timestamp = asctime(localtime(&ltime));
+	    timestamp[strlen(timestamp) - 1] = 0;
+	    fprintf(LogFile, "[%s] on_checkBox_2_stageChanged. Status: %d\n", timestamp, uiex->isChecked("checkBox_2"));
+	  }
+#endif
+	  if (uiex->isChecked("checkBox_2")) {
+	    // Retrieve the values and attempt to test connection
+	    uiex->propertyString("lineEdit", "text", m_cWiFiIPAddress, MAX_PORT_NAME_SIZE);
+	    uiex->propertyString("lineEdit_2", "text", WiFiPortString, MAX_PORT_NAME_SIZE);
+	    m_iWiFiPort = atoi(WiFiPortString);
+	    m_bWiFiEnabled = true;
+	    // Store the connection data
+	    SkyW.SetConnectionData(m_PortName, m_cWiFiIPAddress, m_iWiFiPort, m_bWiFiEnabled);
+	    if (SkyW.WiFiCheck()== SB_OK) {
+	      if (SkyW.isConnected()) {
+		sprintf(ColourLabel, "%sWiFi Connected to %s", QTGREEN, SkyW.GetMountName());
+		uiex->setPropertyString("label_20", "text", ColourLabel);
+	      } else {
+		sprintf(ColourLabel, "%sWiFi found %s", QTGREEN, SkyW.GetMountName());
+		uiex->setPropertyString("label_20", "text", ColourLabel);
+	      }
+	    } else {
+	      sprintf(ColourLabel, "%sCould not connect wifi. Untick enable wifi to edit data.", QTRED);
+	      uiex->setPropertyString("label_20", "text", ColourLabel);
+	    }
+	    // Disable editing of data when connected to wifi
+	    uiex->setEnabled("lineEdit", false);
+	    uiex->setEnabled("lineEdit_2", false);
+	  }
+	  else {
+	    sprintf(ColourLabel, "%sWiFi Disconnected", QTRED);
+	    uiex->setPropertyString("label_20", "text", ColourLabel);
+	    m_bWiFiEnabled = false;
+	    // Enable editiing of data when not connected
+	    uiex->setEnabled("lineEdit", true);
+	    uiex->setEnabled("lineEdit_2", true);
+
+	  }
+	}
 	
-	return;
 }
 
 //LinkInterface
@@ -552,11 +915,14 @@ int X2Mount::establishLink(void)
 		time_t ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] Establish Link called Portname %s\n", timestamp, m_PortName);
+		fprintf(LogFile, "[%s] Establish Link called Portname %s wifi %d\n", timestamp, m_PortName, m_bWiFiEnabled);
 	}
 #endif
 
-	err = SkyW.Connect(m_PortName);
+	// Store the connection data
+	SkyW.SetConnectionData(m_PortName, m_cWiFiIPAddress, m_iWiFiPort, m_bWiFiEnabled);
+	// Now Connect
+	err = SkyW.Connect();
 
 	// Retrieve and store successful baud rate
 	m_iBaudRate = SkyW.GetBaudRate();
@@ -572,6 +938,14 @@ int X2Mount::establishLink(void)
 #endif
 		
 	if (err) return err;
+
+	// Set the Polar Illuminator Value
+	err = SkyW.SetPolarScopeIllumination(m_iLEDBrightness); if (err) return err;
+
+	// PEC enabled by default in the Connect routine. Turn off if stored state is off.
+	if (!m_bPecEnabled) {
+		err = SkyW.TurnOffPec(); if (err) return err;
+	}
 
 	// If mount was previously parked, set the encoders to the parked values
 	if (m_bParked && m_lDecParkEncoder > 0 && m_lRaParkEncoder > 0) {
