@@ -7,6 +7,7 @@
 // Constructor for Skywatcher
 Skywatcher::Skywatcher(SerXInterface *pSerX, SleeperInterface *pSleeper, TheSkyXFacadeForDriversInterface *pTSX)
 {
+	int wsa_err;
 	m_pSerX = pSerX;
 	m_pSleeper = pSleeper;
 	m_pTSX = pTSX;
@@ -20,6 +21,9 @@ Skywatcher::Skywatcher(SerXInterface *pSerX, SleeperInterface *pSleeper, TheSkyX
 	
 	MCVersion = 0;
 	MountCode = 0;
+
+	// Initially not connected to WiFi
+	m_bWiFi = false;
 	
 	// Set initial value of m_dDeltaHASteps - approximate over correction to get good goto performance
 	// Will be updated and refined after each slew.
@@ -42,14 +46,29 @@ Skywatcher::Skywatcher(SerXInterface *pSerX, SleeperInterface *pSleeper, TheSkyX
 #ifdef SB_LINUX_BUILD
 	fprintf(LogFile, "[%s] SkyW New Constructor Called Home: %s\n", timestamp, getenv("HOME"));
 #endif
-	fprintf(LogFile, "[%s] SkyW New Constructor Called %f\n", timestamp, m_pTSX->latitude());
+	fprintf(LogFile, "[%s] SkyW New Constructor Called latitude %f\n", timestamp, m_pTSX->latitude());
 #endif
+
+#ifdef SB_WIN_BUILD
+	// Required to start up Winsock.
+	wsa_err = WSAStartup(MAKEWORD(2, 2), &wsadata);
+#ifdef  SKYW_DEBUG
+	fprintf(LogFile, "[%s] SkyW Constructor WSAERR %d \n", timestamp, wsa_err);
+#endif
+#endif
+
 }
 
 
 Skywatcher::~Skywatcher(void)
 {
 	Disconnect();
+
+#ifdef SB_WIN_BUILD
+	// End Windsock
+	WSACleanup();
+#endif
+
 #ifdef SKYW_DEBUG
 	ltime = time(NULL);
 	timestamp = asctime(localtime(&ltime));
@@ -60,94 +79,219 @@ Skywatcher::~Skywatcher(void)
 #endif
 }
 
-int Skywatcher::Connect(char *portName)
+
+void Skywatcher::SetConnectionData(char *serialportname, char *IPAddress, int port, bool wifi)
+{
+  if (wifi) {
+    strncpy(m_cIPAddress, IPAddress, sizeof(m_cIPAddress));
+    m_iWiFiPortNumber = port;
+    m_bWiFi = wifi;
+  }else {
+    strncpy(m_cPortname, serialportname, sizeof(m_cPortname));
+    m_bWiFi = wifi;
+  }
+#ifdef SKYW_DEBUG
+  ltime = time(NULL);
+  timestamp = asctime(localtime(&ltime));
+  timestamp[strlen(timestamp) - 1] = 0;
+  fprintf(LogFile, "[%s] SkyW::SetConnectionData Called port %s ipaddress %s port %d wifi %d\n", asctime(localtime(&ltime)), serialportname, IPAddress, port, wifi);
+#endif
+}
+    
+int Skywatcher::WiFiCheck(void)
+{
+
+  int err = 0;
+  int oldblinked = m_bLinked;
+  // IF WiFi not enabled, return error
+  if (!m_bWiFi) return ERR_COMMOPENING;
+
+#ifdef	SKYW_DEBUG
+  ltime = time(NULL);
+  timestamp = asctime(localtime(&ltime));
+  timestamp[strlen(timestamp) - 1] = 0;
+  fprintf(LogFile, "[%s] WiFiCheck: Entered\n", timestamp);
+#endif
+
+#if defined SB_LINUX_BUILD || defined SB_WIN_BUILD || defined SB_MAC_BUILD // Lets try all three for now
+  /* socket: create the socket */
+  struct hostent *server;
+  m_isockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+  server = gethostbyname(m_cIPAddress);
+
+#ifdef	SKYW_DEBUG
+  ltime = time(NULL);
+  timestamp = asctime(localtime(&ltime));
+  timestamp[strlen(timestamp) - 1] = 0;
+  fprintf(LogFile, "[%s] WiFiCheck: sockid %d\n", timestamp, m_isockfd);
+#endif
+
+  if (m_isockfd < 0 || !server) return ERR_COMMOPENING;
+
+  /* build the server's Internet address */
+  // First initialise m_serveraddr
+  memset(&m_serveraddr, 0, sizeof(m_serveraddr));
+
+  m_serveraddr.sin_family = AF_INET;
+  memcpy(&m_serveraddr.sin_addr.s_addr, server->h_addr, server->h_length);
+  m_serveraddr.sin_port = htons(m_iWiFiPortNumber);
+  m_iserverlen = sizeof(m_serveraddr);
+
+  /* Now attempt to read the mount name */
+  m_bLinked = true; // Without this, connect will be called by SendSkyWatcherCommand
+
+#ifdef	SKYW_DEBUG
+  ltime = time(NULL);
+  timestamp = asctime(localtime(&ltime));
+  timestamp[strlen(timestamp) - 1] = 0;
+  fprintf(LogFile, "[%s] WiFiCheck: About to call ReadMountData()\n", timestamp);
+#endif
+
+  err = ReadMountData(); if (err) {
+    m_bLinked = false;
+    m_bWiFi = false;
+    return err;
+  }
+
+  /* Now restore m_bLinked to the previous value since have got the data we need */
+  m_bLinked = oldblinked;
+
+#ifdef	SKYW_DEBUG
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(LogFile, "[%s] WiFiCheck: MountName %s\n", timestamp, MountName);
+
+#endif
+
+  return SB_OK;
+#else
+  return ERR_COMMOPENING;
+#endif
+}
+  
+int Skywatcher::Connect(void)
 {
 	int err;
 	char response[SKYWATCHER_MAX_CMD];
-	strncpy(m_cPortname, portName, SKYWATCHER_CHAR_BUFFER);
-	int AltBaudRate;
+	char command[SKYWATCHER_MAX_CMD];
 	
 #ifdef SKYW_DEBUG
 	ltime = time(NULL);
 	timestamp = asctime(localtime(&ltime));
 	timestamp[strlen(timestamp) - 1] = 0;
-	fprintf(LogFile, "[%s] Skyw::Connect Called %s using %d bps\n", timestamp, portName, m_iBaudRate);
+	fprintf(LogFile, "[%s] Skyw::Connect Called %s using %d bps wifi %d\n", timestamp, m_cPortname, m_iBaudRate, m_bWiFi);
 #endif
-	// Try to connect at stored baud rate first
-	if(m_pSerX->open(portName, m_iBaudRate, SerXInterface::B_NOPARITY, "-DTR_CONTROL 1") == 0) {
-		m_bLinked = true;
+	
+	if (m_bWiFi) {
+	  // Use WiFiCheck to set wifi port and check it can be opened
+	  err = WiFiCheck(); if (err) return err;
+	  m_bLinked = true;
+	  // WiFiCheck also reads the mount data, so no need to repeat that here.
+	} else {
+	  // Try to connect at stored baud rate first
+	  if(m_pSerX->open(m_cPortname, m_iBaudRate, SerXInterface::B_NOPARITY, "-DTR_CONTROL 1") == 0) {
+	    m_bLinked = true;
+#ifdef SKYW_DEBUG
+	    ltime = time(NULL);
+	    timestamp = asctime(localtime(&ltime));
+	    timestamp[strlen(timestamp) - 1] = 0;
+	    fprintf(LogFile, "[%s] Skyw::Connect opened %s\n", timestamp, m_cPortname);
+#endif
+	  }
+	  else {
+#ifdef SKYW_DEBUG
+	    ltime = time(NULL);
+	    timestamp = asctime(localtime(&ltime));
+	    timestamp[strlen(timestamp) - 1] = 0;
+	    fprintf(LogFile, "[%s] Skyw::Connect did not open %s\n", timestamp, m_cPortname);
+#endif
+	    m_bLinked = false;
+	  }
+	  if (!m_bLinked) return ERR_COMMOPENING;
+	  
+	  err = ReadMountData();
+	  
+	  //Error reading the Mount Data, try to connect using alterntive baud rate
+	  if (err) {
+	    m_pSerX->close();			// Close serial port prior to trying to reopen
+	    if (m_iBaudRate == 9600) {
+	      m_iBaudRate = 115200;
+	    }
+	    else {
+	      m_iBaudRate = 9600;
+	    }
+	    
+#ifdef SKYW_DEBUG
+	    ltime = time(NULL);
+	    timestamp = asctime(localtime(&ltime));
+	    timestamp[strlen(timestamp) - 1] = 0;
+	    fprintf(LogFile, "[%s] Skyw::Connect Called %s using %d bps\n", timestamp, m_cPortname, m_iBaudRate);
+#endif
+	    if (m_pSerX->open(m_cPortname, m_iBaudRate, SerXInterface::B_NOPARITY, "-DTR_CONTROL 1") == 0) {
+	      m_bLinked = true;
+#ifdef SKYW_DEBUG
+	      ltime = time(NULL);
+	      timestamp = asctime(localtime(&ltime));
+	      timestamp[strlen(timestamp) - 1] = 0;
+	      fprintf(LogFile, "[%s] Skyw::Connect opened %s\n", timestamp, m_cPortname);
+#endif
+	    }
+	    else {
+#ifdef SKYW_DEBUG
+	      ltime = time(NULL);
+	      timestamp = asctime(localtime(&ltime));
+	      timestamp[strlen(timestamp) - 1] = 0;
+	      fprintf(LogFile, "[%s] Skyw::Connect did not open %s\n", timestamp, m_cPortname);
+#endif
+	      m_bLinked = false;
+	    }
+	    if (!m_bLinked) return ERR_COMMOPENING;
+	    err = ReadMountData();
+
+	  }
+	
+	  //Error reading the Mount Data. Close serial port and set to unlinked then return error. Restore baud rate to initial value
+	  if (err) {
+	    m_bLinked = false;
+	    m_pSerX->close();
+	    if (m_iBaudRate == 9600) {
+	      m_iBaudRate = 115200;
+	    }
+	    else {
+	      m_iBaudRate = 9600;
+	    }
+	    return err;
+	  }
+	}
+
+	// If the mount has encoders, turn them off
+	if (m_bSupportDualEncoder) {
 #ifdef SKYW_DEBUG
 		ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] Skyw::Connect opened %s\n", timestamp, portName);
+		fprintf(LogFile, "[%s] Skyw::Connect About to turn off encoders\n", timestamp);
 #endif
-	}
-	else {
+		long2Revu24str(ENCODER_OFF_CMD, command);
+		err = SendSkywatcherCommand(SetFeatureCmd, Axis1, command, response, SKYWATCHER_MAX_CMD); if (err) return err;
 #ifdef SKYW_DEBUG
 		ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] Skyw::Connect did not open %s\n", timestamp, portName);
+		fprintf(LogFile, "[%s] Skyw::Connect Encoders off Axis 1: %s\n", timestamp, response);
 #endif
-		m_bLinked = false;
-	}
-	if (!m_bLinked) return ERR_COMMOPENING;
-	
-	err = ReadMountData();
-	
-	//Error reading the Mount Data, try to connect using alterntive baud rate
-	if (err) {
-		m_pSerX->close();			// Close serial port prior to trying to reopen
-		if (m_iBaudRate == 9600) {
-			m_iBaudRate = 115200;
-		}
-		else {
-			m_iBaudRate = 9600;
-		}
-
+		err = SendSkywatcherCommand(SetFeatureCmd, Axis2, command, response, SKYWATCHER_MAX_CMD); if (err) return err;
 #ifdef SKYW_DEBUG
 		ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] Skyw::Connect Called %s using %d bps\n", timestamp, portName, m_iBaudRate);
+		fprintf(LogFile, "[%s] Skyw::Connect Encoders off Axis 2: %s\n", timestamp, response);
 #endif
-		if (m_pSerX->open(portName, m_iBaudRate, SerXInterface::B_NOPARITY, "-DTR_CONTROL 1") == 0) {
-			m_bLinked = true;
-#ifdef SKYW_DEBUG
-			ltime = time(NULL);
-			timestamp = asctime(localtime(&ltime));
-			timestamp[strlen(timestamp) - 1] = 0;
-			fprintf(LogFile, "[%s] Skyw::Connect opened %s\n", timestamp, portName);
-#endif
-		}
-		else {
-#ifdef SKYW_DEBUG
-			ltime = time(NULL);
-			timestamp = asctime(localtime(&ltime));
-			timestamp[strlen(timestamp) - 1] = 0;
-			fprintf(LogFile, "[%s] Skyw::Connect did not open %s\n", timestamp, portName);
-#endif
-			m_bLinked = false;
-		}
-		if (!m_bLinked) return ERR_COMMOPENING;
-
-		err = ReadMountData();
-
 	}
-	
-	//Error reading the Mount Data. Close serial port and set to unlinked then return error. Restore baud rate to initial value
-	if (err) {
-		m_bLinked = false;
-		m_pSerX->close();
-		if (m_iBaudRate == 9600) {
-			m_iBaudRate = 115200;
-		}
-		else {
-			m_iBaudRate = 9600;
-		}
-		return err;
-	}
+
+	// If mount supports PEC but PEC is not running, try and turn it on. Will set flag if PEC data not valid
+	err = TurnOnPec(); if (err) return err;
 
 	// Now initialise motors in axes - good for astronomer to hear the motors come on!
 	err = SendSkywatcherCommand(Initialize, Axis1, NULL, response, SKYWATCHER_MAX_CMD); if (err) return err;
@@ -178,6 +322,170 @@ int Skywatcher::Connect(char *portName)
 	return err;
 }
 
+int Skywatcher::StartPecTraining()
+{
+	int err;
+	char response[SKYWATCHER_MAX_CMD];
+	char command[SKYWATCHER_MAX_CMD];
+	long2Revu24str(START_PPEC_TRAINING_CMD, command);
+	err = SendSkywatcherCommand(SetFeatureCmd, Axis1, command, response, SKYWATCHER_MAX_CMD); if (err) return err;
+
+#ifdef	SKYW_DEBUG
+	ltime = time(NULL);
+	timestamp = asctime(localtime(&ltime));
+	timestamp[strlen(timestamp) - 1] = 0;
+	fprintf(LogFile, "[%s] StartPecTraining: response %s\n", timestamp, response);
+#endif
+
+	return err;
+}
+
+int Skywatcher::CancelPecTraining()
+{
+	int err;
+	char response[SKYWATCHER_MAX_CMD];
+	char command[SKYWATCHER_MAX_CMD];
+	long2Revu24str(STOP_PPEC_TRAINING_CMD, command);
+	err = SendSkywatcherCommand(SetFeatureCmd, Axis1, command, response, SKYWATCHER_MAX_CMD); if (err) return err;
+
+#ifdef	SKYW_DEBUG
+	ltime = time(NULL);
+	timestamp = asctime(localtime(&ltime));
+	timestamp[strlen(timestamp) - 1] = 0;
+	fprintf(LogFile, "[%s] StopPecTraining: response %s\n", timestamp, response);
+#endif
+
+	return err;
+}
+int Skywatcher::TurnOnPec() 
+{
+	int err;
+	char response[SKYWATCHER_MAX_CMD];
+	char command[SKYWATCHER_MAX_CMD];
+
+	// Cannot read extended commands - 
+	if (!m_bExtendedCmds) {
+		m_bValidPECData = false;
+		m_bPECTrackingOn = false;
+		return SB_OK;
+	}
+
+	long2Revu24str(TURN_PPEC_ON_CMD, command);
+	err = SendSkywatcherCommand(SetFeatureCmd, Axis1, command, response, SKYWATCHER_MAX_CMD); if (err) return err;
+
+#ifdef	SKYW_DEBUG
+	ltime = time(NULL);
+	timestamp = asctime(localtime(&ltime));
+	timestamp[strlen(timestamp) - 1] = 0;
+	fprintf(LogFile, "[%s] TurnOnPec: response %s\n", timestamp, response);
+#endif
+	
+	if (response[0] == '!') {
+		m_bValidPECData = false;
+		long2Revu24str(TURN_PPEC_OFF_CMD, command);
+		err = SendSkywatcherCommand(SetFeatureCmd, Axis1, command, response, SKYWATCHER_MAX_CMD);
+		m_bPECTrackingOn = false;
+#ifdef	SKYW_DEBUG
+		ltime = time(NULL);
+		timestamp = asctime(localtime(&ltime));
+		timestamp[strlen(timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] TurnOnPec - post failure, turning off PEC: response %s\n", timestamp, response);
+#endif
+		return err;
+	}
+
+	// Set flag to say tracaking on
+	m_bValidPECData = true;
+	m_bPECTrackingOn = true;
+
+#ifdef	SKYW_DEBUG
+	long2Revu24str(INQUIRE_STATUS, command);
+	err = SendSkywatcherCommand(GetFeatureCmd, Axis1, command, response, SKYWATCHER_MAX_CMD); if (err) return err;
+	ltime = time(NULL);
+	timestamp = asctime(localtime(&ltime));
+	timestamp[strlen(timestamp) - 1] = 0;
+	fprintf(LogFile, "[%s] Post turning on Pec Extended Status: response %s\n", timestamp, response);
+#endif
+
+	return err;
+}
+
+int Skywatcher::TurnOffPec() 
+{
+	int err;
+	char response[SKYWATCHER_MAX_CMD];
+	char command[SKYWATCHER_MAX_CMD];
+	if (!m_bExtendedCmds) {
+		m_bPECTrackingOn = false;
+		return SB_OK;
+	}
+
+	long2Revu24str(TURN_PPEC_OFF_CMD, command);
+	err = SendSkywatcherCommand(SetFeatureCmd, Axis1, command, response, SKYWATCHER_MAX_CMD); if (err) return err;
+
+	// Set flag to say tracking off
+	m_bPECTrackingOn = false;
+
+#ifdef	SKYW_DEBUG
+	long2Revu24str(INQUIRE_STATUS, command);
+	err = SendSkywatcherCommand(GetFeatureCmd, Axis1, command, response, SKYWATCHER_MAX_CMD); if (err) return err;
+	ltime = time(NULL);
+	timestamp = asctime(localtime(&ltime));
+	timestamp[strlen(timestamp) - 1] = 0;
+	fprintf(LogFile, "[%s] Post turning off Pec Extended Status: response %s\n", timestamp, response);
+#endif
+
+	return err;
+}
+
+bool Skywatcher::GetIsPecTrainingOn(void)
+{
+	int decode;
+	char response[SKYWATCHER_MAX_CMD];
+	char command[SKYWATCHER_MAX_CMD];
+
+
+	// Attempt to read the extended mount status
+	long2Revu24str(INQUIRE_STATUS, command);
+	SendSkywatcherCommand(GetFeatureCmd, Axis1, command, response, SKYWATCHER_MAX_CMD);
+
+	// First test to see if the extended data set gives reponse or error. If error, cannot be read.
+	if (response[0] == '=') {
+		decode = HEX(response[1]);                              // Turn second character of response into a number
+		m_bPECTrainingOn = decode & 0x1;                        // First bit of response
+	}
+	else {
+		m_bPECTrainingOn = false;
+	}
+
+#ifdef	SKYW_DEBUG
+	ltime = time(NULL);
+	timestamp = asctime(localtime(&ltime));
+	timestamp[strlen(timestamp) - 1] = 0;
+	fprintf(LogFile, "[%s]GetIsPecTrainingOn: reponse %s Training on %d\n", timestamp, response, m_bPECTrainingOn);
+#endif
+
+	return m_bPECTrainingOn;
+}
+
+int Skywatcher::SetPolarScopeIllumination(int Brightness)
+{
+	int err;
+	char cmdarg[SKYWATCHER_MAX_CMD], response[SKYWATCHER_MAX_CMD];
+	long2Revu8str(Brightness, cmdarg);
+
+	// Do not try and set the illumination if no scope is present.
+	if (!m_bPolarScope) return SB_OK;
+
+	err = SendSkywatcherCommand(SetPolarScopeLEDBrightness, Axis1, cmdarg, response, SKYWATCHER_MAX_CMD);
+#ifdef	SKYW_DEBUG
+	ltime = time(NULL);
+	timestamp = asctime(localtime(&ltime));
+	timestamp[strlen(timestamp) - 1] = 0;
+	fprintf(LogFile, "[%s] Connect: SetPolerScopeIllumination Brightness %d cmdarg %s response %s err %d\n", timestamp, Brightness, cmdarg, response, err);
+#endif
+	return err;
+}
 
 int Skywatcher::SetST4GuideRate(int m_GuideRateIndex)
 {
@@ -210,9 +518,11 @@ int Skywatcher::Disconnect(void)
 		err = SendSkywatcherCommand(NotInstantAxisStop, Axis2, NULL, response, SKYWATCHER_MAX_CMD); if (err) return err;
 
 		// Now clear buffers and disconnect the serial port
-		m_pSerX->flushTx();
-		m_pSerX->purgeTxRx();
-		m_pSerX->close();
+		if (!m_bWiFi) {
+		  m_pSerX->flushTx();
+		  m_pSerX->purgeTxRx();
+		  m_pSerX->close();
+		}
 	}
 	m_bLinked = false;
 	return SB_OK;
@@ -1109,6 +1419,7 @@ int Skywatcher::ReadMountData(void)
 	char response[SKYWATCHER_MAX_CMD];
 	char command[SKYWATCHER_MAX_CMD];
 	unsigned long tmpMCVersion = 0;
+	unsigned int decode; // Used to decode response from extend inquiry
 	int err;
 
     // Get Mount Status - find out if this has been initialised already
@@ -1119,7 +1430,7 @@ int Skywatcher::ReadMountData(void)
 	
 	
 	// Now Decode motorboard response - code from Skywatcher Basic API - but looks complicated given the simple string returned
-	sprintf(MCVersionName, "%c%c.%c%c.%c%c", response[1], response[2], response[3], response[4], response[5], response[6]);
+	sprintf(MCVersionName, "%c%c.%c%c", response[1], response[2], response[3], response[4]);
 	tmpMCVersion = Revu24str2long(response + 1);
 	MCVersion = ((tmpMCVersion & 0xFF) << 16) | ((tmpMCVersion & 0xFF00)) | ((tmpMCVersion & 0xFF0000) >> 16);
 	MountCode = MCVersion & 0xFF;
@@ -1146,7 +1457,7 @@ int Skywatcher::ReadMountData(void)
 		default: // Unrecognised mount
 			// Frank also tells me that any mount with code < 0x80 is an EQmount, so recognise those mounts
 			if (MountCode < 0x80) {
-				strcpy(MountName, "EQMount");
+				strcpy(MountName, "EQ Mount");
 			}
 			else {
 				strcpy(MountName, "Unsupported");
@@ -1160,36 +1471,54 @@ int Skywatcher::ReadMountData(void)
 	timestamp = asctime(localtime(&ltime));
 	timestamp[strlen(timestamp) - 1] = 0;
 	fprintf(LogFile, "[%s] Skyw::ReadMountData InquireMotorBoardVersion response string %s\n", timestamp, response);
-	fprintf(LogFile, "[%s] Skyw::ReadMountData Mount Code %lul\n", timestamp, MountCode);
-	fprintf(LogFile, "[%s] Skyw::ReadMountData MC Version %lul %s\n", timestamp, MCVersion, MCVersionName);
+	fprintf(LogFile, "[%s] Skyw::ReadMountData Mount Code %lu\n", timestamp, MountCode);
+	fprintf(LogFile, "[%s] Skyw::ReadMountData MC Version %lu %s\n", timestamp, MCVersion, MCVersionName);
 	fprintf(LogFile, "[%s] Skyw::ReadMountData Mount %s\n", timestamp, MountName);
 #endif
 	
-	// If the mount has encoders, turn them off
-	if (MountCode == 0x04 || MountCode == 0x05 || MountCode == 0x06 || MountCode == 0x21 || MountCode == 0x22 ) {
+	// Attempt to read the extended mount status
+	long2Revu24str(INQUIRE_STATUS, command);
+	err = SendSkywatcherCommand(GetFeatureCmd, Axis1, command, response, SKYWATCHER_MAX_CMD);
+
 #ifdef SKYW_DEBUG
-		ltime = time(NULL);
-		timestamp = asctime(localtime(&ltime));
-		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] Skyw::ReadMountData About to turn off encoders\n", timestamp);
+	ltime = time(NULL);
+	timestamp = asctime(localtime(&ltime));
+	timestamp[strlen(timestamp) - 1] = 0;
+	fprintf(LogFile, "[%s] Skyw::ReadMountData Get Feature Reponse Axis1: err: %d response string %s\n", timestamp, err, response);
 #endif
-		long2Revu24str(ENCODER_OFF_CMD, command);
-		err = SendSkywatcherCommand(SetFeatureCmd, Axis1, command, response, SKYWATCHER_MAX_CMD); if (err) return err;
-#ifdef SKYW_DEBUG
-		ltime = time(NULL);
-		timestamp = asctime(localtime(&ltime));
-		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] Skyw::ReadMountData Encoders off Axis 1: %s\n", timestamp, response);
-#endif
-		err = SendSkywatcherCommand(SetFeatureCmd, Axis2, command, response, SKYWATCHER_MAX_CMD); if (err) return err;
-#ifdef SKYW_DEBUG
-		ltime = time(NULL);
-		timestamp = asctime(localtime(&ltime));
-		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] Skyw::ReadMountData Encoders off Axis 2: %s\n", timestamp, response);
-#endif
+
+	// First test to see if the extended data set gives reponse or error. If error, cannot be read.
+	if (response[0] == '=') {
+		m_bExtendedCmds = true;
+
+		decode = HEX(response[1]);                              // Turn second character of response into a number
+		m_bPECTrainingOn = decode & 0x1;                        // First bit of response
+		m_bPECTrackingOn = decode & 0x2;	                    // Second bit of second charcter in response
+
+		decode = HEX(response[2]); 
+		m_bSupportDualEncoder = decode & 0x1;					// First bit of next character
+		m_bSupportPEC = decode & 0x2;							// Second bit of next character
+
+		decode = HEX(response[3]);
+		m_bPolarScope = decode & 0x1;							// First bit of next character.
 	}
-	
+	else {
+		m_bExtendedCmds = false;
+		m_bPECTrainingOn = false;
+		m_bPECTrackingOn = false;
+		m_bSupportDualEncoder = false;
+		m_bSupportPEC = false;
+		m_bPolarScope = false;
+	}
+
+
+#ifdef SKYW_DEBUG
+	ltime = time(NULL);
+	timestamp = asctime(localtime(&ltime));
+	timestamp[strlen(timestamp) - 1] = 0;
+	fprintf(LogFile, "[%s] Skyw::ReadMountData PecTraining on %d PecTracking %d Encoders %d Pec %d\n", timestamp, m_bPECTrainingOn, m_bPECTrackingOn, m_bSupportDualEncoder, m_bSupportPEC);
+#endif
+
 	// Now read the Steps per 360 degrees for RA and Dec
 	err = SendSkywatcherCommand(InquireGridPerRevolution, Axis1, NULL, response, SKYWATCHER_MAX_CMD); if (err) return err;
 	RASteps360 = Revu24str2long(response+1);
@@ -1282,12 +1611,16 @@ int Skywatcher::SendSkywatcherCommand(SkywatcherCommand cmd, SkywatcherAxis Axis
 {
 	int itries;
 	int err = SB_OK;
-	char temp[SKYWATCHER_CHAR_BUFFER];
 
+#ifdef SKYW_DEBUG
+	ltime = time(NULL);
+	timestamp = asctime(localtime(&ltime));
+	timestamp[strlen(timestamp) - 1] = 0;
+	fprintf(LogFile, "[%s] Skyw::SendSkywatcherCommand Entered: Cmd %c Axis %d Args %s\n", timestamp, cmd, Axis, cmdArgs);
+#endif
 	// Ensure that the mount is connected. If not, try to connect:
 	if (!m_bLinked) {
-		strncpy(temp, m_cPortname, SKYWATCHER_CHAR_BUFFER);
-		err = Connect(temp); if (err) return err;
+		err = Connect(); if (err) return err;
 	}
 	
 	// Try SKYWATCHER_MAX_TRIES times until failure
@@ -1335,6 +1668,7 @@ int Skywatcher::SendSkywatcherCommandInnerLoop(SkywatcherCommand cmd, Skywatcher
 	char command[SKYWATCHER_MAX_CMD];
 	int err = SB_OK;
 	unsigned long NBytesWrite = 0, nBytesRead = 0, totalBytesRead = 0;
+	int udpread;
 	char *bufPtr;
 	
 	// Format the command;
@@ -1346,6 +1680,7 @@ int Skywatcher::SendSkywatcherCommandInnerLoop(SkywatcherCommand cmd, Skywatcher
 	}
 	
 	// Now send the command
+	if (!m_bWiFi) {
 	m_pSerX->purgeTxRx();
 	err = m_pSerX->writeFile((void *)command, strlen(command), NBytesWrite);
 	m_pSerX->flushTx();
@@ -1360,7 +1695,7 @@ int Skywatcher::SendSkywatcherCommandInnerLoop(SkywatcherCommand cmd, Skywatcher
 	
 	//Now Read the response
 	// First clear the buffer;
-	memset(response, 0, (size_t)maxlen);
+	memset(response, '\0', (size_t)maxlen);
 	bufPtr = response;
 	do {
 		err = m_pSerX->readFile(bufPtr, 1, nBytesRead, SKYWATCHER_MAX_TIMEOUT); if (err) return err;
@@ -1374,8 +1709,71 @@ int Skywatcher::SendSkywatcherCommandInnerLoop(SkywatcherCommand cmd, Skywatcher
 		
 	} while (*bufPtr++ != SkywatcherTrailingChar && totalBytesRead < maxlen);
 	
-	if (!err) *--bufPtr = 0; //remove the trailing character
-	
+	if (!err) *--bufPtr = '\0'; //remove the trailing character
+	} 
+#if defined SB_LINUX_BUILD || defined SB_WIN_BUILD || defined SB_MAC_BUILD // Lets try all three for now
+	else {
+	  // Wifi - sending using UDP
+	  sockaddr retserver;
+
+#ifdef SB_WIN_BUILD
+	  // Winsock does not define socklen_t
+	  typedef int socklen_t;
+
+	  // Winsock does not use a timeval struct, but instead a DWORD (32 bit unsigned integer)
+	  DWORD tvwin;
+#endif
+
+	  socklen_t lenretserver = sizeof(retserver);
+
+#if defined SB_LINUX_BUILD || defined SB_MAC_BUILD
+	  // Mac and Unix use a timeval struct to set the timout
+	  // Set timeout to 0.1s
+	  struct timeval tv;
+	  tv.tv_sec = 0;
+	  tv.tv_usec = 100000;
+
+	  err = setsockopt(m_isockfd, SOL_SOCKET, SO_RCVTIMEO,(const char *) &tv,sizeof(tv));
+	  if (err) return ERR_RXTIMEOUT;
+	  err = setsockopt(m_isockfd, SOL_SOCKET, SO_SNDTIMEO,(const char *) &tv,sizeof(tv));
+	  if (err) return ERR_TXTIMEOUT;
+#endif
+
+#ifdef SB_WIN_BUILD
+	  // Timeout measured in milliseconds 0.1s
+	  tvwin = 100;
+	  err = setsockopt(m_isockfd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tvwin, sizeof(tvwin));
+	  if (err) return ERR_RXTIMEOUT;
+	  err = setsockopt(m_isockfd, SOL_SOCKET, SO_SNDTIMEO, (const char *)&tvwin, sizeof(tvwin));
+	  if (err) return ERR_TXTIMEOUT;
+#endif
+
+	  // Send command to the mount
+	  udpread = sendto(m_isockfd, command, strlen(command), 0,  (const sockaddr*) &m_serveraddr,
+		       m_iserverlen);
+	  if (udpread < 0) return ERR_TXTIMEOUT;
+
+	  // Clear buffer before reading response
+	  memset(response, '\0', (size_t) maxlen);
+
+	  // Read response from socket
+	  udpread= recvfrom(m_isockfd, response, maxlen, 0, &retserver, &lenretserver);
+
+#ifdef SKYW_DEBUG
+	  ltime = time(NULL);
+	  timestamp = asctime(localtime(&ltime));
+	  timestamp[strlen(timestamp) - 1] = 0;
+	  fprintf(LogFile, "[%s] Skyw::SendSkywatcherCommandInnerLoop updread %d command %s response %s\n", timestamp, udpread, command, response);
+#endif
+
+	  if (udpread < 0) return ERR_RXTIMEOUT;
+	  response[udpread-1] = '\0'; // remove trailing character
+	  totalBytesRead = udpread;
+	  err = SB_OK;
+	}
+#endif
+
+	  
 #ifdef SKYW_DEBUG
 	ltime = time(NULL);
 	timestamp = asctime(localtime(&ltime));
@@ -1405,6 +1803,14 @@ unsigned long Skywatcher::Highstr2long(char *s) {
 	res = HEX(s[0]); res <<= 4;
 	res |= HEX(s[1]);
 	return res;
+}
+
+void Skywatcher::long2Revu8str(unsigned long n, char *str) {
+	char hexa[16] = { '0', '1', '2', '3', '4', '5', '6', '7',
+		'8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+	str[0] = hexa[(n & 0xF0) >> 4];
+	str[1] = hexa[(n & 0x0F)];
+	str[2] = '\0';
 }
 
 

@@ -30,6 +30,8 @@
 #include "../../licensedinterfaces/x2guiinterface.h"
 #include "../../licensedinterfaces/serialportparams2interface.h"
 
+// #define HEQ5_DEBUG    // Define this to have log files
+
 // Forward declare the interfaces that the this driver is "given" by TheSkyX
 class SerXInterface;
 class TheSkyXFacadeForDriversInterface;
@@ -60,6 +62,11 @@ class TickCountInterface;
 #define CHILD_KEY_FLIPHOURANGLE "FlipHourAngle"
 #define CHILD_KEY_ANGLEABOVEHORIZON "AngleAboveHorizon"
 #define CHILD_KEY_BAUDRATE "BaudRate"
+#define CHILD_KEY_LEDBRIGHTNESS "LEDBrightness"
+#define CHILD_KEY_PECENABLED "PecEnabled"
+#define CHILD_KEY_WIFIENABLED "WiFiEnabled"
+#define CHILD_KEY_WIFIIP "WiFiIpAddress"
+#define CHILD_KEY_WIFIPORT "WiFiPort"
 
 #define MAX_PORT_NAME_SIZE 120
 
@@ -67,9 +74,15 @@ class TickCountInterface;
 #define MAXSLEWNAMESIZE 20
 #define NGUIDESPEEDS 4
 
+// Colours for interface
+#define QTRED "<span style = \" color:#ff0000;\">"
+#define QTGREEN "<span style = \" color:#00ff00;\">"
+#define QTREDBOLD "<span style = \" font-weight:600; color:#ff0000;\">"
+#define QTGREENBOLD "<span style = \" font-weight:600; color:#00ff00;\">"
+
 #include <cstdio>
 
-// #define HEQ5_DEBUG    // Define this to have log files
+
 
 #if defined(SB_WIN_BUILD)
 #define DEF_PORT_NAME					"COM3"
@@ -260,6 +273,8 @@ private:
 	bool m_bPolarisHomeAlignmentSet;
 	char m_PortName[MAX_PORT_NAME_SIZE];
 	bool m_bPolarisAlignmentSlew;
+	bool m_bIsPECTraining;
+	bool m_bPecEnabled;
 	int m_iST4GuideRateIndex;
 	int m_iPostSlewDelay;
 
@@ -284,8 +299,15 @@ private:
 	double m_dTempWestSlewLim;
 	double m_dTempFlipHourAngle;
 
+	// WIFI data
+	bool m_bWiFiEnabled;
+	int m_iWiFiPort;
+	char m_cWiFiIPAddress[MAX_PORT_NAME_SIZE];
+
     void portNameOnToCharPtr(char* pszPort, const unsigned int& nMaxSize) const;
 
+	int m_iLEDBrightness;
+	bool m_bCausedCheckBoxStateChange = false;						// Have we caused the check box to change state
 #ifdef HEQ5_DEBUG
 	char m_sLogfilePath[SKYWATCHER_CHAR_BUFFER];
 	// timestamp for logs
