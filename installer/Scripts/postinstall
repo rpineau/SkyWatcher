@@ -35,8 +35,12 @@ echo "Installing in $PLUGINS_DIR/MountPlugIns/"
 
 cp -f "/tmp/Skywatcher_X2/mountlist Skywatcher.txt" "$TheSkyX_Path/Resources/Common/Miscellaneous Files/"
 if [ "$?" -ne "0" ]; then exit 1; fi
+
+rm -f "$PLUGINS_DIR/MountPlugIns/"
 cp -f "/tmp/Skywatcher_X2/Skywatcher.ui" "$PLUGINS_DIR/MountPlugIns/"
 if [ "$?" -ne "0" ]; then exit 1; fi
+
+rm -f "$PLUGINS_DIR/MountPlugIns/libSkywatcher.dylib"
 cp -f "/tmp/Skywatcher_X2/libSkywatcher.dylib" "$PLUGINS_DIR/MountPlugIns/"
 if [ "$?" -ne "0" ]; then exit 1; fi
 
