@@ -1,14 +1,13 @@
 #include "Skywatcher.h"
-#include <string.h>
-#include <memory.h>
-#include <math.h>
-#include <stdlib.h>
 
 // Constructor for Skywatcher
 Skywatcher::Skywatcher(SerXInterface *pSerX, SleeperInterface *pSleeper, TheSkyXFacadeForDriversInterface *pTSX)
 {
+#ifdef SB_WIN_BUILD
 	int wsa_err;
-	m_pSerX = pSerX;
+#endif
+    
+    m_pSerX = pSerX;
 	m_pSleeper = pSleeper;
 	m_pTSX = pTSX;
 	
@@ -57,26 +56,33 @@ Skywatcher::Skywatcher(SerXInterface *pSerX, SleeperInterface *pSleeper, TheSkyX
 #endif
 #endif
 
+#if defined SKYW_DEBUG
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(LogFile, "[%s] [Skywatcher::Skywatcher] version %3.2f build 2020_05_21_12_45.\n", timestamp, SKYWATCHER_DRIVER_VERSION);
+    fflush(LogFile);
+#endif
+
 }
 
 
 Skywatcher::~Skywatcher(void)
 {
-	Disconnect();
+#ifdef SKYW_DEBUG
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(LogFile, "[%s] SkyW Destructor Called\n", asctime( localtime(&ltime) ) );
+    // Close LogFile
+    if (LogFile) fclose(LogFile);
+#endif
 
 #ifdef SB_WIN_BUILD
 	// End Windsock
-	WSACleanup();
+    WSACleanup();
 #endif
 
-#ifdef SKYW_DEBUG
-	ltime = time(NULL);
-	timestamp = asctime(localtime(&ltime));
-	timestamp[strlen(timestamp) - 1] = 0;
-	fprintf(LogFile, "[%s] SkyW Destructor Called\n", asctime( localtime(&ltime) ) );
-	// Close LogFile
-	if (LogFile) fclose(LogFile);
-#endif
 }
 
 
@@ -210,6 +216,7 @@ int Skywatcher::Connect(void)
 	  }
 	  if (!m_bLinked) return ERR_COMMOPENING;
 	  
+      m_cmdDelayTimer.Reset();
 	  err = ReadMountData();
 	  
 	  //Error reading the Mount Data, try to connect using alterntive baud rate
@@ -1350,7 +1357,7 @@ int Skywatcher::StartTargetSlew(SkywatcherAxis Axis, long CurrentStep, long Targ
 		ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] Skyw::StartTargetSlew: Trapped Negative Move. Now Movingsteps: %d Direction %d\n", timestamp, MovingSteps, Direction);
+		fprintf(LogFile, "[%s] Skyw::StartTargetSlew: Trapped Negative Move. Now Movingsteps: %ld Direction %d\n", timestamp, MovingSteps, Direction);
 #endif
 
 	}
@@ -1668,7 +1675,9 @@ int Skywatcher::SendSkywatcherCommandInnerLoop(SkywatcherCommand cmd, Skywatcher
 	char command[SKYWATCHER_MAX_CMD];
 	int err = SB_OK;
 	unsigned long NBytesWrite = 0, nBytesRead = 0, totalBytesRead = 0;
-	int udpread;
+	long udpread;
+    int dDelayMs;
+
 	char *bufPtr;
 	
 	// Format the command;
@@ -1679,6 +1688,13 @@ int Skywatcher::SendSkywatcherCommandInnerLoop(SkywatcherCommand cmd, Skywatcher
 		snprintf(command, SKYWATCHER_MAX_CMD, "%c%c%c%s%c", SkywatcherLeadingChar, cmd, Axis, cmdArgs, SkywatcherTrailingChar);
 	}
 	
+    if(m_cmdDelayTimer.GetElapsedSeconds()<INTER_COMMAND_WAIT) {
+        dDelayMs = INTER_COMMAND_WAIT - int(m_cmdDelayTimer.GetElapsedSeconds() *1000);
+        if(dDelayMs>0)
+            m_pSleeper->sleep(dDelayMs);
+    }
+    m_cmdDelayTimer.Reset();
+
 	// Now send the command
 	if (!m_bWiFi) {
 	m_pSerX->purgeTxRx();
@@ -1757,13 +1773,13 @@ int Skywatcher::SendSkywatcherCommandInnerLoop(SkywatcherCommand cmd, Skywatcher
 	  memset(response, '\0', (size_t) maxlen);
 
 	  // Read response from socket
-	  udpread= recvfrom(m_isockfd, response, maxlen, 0, &retserver, &lenretserver);
+	  udpread = recvfrom(m_isockfd, response, maxlen, 0, &retserver, &lenretserver);
 
 #ifdef SKYW_DEBUG
 	  ltime = time(NULL);
 	  timestamp = asctime(localtime(&ltime));
 	  timestamp[strlen(timestamp) - 1] = 0;
-	  fprintf(LogFile, "[%s] Skyw::SendSkywatcherCommandInnerLoop updread %d command %s response %s\n", timestamp, udpread, command, response);
+	  fprintf(LogFile, "[%s] Skyw::SendSkywatcherCommandInnerLoop updread %ld command %s response %s\n", timestamp, udpread, command, response);
 #endif
 
 	  if (udpread < 0) return ERR_RXTIMEOUT;

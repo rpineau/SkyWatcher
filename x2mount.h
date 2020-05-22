@@ -30,7 +30,7 @@
 #include "../../licensedinterfaces/x2guiinterface.h"
 #include "../../licensedinterfaces/serialportparams2interface.h"
 
-// #define HEQ5_DEBUG    // Define this to have log files
+#define HEQ5_DEBUG    // Define this to have log files
 
 // Forward declare the interfaces that the this driver is "given" by TheSkyX
 class SerXInterface;
@@ -311,7 +311,7 @@ private:
 #ifdef HEQ5_DEBUG
 	char m_sLogfilePath[SKYWATCHER_CHAR_BUFFER];
 	// timestamp for logs
-	char *timestamp = "";
+	char *timestamp;
 	time_t ltime;
 	FILE *LogFile;      // LogFile
 #endif

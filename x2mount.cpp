@@ -37,6 +37,16 @@ X2Mount::X2Mount(const char* pszDriverSelection,
 	setbuf(LogFile, NULL);
 #endif
 
+    
+#if defined HEQ5_DEBUG
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(LogFile, "[%s] [X2Mount::X2Mount] Constructor Called.\n", timestamp);
+    fprintf(LogFile, "[%s] [X2Mount::X2Mount] version %3.2f build 2020_05_21_12_45.\n", timestamp, SKYWATCHER_DRIVER_VERSION);
+    fflush(LogFile);
+#endif
+
 	// Set Slew Speeds and Names
 	
 	SlewSpeeds[0] = 0.5;		sprintf(SlewSpeedNames[0], "1/2 Sidereal");
@@ -91,7 +101,7 @@ X2Mount::X2Mount(const char* pszDriverSelection,
 	ltime = time(NULL);
 	timestamp = asctime(localtime(&ltime));
 	timestamp[strlen(timestamp) - 1] = 0;
-	fprintf(LogFile, "[%s] Park Encoder Values: Parked %d RA %u Dec %u\n", timestamp, m_bParked, m_lRaParkEncoder, m_lDecParkEncoder);
+	fprintf(LogFile, "[%s] Park Encoder Values: Parked %d RA %lu Dec %lu\n", timestamp, m_bParked, m_lRaParkEncoder, m_lDecParkEncoder);
 	fprintf(LogFile, "[%s] PEC Setting:  PecEnabled %d\n", timestamp, m_bPecEnabled);
 #endif
 
@@ -533,7 +543,7 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 	bool slewerr = false;											// Is there an error in the slew variables?
 	int itemp;														// For reading temporary illuminator data
 	char Orientation[200];											// Label for polris/Octans orientation
-	char *StarName;													// Name of star for orientation
+	std::string StarName;											// Name of star for orientation
 	double HAStar;													// HA for star for orientation
 	int hours;														// Hour for orientation label
 	int minutes;													// Minutes for orientation label
@@ -579,7 +589,7 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 		minutes = floor((HAStar - hours) * 60 + 0.5);
 
 		// Format String
-		sprintf(Orientation, "%s clock location:     %02d:%02d", StarName, hours, minutes);
+        sprintf(Orientation, "%s clock location:     %02d:%02d", StarName.c_str(), hours, minutes);
 		uiex->setPropertyString("label_17", "text", Orientation);
 
 		// Read the value of the horizontal slider
@@ -960,7 +970,7 @@ int X2Mount::establishLink(void)
 		time_t ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] Establish Link - Park %d Dec Encoder %u, Ra Encloder %u err %d\n", timestamp, m_bParked, m_lRaParkEncoder, m_lDecParkEncoder, err);
+		fprintf(LogFile, "[%s] Establish Link - Park %d Dec Encoder %lu, Ra Encloder %lu err %d\n", timestamp, m_bParked, m_lRaParkEncoder, m_lDecParkEncoder, err);
 	}
 #endif
 
@@ -987,20 +997,22 @@ bool X2Mount::isLinked(void) const
 	bool temp;
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
-//		timestamp = asctime(localtime(&ltime));
-//		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] isLinked called\n", timestamp);
+        X2Mount* pMe = (X2Mount*)this;
+		pMe->ltime = time(NULL);
+		pMe->timestamp = asctime(localtime(&ltime));
+		pMe->timestamp[strlen(timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] isLinked called\n", pMe->timestamp);
 	}
 #endif
 	
 	temp = SkyW.isConnected();
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
-		//		timestamp = asctime(localtime(&ltime));
-		//		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] isLinked called returning %d\n", timestamp, temp);
+        X2Mount* pMe = (X2Mount*)this;
+		pMe->ltime = time(NULL);
+		pMe->timestamp = asctime(localtime(&ltime));
+		pMe->timestamp[strlen(timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] isLinked called returning %d\n", pMe->timestamp, temp);
 	}
 #endif
 	return temp;
@@ -1019,10 +1031,11 @@ void	X2Mount::driverInfoDetailedInfo(BasicStringInterface& str) const
 {
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
-//		timestamp = asctime(localtime(&ltime));
-//		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] driverInfoDetailedInfo Called\n", timestamp);
+        X2Mount* pMe = (X2Mount*)this;
+        pMe->ltime = time(NULL);
+        pMe->timestamp = asctime(localtime(&ltime));
+        pMe->timestamp[strlen(timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] driverInfoDetailedInfo Called\n", pMe->timestamp);
 	}
 #endif
 	str = "EQ Direct X2 plugin by Colin McGill";
@@ -1032,10 +1045,11 @@ double	X2Mount::driverInfoVersion(void) const
 {
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
-//		timestamp = asctime(localtime(&ltime));
-//		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] driverInfoVersion Called\n", timestamp);
+        X2Mount* pMe = (X2Mount*)this;
+		pMe->ltime = time(NULL);
+		pMe->timestamp = asctime(localtime(&ltime));
+		pMe->timestamp[strlen(timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] driverInfoVersion Called\n", pMe->timestamp);
 	}
 #endif
 	return SKYWATCHER_DRIVER_VERSION;
@@ -1046,10 +1060,11 @@ void X2Mount::deviceInfoNameShort(BasicStringInterface& str) const
 {
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
-//		timestamp = asctime(localtime(&ltime));
-//		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] driverInfoNameShort Called\n", timestamp);
+        X2Mount* pMe = (X2Mount*)this;
+        pMe->ltime = time(NULL);
+        pMe->timestamp = asctime(localtime(&ltime));
+        pMe->timestamp[strlen(timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] driverInfoNameShort Called\n", pMe->timestamp);
 	}
 #endif
 	str = "Doesn't Seem to be used";
@@ -1058,10 +1073,11 @@ void X2Mount::deviceInfoNameLong(BasicStringInterface& str) const
 {
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
-//		timestamp = asctime(localtime(&ltime));
-//		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] deviceInfoNameLong Called\n", timestamp);
+        X2Mount* pMe = (X2Mount*)this;
+        pMe->ltime = time(NULL);
+        pMe->timestamp = asctime(localtime(&ltime));
+        pMe->timestamp[strlen(timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] deviceInfoNameLong Called\n", pMe->timestamp);
 	}
 #endif
 	str = "Skywatcher EQ Mount";
@@ -1071,10 +1087,11 @@ void X2Mount::deviceInfoDetailedDescription(BasicStringInterface& str) const
 {
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
-//		timestamp = asctime(localtime(&ltime));
-//		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] driverInfoDetailedDescription Called\n", timestamp);
+        X2Mount* pMe = (X2Mount*)this;
+        pMe->ltime = time(NULL);
+        pMe->timestamp = asctime(localtime(&ltime));
+        pMe->timestamp[strlen(timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] driverInfoDetailedDescription Called\n", pMe->timestamp);
 	}
 #endif
 	str = "Connects to a Skywatcher equatorial mount through an EQDIR cable - see the EQMOD project for details";
@@ -1082,6 +1099,7 @@ void X2Mount::deviceInfoDetailedDescription(BasicStringInterface& str) const
 }
 void X2Mount::deviceInfoFirmwareVersion(BasicStringInterface& str)
 {
+    X2MutexLocker ml(GetMutex());
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
 		time_t ltime = time(NULL);
@@ -1099,6 +1117,7 @@ void X2Mount::deviceInfoFirmwareVersion(BasicStringInterface& str)
 }
 void X2Mount::deviceInfoModel(BasicStringInterface& str)
 {
+    X2MutexLocker ml(GetMutex());
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
 		time_t ltime = time(NULL);
@@ -1226,10 +1245,11 @@ int X2Mount::isCompleteSlewTo(bool& bComplete) const
 	
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
-//		timestamp = asctime(localtime(&ltime));
-//		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] isCompleteSlewTo called %d\n", timestamp, bComplete);
+        X2Mount* pMe = (X2Mount*)this;
+        pMe->ltime = time(NULL);
+        pMe->timestamp = asctime(localtime(&ltime));
+        pMe->timestamp[strlen(timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] isCompleteSlewTo called %d\n", pMe->timestamp, bComplete);
 	}
 #endif
 	
@@ -1365,10 +1385,11 @@ int X2Mount::isCompletePark(bool& bComplete) const
 {
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
-		time_t ltime = time(NULL);
-//		timestamp = asctime(localtime(&ltime));
-//		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] isCompletePark Called\n", timestamp);
+        X2Mount* pMe = (X2Mount*)this;
+        pMe->ltime = time(NULL);
+        pMe->timestamp = asctime(localtime(&ltime));
+        pMe->timestamp[strlen(timestamp) - 1] = 0;
+		fprintf(LogFile, "[%s] isCompletePark Called\n", pMe->timestamp);
 	}
 #endif
 	bComplete = SkyW.GetIsParkingComplete();
@@ -1401,7 +1422,7 @@ int X2Mount::endPark(void)
 		time_t ltime = time(NULL);
 		timestamp = asctime(localtime(&ltime));
 		timestamp[strlen(timestamp) - 1] = 0;
-		fprintf(LogFile, "[%s] endPark Encoder Values: Parked %d Ra %u Dec %u\n", timestamp, m_bParked, m_lRaParkEncoder, m_lDecParkEncoder);
+		fprintf(LogFile, "[%s] endPark Encoder Values: Parked %d Ra %lu Dec %lu\n", timestamp, m_bParked, m_lRaParkEncoder, m_lDecParkEncoder);
 	}
 #endif
 	return err;
