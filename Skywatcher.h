@@ -30,13 +30,13 @@
 #include "../../licensedinterfaces/loggerinterface.h"
 
 
-#include "StopWatch.h"
+// #include "StopWatch.h"
 
 
-#define SKYW_DEBUG 1   // define this to have log files
+// #define SKYW_DEBUG 1   // define this to have log files
 
 // Defines below from INDI EQMOD
-#define SKYWATCHER_DRIVER_VERSION 3.0
+#define SKYWATCHER_DRIVER_VERSION 3.01
 #define SKYWATCHER_MAX_CMD        16
 #define SKYWATCHER_MAX_TRIES      3
 #define SKYWATCHER_CHAR_BUFFER   1024
@@ -288,7 +288,7 @@ private:
 	WSADATA wsadata;
 #endif
 
-	CStopWatch        m_cmdDelayTimer;
+	// CStopWatch        m_cmdDelayTimer;
     
 #ifdef SKYW_DEBUG
 	char m_sLogfilePath[SKYWATCHER_CHAR_BUFFER];

@@ -216,7 +216,7 @@ int Skywatcher::Connect(void)
 	  }
 	  if (!m_bLinked) return ERR_COMMOPENING;
 	  
-      m_cmdDelayTimer.Reset();
+      // m_cmdDelayTimer.Reset();
 	  err = ReadMountData();
 	  
 	  //Error reading the Mount Data, try to connect using alterntive baud rate
@@ -1687,14 +1687,15 @@ int Skywatcher::SendSkywatcherCommandInnerLoop(SkywatcherCommand cmd, Skywatcher
 	else {
 		snprintf(command, SKYWATCHER_MAX_CMD, "%c%c%c%s%c", SkywatcherLeadingChar, cmd, Axis, cmdArgs, SkywatcherTrailingChar);
 	}
-	
+	/*
     if(m_cmdDelayTimer.GetElapsedSeconds()<INTER_COMMAND_WAIT) {
         dDelayMs = INTER_COMMAND_WAIT - int(m_cmdDelayTimer.GetElapsedSeconds() *1000);
         if(dDelayMs>0)
             m_pSleeper->sleep(dDelayMs);
     }
     m_cmdDelayTimer.Reset();
-
+     */
+    
 	// Now send the command
 	if (!m_bWiFi) {
 	m_pSerX->purgeTxRx();

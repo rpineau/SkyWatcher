@@ -30,7 +30,7 @@
 #include "../../licensedinterfaces/x2guiinterface.h"
 #include "../../licensedinterfaces/serialportparams2interface.h"
 
-#define HEQ5_DEBUG    // Define this to have log files
+// #define HEQ5_DEBUG    // Define this to have log files
 
 // Forward declare the interfaces that the this driver is "given" by TheSkyX
 class SerXInterface;
