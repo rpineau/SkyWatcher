@@ -1025,7 +1025,7 @@ int Skywatcher::StartOpenSlew(const MountDriverInterface::MoveDir &		Dir, double
 		fprintf(LogFile, "[%s] Skyw::StartOpenSlew called Pre-Meridian: NorthHemisphere %d DESSTEP %lu DESTEPINIT %lu\n", timestamp, NorthHemisphere, DEStep, DEStepInit);
 #endif
 		switch (Dir) {
-			case MountDriverInterface::MD_NORTH:;
+			case MountDriverInterface::MD_NORTH:
 				DECRate += rate*SKYWATCHER_SIDEREAL_SPEED;
 				break;
 			case MountDriverInterface::MD_SOUTH:
