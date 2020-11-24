@@ -30,10 +30,7 @@
 #include "../../licensedinterfaces/x2guiinterface.h"
 #include "../../licensedinterfaces/serialportparams2interface.h"
 
-//// DO NOT DISTRIBUTE !!!!!!
-#include "../../licensedinterfaces/pulseguideinterface.h"
-
-#define HEQ5_DEBUG    // Define this to have log files
+// #define HEQ5_DEBUG    // Define this to have log files
 
 // Forward declare the interfaces that the this driver is "given" by TheSkyX
 class SerXInterface;
@@ -73,7 +70,7 @@ class TickCountInterface;
 
 #define MAX_PORT_NAME_SIZE 120
 
-#define NSLEWSPEEDS 8
+#define NSLEWSPEEDS 7
 #define MAXSLEWNAMESIZE 20
 #define NGUIDESPEEDS 4
 
@@ -116,8 +113,7 @@ class X2Mount : public MountDriverInterface
 						,public UnparkInterface
 						,public ModalSettingsDialogInterface
                         ,public X2GUIEventInterface
-                        ,public SerialPortParams2Interface,
-                        public PulseGuideInterface
+                        ,public SerialPortParams2Interface
 
 {
 public:
@@ -243,10 +239,6 @@ public:
 	int gemLimits(double & dHoursEast, double & dHoursWest);
 	double flipHourAngle();
 	
-    virtual int getOpenLoopMoveInterface(int &nGuideRateIndex, OpenLoopMoveInterface** pOLSI);
-    virtual int pulseGuideMoveTelescope(const int& centiSecRa, const int& centiSecDec);
-    virtual void pulseGuideAbort(void);
-    
 	// Implementation
 private:
 	// Sky Interfaces

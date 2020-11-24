@@ -51,14 +51,11 @@ X2Mount::X2Mount(const char* pszDriverSelection,
 	
 	SlewSpeeds[0] = 0.5;		sprintf(SlewSpeedNames[0], "1/2 Sidereal");
 	SlewSpeeds[1] = 1.0;		sprintf(SlewSpeedNames[1], "Sidereal");
-
-    SlewSpeeds[2] = 2.0;        sprintf(SlewSpeedNames[1], "2x Sidereal");
-
-	SlewSpeeds[3] = 16.0;		sprintf(SlewSpeedNames[2], "16x Sidereal");
-	SlewSpeeds[4] = 64.0;		sprintf(SlewSpeedNames[3], "64x Sidereal");
-	SlewSpeeds[5] = 128.0;		sprintf(SlewSpeedNames[4], "128x Sidereal");
-	SlewSpeeds[6] = 256.0;		sprintf(SlewSpeedNames[5], "256x Sidereal");
-	SlewSpeeds[7] = 800.0;		sprintf(SlewSpeedNames[6], "800x Sidereal");
+	SlewSpeeds[2] = 16.0;		sprintf(SlewSpeedNames[2], "16x Sidereal");
+	SlewSpeeds[3] = 64.0;		sprintf(SlewSpeedNames[3], "64x Sidereal");
+	SlewSpeeds[4] = 128.0;		sprintf(SlewSpeedNames[4], "128x Sidereal");
+	SlewSpeeds[5] = 256.0;		sprintf(SlewSpeedNames[5], "256x Sidereal");
+	SlewSpeeds[6] = 800.0;		sprintf(SlewSpeedNames[6], "800x Sidereal");
 	
 	sprintf(GuideSpeedNames[0], "1.0 Sidereal");
 	sprintf(GuideSpeedNames[1], "3/4 Sidereal");
@@ -205,11 +202,6 @@ int X2Mount::queryAbstraction(const char* pszName, void** ppVal)
     else if (!strcmp(pszName, SerialPortParams2Interface_Name))
         *ppVal = dynamic_cast<SerialPortParams2Interface*>(this);
 
-    //// DO NOT DISTRIBUTE !!!!!!
-    else if (!strcmp(pszName, PulseGuideInterface_Name))
-        *ppVal = dynamic_cast<PulseGuideInterface*>(this);
-
-    
 	//Add support for the optional LoggerInterface
 	/* if (!strcmp(pszName, LoggerInterface_Name)) {
 		*ppVal = GetLogger();
@@ -1526,70 +1518,3 @@ void X2Mount::portNameOnToCharPtr(char* pszPort, const unsigned int& nMaxSize) c
         m_pIniUtil->readString(PARENT_KEY, CHILD_KEY_PORT_NAME, pszPort, pszPort, nMaxSize);
 
 }
-
-#pragma mark - PulseGuideInterface
-int X2Mount::getOpenLoopMoveInterface(int &nGuideRateIndex, OpenLoopMoveInterface** pOLSI)
-{
-    #ifdef HEQ5_DEBUG
-        if (LogFile) {
-            time_t ltime = time(NULL);
-            timestamp = asctime(localtime(&ltime));
-            timestamp[strlen(timestamp) - 1] = 0;
-            fprintf(LogFile, "[%s] [getOpenLoopMoveInterface] called\n", timestamp);
-        }
-    #endif
-
-    nGuideRateIndex = 2; // 2 is rate "2x", i.e. the desired rate at which to autoguide
-    return queryAbstraction(OpenLoopMoveInterface_Name, (void**)pOLSI);
-}
-
-int X2Mount::pulseGuideMoveTelescope(const int& centiSecRa, const int& centiSecDec)
-{
-    int nErr = SB_OK;
-    MountDriverInterface::MoveDir nDir;
-    
-    #ifdef HEQ5_DEBUG
-        if (LogFile) {
-            time_t ltime = time(NULL);
-            timestamp = asctime(localtime(&ltime));
-            timestamp[strlen(timestamp) - 1] = 0;
-            fprintf(LogFile, "[%s] [pulseGuideMoveTelescope] called\n", timestamp);
-            fprintf(LogFile, "[%s] [pulseGuideMoveTelescope] centiSecRa = %d\n", timestamp, centiSecRa);
-            fprintf(LogFile, "[%s] [pulseGuideMoveTelescope] centiSecDec = %d\n", timestamp, centiSecDec);
-        }
-    #endif
-
-    if(centiSecRa != 0) {
-        nDir = centiSecRa>0 ? MountDriverInterface::MD_EAST :  MountDriverInterface::MD_WEST;
-        nErr = SkyW.StartOpenSlew(nDir, SlewSpeeds[2]);
-        if(nErr)
-            return nErr;
-        m_pSleeper->sleep(centiSecRa*10);
-        nErr = endOpenLoopMove();
-    }
-    
-    if(centiSecDec != 0) {
-        nDir = centiSecDec>0 ? MountDriverInterface::MD_NORTH :  MountDriverInterface::MD_SOUTH;
-        nErr = SkyW.StartOpenSlew(nDir, SlewSpeeds[2]);
-        if(nErr)
-            return nErr;
-        m_pSleeper->sleep(centiSecDec*10);
-        nErr = endOpenLoopMove();
-    }
-    
-    return nErr;
-}
-
-void X2Mount::pulseGuideAbort(void)
-{
-    #ifdef HEQ5_DEBUG
-        if (LogFile) {
-            time_t ltime = time(NULL);
-            timestamp = asctime(localtime(&ltime));
-            timestamp[strlen(timestamp) - 1] = 0;
-            fprintf(LogFile, "[%s] [pulseGuideAbort] called\n", timestamp);
-        }
-    #endif
-    endOpenLoopMove();
-}
-
