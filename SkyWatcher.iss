@@ -106,12 +106,16 @@ begin
    TheSkyXInstallPath := FindFile(ExpandConstant('{userdocs}') + '\Software Bisque', 'TheSkyXInstallPath.txt');
   { Check that could open the file}
   if Length(TheSkyXInstallPath)=0 then
-    RaiseException('Unable to find the installation path for The Sky X :' + TheSkyXInstallPath);
-  LoadResult := LoadStringFromFile(TheSkyXInstallPath, Location)
+    begin
+      LoadResult := BrowseForFolder('Please locate the installation path for TheSkyX', Location, False);
+      if not LoadResult then
+        RaiseException('Unable to find the installation path for TheSkyX');
+    end
+  else
+    LoadResult := LoadStringFromFile(TheSkyXInstallPath, Location)
   {Check that the file exists}
   if not DirExists(Location) then
     RaiseException('The SkyX installation directory ' + Location + ' does not exist');
 
   Result := Location;
 end;
-
