@@ -15,7 +15,7 @@
 #include "../../licensedinterfaces/mount/asymmetricalequatorialinterface.h"
 #include "../../licensedinterfaces/mount/needsrefractioninterface.h"
 #include "../../licensedinterfaces/mountdriverinterface.h"
-
+#include "../../licensedinterfaces/mount/pulseguideinterface2.h"
 
 
 //Optional interfaces, uncomment and implement as required.
@@ -70,7 +70,7 @@ class TickCountInterface;
 
 #define MAX_PORT_NAME_SIZE 120
 
-#define NSLEWSPEEDS 7
+#define NSLEWSPEEDS 4
 #define MAXSLEWNAMESIZE 20
 #define NGUIDESPEEDS 4
 
@@ -114,7 +114,7 @@ class X2Mount : public MountDriverInterface
 						,public ModalSettingsDialogInterface
                         ,public X2GUIEventInterface
                         ,public SerialPortParams2Interface
-
+                        ,public PulseGuideInterface2
 {
 public:
 	/*!Standard X2 constructor*/
@@ -195,6 +195,24 @@ public:
 	virtual int								rateNameFromIndexOpenLoopMove(const int& nZeroBasedIndex, char* pszOut, const int& nOutMaxSize);
 	virtual int								rateIndexOpenLoopMove(void);
 	
+    //PulseGuideInterface
+    virtual int useOpenLoopMoveInterface(int& nGuideRateIndex, OpenLoopMoveInterface** pOLSI)
+    {
+        // The Skywatcheer protocol defines guide rates from 0 (siderial) to 3 (0.25x) in 0.25
+        // increments. X2 requires slew rates in the other order, so subtract from 4.
+        nGuideRateIndex = 3 - m_iST4GuideRateIndex;
+#if defined HEQ5_DEBUG
+    ltime = time(NULL);
+    timestamp = asctime(localtime(&ltime));
+    timestamp[strlen(timestamp) - 1] = 0;
+    fprintf(LogFile, "[%s] m_iSTGuideRateIndex %d nGuideRateIndex %d.\n", timestamp, m_iST4GuideRateIndex, nGuideRateIndex);
+    fflush(LogFile);
+#endif
+
+        return queryAbstraction(OpenLoopMoveInterface_Name, (void**)pOLSI);
+    }
+    
+    
 	//NeedsRefractionInterface
 	virtual bool							needsRefactionAdjustments(void);
 	
@@ -311,7 +329,7 @@ private:
 #ifdef HEQ5_DEBUG
 	char m_sLogfilePath[SKYWATCHER_CHAR_BUFFER];
 	// timestamp for logs
-	char *timestamp = "";
+	char *timestamp;
 	time_t ltime;
 	FILE *LogFile;      // LogFile
 #endif

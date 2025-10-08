@@ -12,6 +12,11 @@
 #include <netdb.h>
 #endif
 
+#include <string.h>
+#include <memory.h>
+#include <math.h>
+#include <stdlib.h>
+
 #include <cstdio>
 #include <time.h>
 #include <string>
@@ -24,10 +29,14 @@
 #include "../../licensedinterfaces/mountdriverinterface.h"
 #include "../../licensedinterfaces/loggerinterface.h"
 
+
+// #include "StopWatch.h"
+
+
 // #define SKYW_DEBUG 1   // define this to have log files
 
 // Defines below from INDI EQMOD
-#define SKYWATCHER_DRIVER_VERSION 3.0
+#define SKYWATCHER_DRIVER_VERSION 3.2
 #define SKYWATCHER_MAX_CMD        16
 #define SKYWATCHER_MAX_TRIES      3
 #define SKYWATCHER_CHAR_BUFFER   1024
@@ -46,6 +55,7 @@
 #define SKYWATCHER_MAX_GOTO_ITERATIONS 5   // How many times to attempt an iterative goto
 #define SKYWATCHER_GOTO_ERROR          5.0 // Permitted arcseconds of error in goto target
 
+#define INTER_COMMAND_WAIT    100
 
 // Next turns string charcter representing a HEX code into a number
 #define HEX(c) (((c) < 'A')?((c)-'0'):((c) - 'A') + 10)
@@ -86,6 +96,7 @@ public:
 	int GetAxesStatus(void);
 	int StartPark(void);
 	int StartOpenSlew(const MountDriverInterface::MoveDir & 	Dir, double rate);
+    int EndOpenSlew(void);
 	int PolarAlignment(double dHAHome, double dDecHome, int HomeIndex, double HaPolaris, double HAOctansSigma);
 	int SetST4GuideRate(int m_ST4GuideRateIndex);
 	void SetWiFiEnabled(bool enabled) { m_bWiFi = enabled; }
@@ -278,7 +289,8 @@ private:
 	WSADATA wsadata;
 #endif
 
-	
+	// CStopWatch        m_cmdDelayTimer;
+    
 #ifdef SKYW_DEBUG
 	char m_sLogfilePath[SKYWATCHER_CHAR_BUFFER];
 	// timestamp for logs
