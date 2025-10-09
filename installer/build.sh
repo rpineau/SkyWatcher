@@ -12,7 +12,6 @@ cp "../Skywatcher.ui" ROOT/tmp/Skywatcher_X2/
 cp "../mountlist Skywatcher.txt" ROOT/tmp/Skywatcher_X2/
 cp "../build/Release/libSkywatcher.dylib" ROOT/tmp/Skywatcher_X2/
 
-
 if [ ! -z "$installer_signature" ]; then
 	# signed package using env variable installer_signature
 	pkgbuild --root ROOT --identifier $BUNDLE_NAME --sign "$installer_signature" --scripts Scripts --version 1.0 $PACKAGE_NAME
@@ -22,3 +21,4 @@ else
 fi
 
 rm -rf ROOT
+
