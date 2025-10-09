@@ -672,7 +672,7 @@ int Skywatcher::EndOpenSlew(void)
     err = SendSkywatcherCommand(StartMotion, Axis1, NULL, response, SKYWATCHER_MAX_CMD); if (err) return err;
 
     // Now stop DEC axis moving.
-    err = SendSkywatcherCommand(InstantAxisStop, Axis2, NULL, response, SKYWATCHER_MAX_CMD);
+    err = SendSkywatcherCommand(NotInstantAxisStop, Axis2, NULL, response, SKYWATCHER_MAX_CMD);
 
     return err;
 }
