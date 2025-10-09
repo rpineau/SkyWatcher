@@ -82,16 +82,7 @@ class TickCountInterface;
 
 #include <cstdio>
 
-
-
-#if defined(SB_WIN_BUILD)
-#define DEF_PORT_NAME					"COM3"
-#elif defined(SB_LINUX_BUILD)
-#define DEF_PORT_NAME					"/dev/mount"
-#elif defined (SB_MAC_BUILD)
-#define DEF_PORT_NAME					"/dev/cu.KeySerial1"
-#endif
-
+#define DEF_PORT_NAME				"No port selected"
 
 /*!
 \brief The X2Mount example.

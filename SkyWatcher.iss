@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "SkyWatcher X2 Driver"
-#define MyAppVersion "3.0"
+#define MyAppVersion "3.2"
 #define MyAppPublisher "RTI-Zone"
 #define MyAppURL "https://rti-zone.org"
 
@@ -40,13 +40,20 @@ DirExistsWarning=no
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
+[Dirs]
+Name: "{app}\Plugins\MountPlugIns";
+Name: "{app}\Plugins64\MountPlugIns";
+
 [Files]
-; WIll also need to customise these!
-Source: "mountlist SkyWatcher.txt"; DestDir: "{app}\Miscellaneous Files"; Flags: ignoreversion
-Source: "libSkyWatcher\Release\libSkyWatcher.dll"; DestDir: "{app}\Plugins\MountPlugIns"; Flags: ignoreversion
-Source: "SkyWatcher.ui"; DestDir: "{app}\Plugins\MountPlugIns"; Flags: ignoreversion
-; NOTE: Don't use "Flags: ignoreversion" on any shared system files
-; msgBox('Do you want to install MyProg.exe to ' + ExtractFilePath(CurrentFileName) + '?', mbConfirmation, MB_YESNO)
+Source: "mountlist SkyWatcher.txt";                         DestDir: "{app}\Miscellaneous Files"; Flags: ignoreversion
+Source: "mountlist SkyWatcher.txt";                         DestDir: "{app}\Miscellaneous Files"; Flags: ignoreversion; DestName: "mountlist64 SkyWatcher.txt"
+; 32 bits
+Source: "libSkyWatcher\Win32\Release\libSkyWatcher.dll";    DestDir: "{app}\Plugins\MountPlugIns"; Flags: ignoreversion
+Source: "SkyWatcher.ui";                                    DestDir: "{app}\Plugins\MountPlugIns"; Flags: ignoreversion
+; 64 bits
+Source: "libSkyWatcher\x64\Release\libSkyWatcher.dll";      DestDir: "{app}\Plugins64\MountPlugIns"; Flags: ignoreversion; Check: DirExists(ExpandConstant('{app}\Plugins64\MountPlugIns'))
+Source: "SkyWatcher.ui";                                    DestDir: "{app}\Plugins64\MountPlugIns"; Flags: ignoreversion; Check: DirExists(ExpandConstant('{app}\Plugins64\MountPlugIns'))
+
 
 [Code]
 {* Below are functions to read TheSkyXInstallPath.txt and confirm that the directory does exist
@@ -99,12 +106,16 @@ begin
    TheSkyXInstallPath := FindFile(ExpandConstant('{userdocs}') + '\Software Bisque', 'TheSkyXInstallPath.txt');
   { Check that could open the file}
   if Length(TheSkyXInstallPath)=0 then
-    RaiseException('Unable to find the installation path for The Sky X :' + TheSkyXInstallPath);
-  LoadResult := LoadStringFromFile(TheSkyXInstallPath, Location)
+    begin
+      LoadResult := BrowseForFolder('Please locate the installation path for TheSkyX', Location, False);
+      if not LoadResult then
+        RaiseException('Unable to find the installation path for TheSkyX');
+    end
+  else
+    LoadResult := LoadStringFromFile(TheSkyXInstallPath, Location)
   {Check that the file exists}
   if not DirExists(Location) then
     RaiseException('The SkyX installation directory ' + Location + ' does not exist');
 
   Result := Location;
 end;
-

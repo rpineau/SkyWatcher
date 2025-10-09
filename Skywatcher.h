@@ -1,10 +1,7 @@
 #pragma once
-#ifdef SB_WIN_BUILD
+#ifdef WIN32
 #include <WinSock2.h>
 #else
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -12,10 +9,11 @@
 #include <netdb.h>
 #endif
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <memory.h>
 #include <math.h>
-#include <stdlib.h>
 
 #include <cstdio>
 #include <time.h>
