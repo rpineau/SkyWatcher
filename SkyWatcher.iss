@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "SkyWatcher X2 Driver"
-#define MyAppVersion "3.2"
+#define MyAppVersion "3.21"
 #define MyAppPublisher "RTI-Zone"
 #define MyAppURL "https://rti-zone.org"
 
