@@ -34,7 +34,7 @@
 // #define SKYW_DEBUG 1   // define this to have log files
 
 // Defines below from INDI EQMOD
-#define SKYWATCHER_DRIVER_VERSION 3.2
+#define SKYWATCHER_DRIVER_VERSION 3.21
 #define SKYWATCHER_MAX_CMD        16
 #define SKYWATCHER_MAX_TRIES      3
 #define SKYWATCHER_CHAR_BUFFER   1024
