@@ -40,7 +40,7 @@
 //   2: (unused here) - the send-command machinery it would cover lives in Skywatcher.cpp.
 //   3: Everything else - driver/connection lifecycle, coordinate/math tracing, slew and tracking lifecycle,
 //      UI events.
-#define HEQ5_DEBUG 3  // Uncomment to enable logging (levels 0-3, see above)
+// #define HEQ5_DEBUG 3  // Uncomment to enable logging (levels 0-3, see above)
 
 // Forward declare the interfaces that the this driver is "given" by TheSkyX
 class SerXInterface;
