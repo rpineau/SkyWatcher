@@ -31,14 +31,27 @@
 // #include "StopWatch.h"
 
 
-// #define SKYW_DEBUG 1   // define this to have log files
+// Comment out SKYW_DEBUG entirely for a production build - LogFile/LogDebug then compile away to nothing
+// (see LogDebug in Skywatcher.cpp). When defined, controls how much gets logged. Levels mirror the
+// HEQ5_DEBUG scheme in x2mount.h so the two log files read consistently (levels 0 and 2 have no sites in
+// x2mount.cpp - open-loop-move timing and send-command machinery live here instead):
+//   0: Open-loop-move tracing (relevant to guiding).
+//   1: Notable/unexpected events worth a heads-up even outside active debugging - command failures,
+//      malformed replies, retries.
+//   2: The send-command machinery's full trace (every command sent/received).
+//   3: Everything else - connection lifecycle, coordinate/math tracing, slew and tracking lifecycle.
+// #define SKYW_DEBUG 1   // Uncomment to enable logging (levels 0-3, see above)
 
 // Defines below from INDI EQMOD
-#define SKYWATCHER_DRIVER_VERSION 3.21
+#define SKYWATCHER_DRIVER_VERSION 3.4
 #define SKYWATCHER_MAX_CMD        16
 #define SKYWATCHER_MAX_TRIES      3
 #define SKYWATCHER_CHAR_BUFFER   1024
 #define SKYWATCHER_MAX_TIMEOUT 200
+// How often the serial read loop in SendSkywatcherCommandInnerLoop() re-checks bytesWaitingRx
+// while waiting for a reply, instead of trusting readFile()'s own timeout parameter to be
+// honored (see AstroTrac's AstroTracreadResponse() for the same pattern and why).
+#define SKYWATCHER_READ_POLL_INTERVAL_MS 3
 
 #define SKYWATCHER_SIDEREAL_DAY 86164.09053083288
 #define SKYWATCHER_SIDEREAL_SPEED 15.04106864
@@ -162,7 +175,16 @@ private:
 	bool m_bTracking;							  // Is the telescope tracking?
 	double m_dRATrackingRate;					  // RA Tracking rate in arcsec/sec
 	double m_dDETrackingRate;	                  // DEC Tracking Rate in arcsec/sec
-			
+
+	// Open-loop-move (guiding/jog) duration tracking, per axis since a diagonal move can have
+	// both running independently. Mirrors AstroTrac's m_OpenLoopStartTimeRA/DEC and
+	// m_bOpenLoopRA/DEC: StartOpenSlew() stamps the relevant one when a move begins,
+	// EndOpenSlew() logs the elapsed duration for whichever is set and clears both.
+	struct timespec m_OpenLoopStartTimeRA;
+	struct timespec m_OpenLoopStartTimeDEC;
+	bool m_bOpenLoopRA = false;
+	bool m_bOpenLoopDEC = false;
+
 	// Types
 	enum SkywatcherCommand {
 		SetAxisPositionCmd = 'E',
@@ -291,11 +313,13 @@ private:
     
 #ifdef SKYW_DEBUG
 	char m_sLogfilePath[SKYWATCHER_CHAR_BUFFER];
-	// timestamp for logs
-	char *timestamp;
-	time_t ltime;
 	FILE *LogFile;      // LogFile
 #endif
+
+	// Write a single debug log line if SKYW_DEBUG is defined and at least nLevel, otherwise a no-op.
+	// Centralizes the timestamp/fprintf/fflush boilerplate that used to be repeated at every log site.
+	// Const so it can be called from const methods.
+	void LogDebug(int nLevel, const char *pszFormat, ...) const;
 
 };
 

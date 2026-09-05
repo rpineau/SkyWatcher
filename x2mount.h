@@ -30,7 +30,17 @@
 #include "../../licensedinterfaces/x2guiinterface.h"
 #include "../../licensedinterfaces/serialportparams2interface.h"
 
-// #define HEQ5_DEBUG    // Define this to have log files
+// Comment out HEQ5_DEBUG entirely for a production build - LogFile/LogDebug then compile away to nothing
+// (see LogDebug in x2mount.cpp). When defined, controls how much gets logged. Levels mirror the SKYW_DEBUG
+// scheme in Skywatcher.h so the two log files read consistently (levels 0 and 2 have no sites here - the
+// open-loop-move timing and send-command machinery they cover live in Skywatcher.cpp):
+//   0: (unused here) - open-loop-move timing lives in Skywatcher.cpp under SKYW_DEBUG.
+//   1: Open-loop-move tracing (relevant to guiding) plus notable/unexpected events worth a heads-up even
+//      outside active debugging.
+//   2: (unused here) - the send-command machinery it would cover lives in Skywatcher.cpp.
+//   3: Everything else - driver/connection lifecycle, coordinate/math tracing, slew and tracking lifecycle,
+//      UI events.
+// #define HEQ5_DEBUG 3  // Uncomment to enable logging (levels 0-3, see above)
 
 // Forward declare the interfaces that the this driver is "given" by TheSkyX
 class SerXInterface;
@@ -192,13 +202,7 @@ public:
         // The Skywatcheer protocol defines guide rates from 0 (siderial) to 3 (0.25x) in 0.25
         // increments. X2 requires slew rates in the other order, so subtract from 4.
         nGuideRateIndex = 3 - m_iST4GuideRateIndex;
-#if defined HEQ5_DEBUG
-    ltime = time(NULL);
-    timestamp = asctime(localtime(&ltime));
-    timestamp[strlen(timestamp) - 1] = 0;
-    fprintf(LogFile, "[%s] m_iSTGuideRateIndex %d nGuideRateIndex %d.\n", timestamp, m_iST4GuideRateIndex, nGuideRateIndex);
-    fflush(LogFile);
-#endif
+        LogDebug(1, "m_iSTGuideRateIndex %d nGuideRateIndex %d.\n", m_iST4GuideRateIndex, nGuideRateIndex);
 
         return queryAbstraction(OpenLoopMoveInterface_Name, (void**)pOLSI);
     }
@@ -258,7 +262,16 @@ private:
 	LoggerInterface							*GetLogger() {return m_pLogger; }
 	MutexInterface							*GetMutex()  {return m_pIOMutex;}
 	TickCountInterface						*GetTickCountInterface() {return m_pTickCount;}
-	
+
+	// Same as setTrackingRates(), minus the mutex lock. For callers (raDec, endPark, uiEvent) that
+	// already hold GetMutex() themselves and would otherwise re-lock it reentrantly.
+	int										setTrackingRatesCore(const bool& bTrackingOn, const bool& bIgnoreRates, const double& dRaRateArcSecPerSec, const double& dDecRateArcSecPerSec);
+
+	// Write a single debug log line if HEQ5_DEBUG is defined and at least nLevel, otherwise a no-op.
+	// Centralizes the timestamp/fprintf/fflush boilerplate that used to be repeated at every log site.
+	// Const so it can be called from const methods like isCompleteSlewTo().
+	void									LogDebug(int nLevel, const char *pszFormat, ...) const;
+
 	// Variables to store Sky X interfaces
 	int m_nPrivateMulitInstanceIndex;
 	SerXInterface*							m_pSerX;
@@ -319,9 +332,6 @@ private:
 	bool m_bCausedCheckBoxStateChange = false;						// Have we caused the check box to change state
 #ifdef HEQ5_DEBUG
 	char m_sLogfilePath[SKYWATCHER_CHAR_BUFFER];
-	// timestamp for logs
-	char *timestamp;
-	time_t ltime;
 	FILE *LogFile;      // LogFile
 #endif
 	
