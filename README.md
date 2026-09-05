@@ -51,14 +51,14 @@ Reached via **More Settings...** in the Serial Device Settings dialog above:
   - **East Limit** (hours): how far before the meridian the mount move
     can slew after a meridian flip - will generally be zero or negative.
     Negative will result in a slightly weights up position
-  **West Limit** (hours): how far past the meridian the
+  - **West Limit** (hours): how far past the meridian the
     mount is allowed to track before the driver stops tracking. A positive
-    Wast Limit allows tracking slightly into the weights-up position. 
+    West Limit allows tracking slightly into the weights-up position. 
     The West Limit must be ≥ East Limit.
   - **Flip Hour Angle**: the hour angle at which the mount performs a
     meridian flip when slewing. Usually set equal to the East Limit; must lie
     between the East and West Limits. Note that although all three limits are 
-    set to TheSky correctly, only the West Limit is implemented by TheSky.
+    sent to TheSky correctly, only the West Limit is implemented by TheSky.
   - **Horizon Limit** (degrees): tracking stops once the target sets below
     this altitude.
   - **Post Slew Delay** (seconds): a pause added after every slew completes.
