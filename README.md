@@ -28,8 +28,15 @@ cable (or Synscan Wi-Fi dongle).
 ## Connecting to the mount
 
 TheSkyX's Serial Device Settings dialog is used for the EQDIR cable
-connection - set the port to whichever USB serial device the cable enumerates
-as, and the baud rate is auto-detected on connect (9600 or 115200).
+connection:
+
+![Serial Device Settings dialog](images/Serial%20Settings.png)
+
+- **Serial device**: set this to whichever USB serial device your EQDIR cable
+  actually enumerates as - **not** the example port shown above (that's
+  whatever happened to be selected when this screenshot was taken, not a
+  Sky-Watcher device). The baud rate is auto-detected on connect (9600 or
+  115200).
 
 Click **More Settings...** in that same dialog to reach the driver's own
 settings (below), including the option to connect over the mount's Synscan
@@ -38,6 +45,8 @@ Wi-Fi dongle instead of the EQDIR cable.
 ## Driver settings
 
 Reached via **More Settings...** in the Serial Device Settings dialog above:
+
+![Setup Skywatcher dialog](images/More%20Settings.png)
 
 - **Polar Alignment**: choose which of the four clock positions (12/3/6/9
   o'clock) the polar-scope reticle's home position corresponds to on your
