@@ -258,7 +258,11 @@ private:
 	LoggerInterface							*GetLogger() {return m_pLogger; }
 	MutexInterface							*GetMutex()  {return m_pIOMutex;}
 	TickCountInterface						*GetTickCountInterface() {return m_pTickCount;}
-	
+
+	// Same as setTrackingRates(), minus the mutex lock. For callers (raDec, endPark, uiEvent) that
+	// already hold GetMutex() themselves and would otherwise re-lock it reentrantly.
+	int										setTrackingRatesCore(const bool& bTrackingOn, const bool& bIgnoreRates, const double& dRaRateArcSecPerSec, const double& dDecRateArcSecPerSec);
+
 	// Variables to store Sky X interfaces
 	int m_nPrivateMulitInstanceIndex;
 	SerXInterface*							m_pSerX;

@@ -735,7 +735,7 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 		if (!SkyW.GetIsPolarAlignInProgress()) {			// Slewing has finished
 			uiex->setPropertyString("pushButton_2", "text", "Move to Alignment Position"); // Change label to indicate action taken
 			m_bPolarisAlignmentSlew = false;
-			setTrackingRates(true, true, 0.0, 0.0);        // Start tracking
+			setTrackingRatesCore(true, true, 0.0, 0.0);        // Start tracking
 			sprintf(ColourLabel, "%sTracking On", QTGREEN);
 			uiex->setPropertyString("label_4", "text", ColourLabel);
 			return;
@@ -1205,7 +1205,7 @@ int X2Mount::raDec(double& ra, double& dec, const bool& bCached)
 	// Now check if have exceeded the tracking limits
 	// First tracking beyond the meridian. Must be beyond the pole (pointing east of horizon) for this to occur.
 	if (SkyW.GetIsBeyondThePole() && SkyW.GetIsTracking() && Ha > m_dWestSlewLim) {
-		err = setTrackingRates(false, true, 0.0, 0.0);	// Stop tracking since these have been exceeded
+		err = setTrackingRatesCore(false, true, 0.0, 0.0);	// Stop tracking since these have been exceeded
 		if (err) return err;
 		return ERR_LIMITSEXCEEDED;
 	}
@@ -1213,7 +1213,7 @@ int X2Mount::raDec(double& ra, double& dec, const bool& bCached)
 	// Now check to see if above the horizon
 	err = m_pTheSkyXForMounts->EqToHz(ra, dec, dAz, dAlt); if (err) return err;
 	if (!SkyW.GetIsBeyondThePole() && SkyW.GetIsTracking() && dAlt < m_dMinAngleAboveHorizon) {
-		err = setTrackingRates(false, true, 0.0, 0.0);	if (err) return err; // Stop tracking since now to low and setting
+		err = setTrackingRatesCore(false, true, 0.0, 0.0);	if (err) return err; // Stop tracking since now to low and setting
 		return ERR_LIMITSEXCEEDED;
 	}
 	return err;
@@ -1332,6 +1332,13 @@ bool X2Mount::isSynced(void)
 int X2Mount::setTrackingRates(const bool& bTrackingOn, const bool& bIgnoreRates, const double& dRaRateArcSecPerSec, const double& dDecRateArcSecPerSec)
 {
 	X2MutexLocker ml(GetMutex());
+	return setTrackingRatesCore(bTrackingOn, bIgnoreRates, dRaRateArcSecPerSec, dDecRateArcSecPerSec);
+}
+
+// Same as setTrackingRates(), minus the mutex lock - for callers (raDec, endPark, uiEvent) that already
+// hold the lock themselves and would otherwise re-lock GetMutex() reentrantly.
+int X2Mount::setTrackingRatesCore(const bool& bTrackingOn, const bool& bIgnoreRates, const double& dRaRateArcSecPerSec, const double& dDecRateArcSecPerSec)
+{
 #ifdef HEQ5_DEBUG
 	if (LogFile) {
 		time_t ltime = time(NULL);
@@ -1344,7 +1351,7 @@ int X2Mount::setTrackingRates(const bool& bTrackingOn, const bool& bIgnoreRates,
 //	if (!bIgnoreRates && fabs(dRaRateArcSecPerSec + 1000) < 0.1 && fabs(dDecRateArcSecPerSec + 1000) < 0.1) return SB_OK;
 
 	return SkyW.SetTrackingRates(bTrackingOn, bIgnoreRates, dRaRateArcSecPerSec, dDecRateArcSecPerSec);
-	
+
 }
 
 int X2Mount::trackingRates(bool& bTrackingOn, double& dRaRateArcSecPerSec, double& dDecRateArcSecPerSec)
@@ -1427,7 +1434,7 @@ int X2Mount::endPark(void)
 		fprintf(LogFile, "[%s] endPark Called\n", timestamp);
 	}
 #endif
-	err = setTrackingRates(false, true, 0.0, 0.0); if (err) return err;
+	err = setTrackingRatesCore(false, true, 0.0, 0.0); if (err) return err;
 	m_bParked = true;
 
 	// Now record parked positions
