@@ -40,7 +40,7 @@
 //      malformed replies, retries.
 //   2: The send-command machinery's full trace (every command sent/received).
 //   3: Everything else - connection lifecycle, coordinate/math tracing, slew and tracking lifecycle.
-#define SKYW_DEBUG 3   // Uncomment to enable logging (levels 0-3, see above)
+#define SKYW_DEBUG 1   // Uncomment to enable logging (levels 0-3, see above)
 
 // Defines below from INDI EQMOD
 #define SKYWATCHER_DRIVER_VERSION 3.21

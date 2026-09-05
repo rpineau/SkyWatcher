@@ -1388,13 +1388,25 @@ int Skywatcher::SendSkywatcherCommand(SkywatcherCommand cmd, SkywatcherAxis Axis
 {
 	int itries;
 	int err = SB_OK;
+	char szWireCmd[SKYWATCHER_MAX_CMD];
+	struct timespec cmdStart, cmdNow;
+	double cmdElapsed;
+
+	// Build the wire-format command string purely for logging - mirrors the snprintf in
+	// SendSkywatcherCommandInnerLoop, which builds its own copy to actually send.
+	if (cmdArgs == NULL)
+		snprintf(szWireCmd, sizeof(szWireCmd), "%c%c%c%c", SkywatcherLeadingChar, cmd, Axis, SkywatcherTrailingChar);
+	else
+		snprintf(szWireCmd, sizeof(szWireCmd), "%c%c%c%s%c", SkywatcherLeadingChar, cmd, Axis, cmdArgs, SkywatcherTrailingChar);
 
 	LogDebug(2, "Skyw::SendSkywatcherCommand Entered: Cmd %c Axis %d Args %s\n", cmd, Axis, cmdArgs);
 	// Ensure that the mount is connected. If not, try to connect:
 	if (!m_bLinked) {
 		err = Connect(); if (err) return err;
 	}
-	
+
+	clock_gettime(CLOCK_MONOTONIC, &cmdStart);
+
 	// Try SKYWATCHER_MAX_TRIES times until failure
 	for (itries = 0; itries < SKYWATCHER_MAX_TRIES; itries++) {
 		err = SendSkywatcherCommandInnerLoop(cmd, Axis, cmdArgs, response, maxlen);
@@ -1410,14 +1422,16 @@ int Skywatcher::SendSkywatcherCommand(SkywatcherCommand cmd, SkywatcherAxis Axis
 
 		}
 	}
-	
+
+	clock_gettime(CLOCK_MONOTONIC, &cmdNow);
+	cmdElapsed = (cmdNow.tv_sec - cmdStart.tv_sec) + (cmdNow.tv_nsec - cmdStart.tv_nsec) * 1e-9;
+
 	if (err != SB_OK) {
-		LogDebug(1, "Skyw::SendSkywatcherCommand Error Code: %d\n", err);
+		// itries == SKYWATCHER_MAX_TRIES here since the loop was never broken out of - that's the total tries made.
+		LogDebug(1, "Skyw::SendSkywatcherCommand Cmd: %s FAILED after %d tries, %.3f seconds total, response: %s, error: %d\n", szWireCmd, itries, cmdElapsed, response, err);
 	}
 	else {
-		if (itries > 0){
-			LogDebug(1, "Skyw::SendSkywatcherCommand itries: %d\n", itries);
-		}
+		LogDebug(1, "Skyw::SendSkywatcherCommand Cmd: %s succeeded after %d tries, %.3f seconds total, response: %s\n", szWireCmd, itries + 1, cmdElapsed, response);
 	}
 	return err;
 }
