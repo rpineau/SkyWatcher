@@ -1472,25 +1472,69 @@ int Skywatcher::SendSkywatcherCommandInnerLoop(SkywatcherCommand cmd, Skywatcher
 
 	LogDebug(2, "Skyw::SendSkywatcherCommand Write Command: %c Error Code :%d\n", cmd, err);
 	if (err) return err;
-	
+
 	//Now Read the response
 	// First clear the buffer;
 	memset(response, '\0', (size_t)maxlen);
 	bufPtr = response;
-	do {
-		err = m_pSerX->readFile(bufPtr, 1, nBytesRead, SKYWATCHER_MAX_TIMEOUT); if (err) return err;
-		
-		if (nBytesRead != 1) {// timeout
-			err = ERR_RXTIMEOUT;
-			break;
+	{
+	int nMsWaited = 0;
+
+	// Poll bytesWaitingRx and only call readFile once bytes are confirmed present, reading
+	// whatever's waiting in one batch instead of one byte at a time. Timeout is self-managed
+	// (sleep SKYWATCHER_READ_POLL_INTERVAL_MS between polls, up to SKYWATCHER_MAX_TIMEOUT
+	// total) instead of relying on readFile's own timeout, which testing found doesn't
+	// reliably honor the value requested - same lesson learned in AstroTrac's
+	// AstroTracreadResponse().
+	while ((totalBytesRead == 0 || *(bufPtr - 1) != SkywatcherTrailingChar) && totalBytesRead < (unsigned long)maxlen) {
+		int nBytesWaiting = 0;
+		int errPeek = m_pSerX->bytesWaitingRx(nBytesWaiting);
+
+		if (errPeek || nBytesWaiting <= 0) {
+			if (nMsWaited >= SKYWATCHER_MAX_TIMEOUT) {
+				LogDebug(1, "Skyw::SendSkywatcherCommandInnerLoop TIMED OUT: no bytes waiting after %dms (had %lu byte(s) so far: '%s')\n",
+					nMsWaited, totalBytesRead, response);
+				return ERR_RXTIMEOUT;
+			}
+			if (m_pSleeper)
+				m_pSleeper->sleep(SKYWATCHER_READ_POLL_INTERVAL_MS);
+			nMsWaited += SKYWATCHER_READ_POLL_INTERVAL_MS;
+			continue;
 		}
-		
+
+		// Read whatever's waiting in one call, bounded by remaining buffer space.
+		unsigned long ulToRead = (unsigned long)nBytesWaiting;
+		if (totalBytesRead + ulToRead > (unsigned long)maxlen)
+			ulToRead = (unsigned long)maxlen - totalBytesRead;
+
+		err = m_pSerX->readFile(bufPtr, ulToRead, nBytesRead, SKYWATCHER_MAX_TIMEOUT);
+		if (err) {
+			LogDebug(1, "Skyw::SendSkywatcherCommandInnerLoop readFile error %d reading %lu waiting byte(s) (had %lu byte(s) so far: '%s')\n",
+				err, ulToRead, totalBytesRead, response);
+			return err;
+		}
+		if (nBytesRead != ulToRead)
+			LogDebug(1, "Skyw::SendSkywatcherCommandInnerLoop readFile got %lu byte(s), bytesWaitingRx had reported %lu waiting (had %lu byte(s) so far: '%s')\n",
+				nBytesRead, ulToRead, totalBytesRead, response);
+
+		LogDebug(2, "Skyw::SendSkywatcherCommandInnerLoop bytesWaitingRx=%d, read %lu byte(s)\n", nBytesWaiting, nBytesRead);
+
+		nMsWaited = 0;
 		totalBytesRead += nBytesRead;
-		
-	} while (*bufPtr++ != SkywatcherTrailingChar && totalBytesRead < maxlen);
-	
-	if (!err) *--bufPtr = '\0'; //remove the trailing character
-	} 
+		bufPtr += nBytesRead;
+	}
+	}
+
+	// Last character should be the protocol's trailing char - if not, the buffer filled up
+	// without ever seeing it.
+	if (totalBytesRead == 0 || *(bufPtr - 1) != SkywatcherTrailingChar) {
+		if (totalBytesRead < (unsigned long)maxlen) *bufPtr = '\0';
+		LogDebug(1, "Skyw::SendSkywatcherCommandInnerLoop No trailing char: response = %s bytes read %lu\n", response, totalBytesRead);
+		return ERR_RXTIMEOUT;
+	}
+
+	*--bufPtr = '\0'; //remove the trailing character
+	}
 #if defined SB_LINUX_BUILD || defined SB_WIN_BUILD || defined SB_MAC_BUILD // Lets try all three for now
 	else {
 	  // Wifi - sending using UDP

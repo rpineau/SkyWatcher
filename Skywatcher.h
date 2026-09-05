@@ -48,6 +48,10 @@
 #define SKYWATCHER_MAX_TRIES      3
 #define SKYWATCHER_CHAR_BUFFER   1024
 #define SKYWATCHER_MAX_TIMEOUT 200
+// How often the serial read loop in SendSkywatcherCommandInnerLoop() re-checks bytesWaitingRx
+// while waiting for a reply, instead of trusting readFile()'s own timeout parameter to be
+// honored (see AstroTrac's AstroTracreadResponse() for the same pattern and why).
+#define SKYWATCHER_READ_POLL_INTERVAL_MS 3
 
 #define SKYWATCHER_SIDEREAL_DAY 86164.09053083288
 #define SKYWATCHER_SIDEREAL_SPEED 15.04106864
