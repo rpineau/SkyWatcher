@@ -31,16 +31,7 @@
 // #include "StopWatch.h"
 
 
-// Comment out SKYW_DEBUG entirely for a production build - LogFile/LogDebug then compile away to nothing
-// (see LogDebug in Skywatcher.cpp). When defined, controls how much gets logged. Levels mirror the
-// HEQ5_DEBUG scheme in x2mount.h so the two log files read consistently (levels 0 and 2 have no sites in
-// x2mount.cpp - open-loop-move timing and send-command machinery live here instead):
-//   0: Open-loop-move tracing (relevant to guiding).
-//   1: Notable/unexpected events worth a heads-up even outside active debugging - command failures,
-//      malformed replies, retries.
-//   2: The send-command machinery's full trace (every command sent/received).
-//   3: Everything else - connection lifecycle, coordinate/math tracing, slew and tracking lifecycle.
-#define SKYW_DEBUG 3   // Uncomment to enable logging (levels 0-3, see above)
+// #define SKYW_DEBUG 1   // define this to have log files
 
 // Defines below from INDI EQMOD
 #define SKYWATCHER_DRIVER_VERSION 3.21
@@ -300,13 +291,11 @@ private:
     
 #ifdef SKYW_DEBUG
 	char m_sLogfilePath[SKYWATCHER_CHAR_BUFFER];
+	// timestamp for logs
+	char *timestamp;
+	time_t ltime;
 	FILE *LogFile;      // LogFile
 #endif
-
-	// Write a single debug log line if SKYW_DEBUG is defined and at least nLevel, otherwise a no-op.
-	// Centralizes the timestamp/fprintf/fflush boilerplate that used to be repeated at every log site.
-	// Const so it can be called from const methods.
-	void LogDebug(int nLevel, const char *pszFormat, ...) const;
 
 };
 
