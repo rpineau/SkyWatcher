@@ -500,7 +500,7 @@ int Skywatcher::StopAxisandWait(SkywatcherAxis Axis)
 		count++;
 	} while (CurrentAxisStatus.motionmode != STOPPED);
 
-	LogDebug(1, "Skyw::StopAxisandWait Axis %c count %d\n", Axis, count - 1);
+	LogDebug(3, "Skyw::StopAxisandWait Axis %c count %d\n", Axis, count - 1);
 
 	return err;
 }
