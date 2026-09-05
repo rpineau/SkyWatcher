@@ -1393,11 +1393,13 @@ int Skywatcher::SendSkywatcherCommand(SkywatcherCommand cmd, SkywatcherAxis Axis
 	double cmdElapsed;
 
 	// Build the wire-format command string purely for logging - mirrors the snprintf in
-	// SendSkywatcherCommandInnerLoop, which builds its own copy to actually send.
+	// SendSkywatcherCommandInnerLoop, which builds its own copy to actually send. Leaves off
+	// SkywatcherTrailingChar (a raw 0x0D, not a printable delimiter) since embedding it here
+	// would corrupt the log line for anything reading it as text.
 	if (cmdArgs == NULL)
-		snprintf(szWireCmd, sizeof(szWireCmd), "%c%c%c%c", SkywatcherLeadingChar, cmd, Axis, SkywatcherTrailingChar);
+		snprintf(szWireCmd, sizeof(szWireCmd), "%c%c%c", SkywatcherLeadingChar, cmd, Axis);
 	else
-		snprintf(szWireCmd, sizeof(szWireCmd), "%c%c%c%s%c", SkywatcherLeadingChar, cmd, Axis, cmdArgs, SkywatcherTrailingChar);
+		snprintf(szWireCmd, sizeof(szWireCmd), "%c%c%c%s", SkywatcherLeadingChar, cmd, Axis, cmdArgs);
 
 	LogDebug(2, "Skyw::SendSkywatcherCommand Entered: Cmd %c Axis %d Args %s\n", cmd, Axis, cmdArgs);
 	// Ensure that the mount is connected. If not, try to connect:
