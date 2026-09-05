@@ -78,9 +78,9 @@ Reached via **More Settings...** in the Serial Device Settings dialog above:
 
 ## Debug logging
 
-For normal use, leave debug logging off (the default) - it's disabled by
-uncommenting nothing, so `LogDebug` compiles away to nothing and no log files
-are written. To diagnose a problem, uncomment one line in each of two
+For normal use, leave debug logging off - this is the default, shipped with
+both macros commented out, so `LogDebug` compiles away to nothing and no log
+files are written. To diagnose a problem, uncomment one line in each of two
 headers and rebuild:
 
 - `Skywatcher.h`: `#define SKYW_DEBUG <level>` - logs to `~/Skylog.txt`.
