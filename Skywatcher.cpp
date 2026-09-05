@@ -1,4 +1,5 @@
 #include "Skywatcher.h"
+#include <cstdarg>
 
 // Constructor for Skywatcher
 Skywatcher::Skywatcher(SerXInterface *pSerX, SleeperInterface *pSleeper, TheSkyXFacadeForDriversInterface *pTSX)

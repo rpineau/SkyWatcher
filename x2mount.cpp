@@ -1,4 +1,5 @@
 #include "x2mount.h"
+#include <cstdarg>
 
 X2Mount::X2Mount(const char* pszDriverSelection,
 				 const int& nInstanceIndex,
