@@ -466,7 +466,7 @@ int Skywatcher::StopAxesandWait(void)
 		err = GetAxesStatus(); if (err) return err;
 		count++;
 	} while (AxisStatus[RA].motionmode != STOPPED || AxisStatus[DEC].motionmode != STOPPED);
-	LogDebug(2, "Skyw::StopAxesandWait Called count %d\n", count-1);
+	LogDebug(3, "Skyw::StopAxesandWait Called count %d\n", count-1);
 
 
 	// Check that they are actually stopped!
@@ -479,7 +479,7 @@ int Skywatcher::StopAxesandWait(void)
 		count++;
 	} while (currentRAStep != RAStep || currentDEStep != DEStep);
 
-	LogDebug(2, "Skyw::StopAxesandWait motors moving count %d\n", count - 1);
+	LogDebug(3, "Skyw::StopAxesandWait motors moving count %d\n", count - 1);
 
 	return err;
 }
@@ -500,7 +500,7 @@ int Skywatcher::StopAxisandWait(SkywatcherAxis Axis)
 		count++;
 	} while (CurrentAxisStatus.motionmode != STOPPED);
 
-	LogDebug(2, "Skyw::StopAxisandWait count %d\n", count - 1);
+	LogDebug(3, "Skyw::StopAxisandWait count %d\n", count - 1);
 
 	return err;
 }
@@ -878,10 +878,10 @@ int Skywatcher::StartOpenSlew(const MountDriverInterface::MoveDir &		Dir, double
 	double RARate = SKYWATCHER_SIDEREAL_SPEED;
 	double DECRate = 0.0;
 
-	LogDebug(1, "Skyw::StartOpenSlew called direction %d rate %f\n", Dir, rate);
+	LogDebug(0, "Skyw::StartOpenSlew called direction %d rate %f\n", Dir, rate);
 	// Diretions are tuned to match jog so that can have same reflection settings.
 	if ((NorthHemisphere && (DEStep < DEStepInit)) || (!NorthHemisphere && (DEStep > DEStepInit))) {	// Pre-Meridian
-		LogDebug(1, "Skyw::StartOpenSlew called Pre-Meridian: NorthHemisphere %d DESSTEP %lu DESTEPINIT %lu\n", NorthHemisphere, DEStep, DEStepInit);
+		LogDebug(0, "Skyw::StartOpenSlew called Pre-Meridian: NorthHemisphere %d DESSTEP %lu DESTEPINIT %lu\n", NorthHemisphere, DEStep, DEStepInit);
 		switch (Dir) {
 			case MountDriverInterface::MD_NORTH:;
 				DECRate += rate*SKYWATCHER_SIDEREAL_SPEED;
@@ -898,7 +898,7 @@ int Skywatcher::StartOpenSlew(const MountDriverInterface::MoveDir &		Dir, double
 		}
 	}
 	else {				 // Post-Meridian
-		LogDebug(1, "Skyw::StartOpenSlew called Post-Meridian: NorthHemisphere %d DESSTEP %lu DESTEPINIT %lu\n", NorthHemisphere, DEStep, DEStepInit);
+		LogDebug(0, "Skyw::StartOpenSlew called Post-Meridian: NorthHemisphere %d DESSTEP %lu DESTEPINIT %lu\n", NorthHemisphere, DEStep, DEStepInit);
 		switch (Dir) {
 			case MountDriverInterface::MD_NORTH:;
 				DECRate -= rate*SKYWATCHER_SIDEREAL_SPEED;
