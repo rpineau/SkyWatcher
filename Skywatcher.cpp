@@ -30,9 +30,9 @@ Skywatcher::Skywatcher(SerXInterface *pSerX, SleeperInterface *pSleeper, TheSkyX
 
 #ifdef  SKYW_DEBUG
 #if defined(SB_WIN_BUILD)
-	sprintf(m_sLogfilePath,"%s%s%s", getenv("HOMEDRIVE"), getenv("HOMEPATH"),"\\Skylog.txt");
+	snprintf(m_sLogfilePath, sizeof(m_sLogfilePath),"%s%s%s", getenv("HOMEDRIVE"), getenv("HOMEPATH"),"\\Skylog.txt");
 #else
-	sprintf(m_sLogfilePath, "%s%s", getenv("HOME"), "/Skylog.txt");
+	snprintf(m_sLogfilePath, sizeof(m_sLogfilePath), "%s%s", getenv("HOME"), "/Skylog.txt");
 #endif
 
 	LogFile = fopen(m_sLogfilePath, "w");
@@ -398,7 +398,7 @@ int Skywatcher::SetST4GuideRate(int m_GuideRateIndex)
 	m_ST4GuideRate = m_GuideRateIndex;
 	
 	if (m_bLinked) {
-		sprintf(cmdargs, "%d", m_ST4GuideRate);
+		snprintf(cmdargs, sizeof(cmdargs), "%d", m_ST4GuideRate);
 		err = SendSkywatcherCommand(SetGuideRate, Axis1, cmdargs, response, SKYWATCHER_MAX_CMD); if (err) return err;
 		err = SendSkywatcherCommand(SetGuideRate, Axis2, cmdargs, response, SKYWATCHER_MAX_CMD); if (err) return err;
 	}
@@ -659,7 +659,7 @@ int Skywatcher::SetTrackingRateAxis(SkywatcherAxis Axis, double Rate, unsigned l
 		if (CurrentAxisStatus.motionmode != STOPPED) { err = StopAxisandWait(Axis); if (err) return err; }
 		
 		// Tell mount to do slew with speed and direction
-		sprintf(command, "%d%d", Speedmode, Direction);
+		snprintf(command, sizeof(command), "%d%d", Speedmode, Direction);
 		err = SendSkywatcherCommand(SetMotionMode, Axis, command, response, SKYWATCHER_MAX_CMD); if (err) return err;
 	}
 	
@@ -1172,7 +1172,7 @@ int Skywatcher::StartTargetSlew(SkywatcherAxis Axis, long CurrentStep, long Targ
 
 	
 	// Tell mount to do goto with speed and direction
-	sprintf(command, "%d%d", lowspeed, Direction);
+	snprintf(command, sizeof(command), "%d%d", lowspeed, Direction);
 	err = SendSkywatcherCommand(SetMotionMode, Axis, command, response, SKYWATCHER_MAX_CMD); if (err) return err;
 
 
@@ -1231,11 +1231,11 @@ int Skywatcher::ReadMountData(void)
 	
 	
 	// Now Decode motorboard response - code from Skywatcher Basic API - but looks complicated given the simple string returned
-	sprintf(MCVersionName, "%c%c.%c%c", response[1], response[2], response[3], response[4]);
+	snprintf(MCVersionName, sizeof(MCVersionName), "%c%c.%c%c", response[1], response[2], response[3], response[4]);
 	tmpMCVersion = Revu24str2long(response + 1);
 	MCVersion = ((tmpMCVersion & 0xFF) << 16) | ((tmpMCVersion & 0xFF00)) | ((tmpMCVersion & 0xFF0000) >> 16);
 	MountCode = MCVersion & 0xFF;
-	//	sprintf(MCVersionName, "%04lx", (MCVersion >> 8)); - version in Skywatcher Basic API
+	//	snprintf(MCVersionName, sizeof(MCVersionName), "%04lx", (MCVersion >> 8)); - version in Skywatcher Basic API
 	
 	// Translate MountCode into text:
 	switch (MountCode) {
@@ -1371,11 +1371,11 @@ int Skywatcher::ResetMotions(void)
 
 	// Get axis status to find direction and set
 	err = GetAxisStatus(Axis1, CurrentAxisStatus); if (err) return err;
-	sprintf(command, "1%d", CurrentAxisStatus.direction);
+	snprintf(command, sizeof(command), "1%d", CurrentAxisStatus.direction);
 	err = SendSkywatcherCommand(SetMotionMode, Axis1, command, response, SKYWATCHER_MAX_CMD); if (err) return err;
 
 	err = GetAxisStatus(Axis2, CurrentAxisStatus); if (err) return err;
-	sprintf(command, "1%d", CurrentAxisStatus.direction);
+	snprintf(command, sizeof(command), "1%d", CurrentAxisStatus.direction);
 	err = SendSkywatcherCommand(SetMotionMode, Axis2, command, response, SKYWATCHER_MAX_CMD); if (err) return err;
 
 	return SB_OK;

@@ -28,9 +28,9 @@ X2Mount::X2Mount(const char* pszDriverSelection,
 #ifdef  HEQ5_DEBUG
 	// Open log file
 #if defined(SB_WIN_BUILD)
-	sprintf(m_sLogfilePath, "%s%s%s", getenv("HOMEDRIVE"), getenv("HOMEPATH"), "\\X2Mountlog.txt");
+	snprintf(m_sLogfilePath, sizeof(m_sLogfilePath), "%s%s%s", getenv("HOMEDRIVE"), getenv("HOMEPATH"), "\\X2Mountlog.txt");
 #else
-	sprintf(m_sLogfilePath, "%s%s", getenv("HOME"), "/X2Mountlog.txt");
+	snprintf(m_sLogfilePath, sizeof(m_sLogfilePath), "%s%s", getenv("HOME"), "/X2Mountlog.txt");
 #endif
 	LogFile = fopen(m_sLogfilePath, "w");
 
@@ -304,19 +304,19 @@ int X2Mount::execModalSettingsDialog(void)
 		dx->setEnabled("comboBox", false);
 	}
 	if (!SkyW.isConnected()) {
-		sprintf(ColourLabel, "%sDisconnected", QTRED);
+		snprintf(ColourLabel, sizeof(ColourLabel), "%sDisconnected", QTRED);
 		dx->setPropertyString("label_4", "text", ColourLabel);;
 	}
 	else if (m_bParked) {
-		sprintf(ColourLabel, "%sParked", QTGREEN);
+		snprintf(ColourLabel, sizeof(ColourLabel), "%sParked", QTGREEN);
 		dx->setPropertyString("label_4", "text", ColourLabel);;
 	}
 	else if (SkyW.GetIsTracking()) {
-		sprintf(ColourLabel, "%sTracking On", QTGREEN);
+		snprintf(ColourLabel, sizeof(ColourLabel), "%sTracking On", QTGREEN);
 		dx->setPropertyString("label_4", "text", ColourLabel);;
 	}
 	else {
-		sprintf(ColourLabel, "%sTracking Off", QTGREEN);
+		snprintf(ColourLabel, sizeof(ColourLabel), "%sTracking Off", QTGREEN);
 		dx->setPropertyString("label_4", "text", ColourLabel);;
 	}
 	
@@ -347,7 +347,7 @@ int X2Mount::execModalSettingsDialog(void)
 	}
 
 	// Slew limits should be OK - and if not, will get checked in any event
-	sprintf(ColourLabel, "%sSlew limits OK", QTGREEN);
+	snprintf(ColourLabel, sizeof(ColourLabel), "%sSlew limits OK", QTGREEN);
 	dx->setPropertyString("label_12", "text", ColourLabel);;
 
 	LogDebug(3, "execModealSetting::  Input Slew Limits %02f %02f %02f %02f\n", m_dEastSlewLim, m_dWestSlewLim, m_dFlipHourAngle, m_dMinAngleAboveHorizon);
@@ -357,7 +357,7 @@ int X2Mount::execModalSettingsDialog(void)
 		dx->setEnabled("pushButton_3", false);
 		dx->setEnabled("checkBox", false);
 		dx->setChecked("checkBox", false);
-		sprintf(ColourLabel, "%sDisconnected", QTRED);
+		snprintf(ColourLabel, sizeof(ColourLabel), "%sDisconnected", QTRED);
 		dx->setPropertyString("label_16", "text", ColourLabel);
 	}
 	else if (!SkyW.GetIsPecSupported()) {
@@ -369,7 +369,7 @@ int X2Mount::execModalSettingsDialog(void)
 		dx->setEnabled("pushButton_3", false);
 		dx->setEnabled("checkBox", true);
 		dx->setChecked("checkBox", m_bPecEnabled);
-		sprintf(ColourLabel, "%sParked", QTGREEN);
+		snprintf(ColourLabel, sizeof(ColourLabel), "%sParked", QTGREEN);
 		dx->setPropertyString("label_16", "text", ColourLabel);
 	} 
 	else {
@@ -378,17 +378,17 @@ int X2Mount::execModalSettingsDialog(void)
 			dx->setEnabled("checkBox", true);
 			dx->setChecked("checkBox", m_bPecEnabled);
 			if (m_bPecEnabled) {
-				sprintf(ColourLabel, "%sPPEC Trained and Enabled", QTGREEN);
+				snprintf(ColourLabel, sizeof(ColourLabel), "%sPPEC Trained and Enabled", QTGREEN);
 			}
 			else {
-				sprintf(ColourLabel, "%sPPEC Trained but disabled", QTRED);
+				snprintf(ColourLabel, sizeof(ColourLabel), "%sPPEC Trained but disabled", QTRED);
 			}
 			dx->setPropertyString("label_16", "text", ColourLabel);
 		}
 		else {
 			dx->setEnabled("checkBox", false);
 			dx->setChecked("checkBox", false);
-			sprintf(ColourLabel, "%sMount does not have valid PPEC data. Ensure autoguider is running then click \"Start PPEC Training\" to store.", QTRED);
+			snprintf(ColourLabel, sizeof(ColourLabel), "%sMount does not have valid PPEC data. Ensure autoguider is running then click \"Start PPEC Training\" to store.", QTRED);
 			dx->setPropertyString("label_16", "text", ColourLabel);
 		}
 	}
@@ -405,7 +405,7 @@ int X2Mount::execModalSettingsDialog(void)
 	// Checking box will cause a changed state event. If enabled, will be handled by uievent routine.
 	// Just need to handle the not enabled set up.
 	if (!m_bWiFiEnabled) {
-	  sprintf(ColourLabel, "%sWiFi Disconnected", QTRED);
+	  snprintf(ColourLabel, sizeof(ColourLabel), "%sWiFi Disconnected", QTRED);
 	  dx->setPropertyString("label_20", "text", ColourLabel);
 	}
 	  
@@ -424,7 +424,7 @@ int X2Mount::execModalSettingsDialog(void)
 	dx->setEnabled("lineEdit", false);
 	dx->setEnabled("lineEdit_2", false);
 	dx->setEnabled("checkBox_2", false);
-	sprintf(ColourLabel, "%sOnly enabled under LINUX", QTRED);
+	snprintf(ColourLabel, sizeof(ColourLabel), "%sOnly enabled under LINUX", QTRED);
 	dx->setPropertyString("label_20", "text", ColourLabel);
 //#endif
 */
@@ -521,7 +521,7 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 		minutes = floor((HAStar - hours) * 60 + 0.5);
 
 		// Format String
-        sprintf(Orientation, "%s clock location:     %02d:%02d", StarName.c_str(), hours, minutes);
+        snprintf(Orientation, sizeof(Orientation), "%s clock location:     %02d:%02d", StarName.c_str(), hours, minutes);
 		uiex->setPropertyString("label_17", "text", Orientation);
 
 		// Read the value of the horizontal slider
@@ -557,21 +557,21 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 		// Check the variables if the slew limits have changed
 		if (ichange) {
 			if (m_dTempEastSlewLim > m_dTempWestSlewLim) {
-				sprintf(ColourLabel, "%sWest Limit set equal to East Limit: West limit must be >= East Limit", QTRED);
+				snprintf(ColourLabel, sizeof(ColourLabel), "%sWest Limit set equal to East Limit: West limit must be >= East Limit", QTRED);
 				uiex->setPropertyString("label_12", "text", ColourLabel);
 				m_dTempWestSlewLim = m_dTempEastSlewLim;
 				uiex->setPropertyDouble("doubleSpinBox_2", "value", m_dTempWestSlewLim);
 				slewerr = true;
 			}
 			if (m_dTempFlipHourAngle < m_dTempEastSlewLim) {
-				sprintf(ColourLabel, "%sFlip hour angle set equal to East Limit: must be >= East Limit", QTRED);
+				snprintf(ColourLabel, sizeof(ColourLabel), "%sFlip hour angle set equal to East Limit: must be >= East Limit", QTRED);
 				uiex->setPropertyString("label_12", "text", ColourLabel);
 				m_dTempFlipHourAngle = m_dTempEastSlewLim;
 				uiex->setPropertyDouble("doubleSpinBox_3", "value", m_dTempFlipHourAngle);
 				slewerr = true;
 			}
 			if (m_dTempFlipHourAngle > m_dTempWestSlewLim) {
-				sprintf(ColourLabel, "%sFlip hour angle set to West Limit: must be <= West Limit", QTRED);
+				snprintf(ColourLabel, sizeof(ColourLabel), "%sFlip hour angle set to West Limit: must be <= West Limit", QTRED);
 				uiex->setPropertyString("label_12", "text", ColourLabel);
 				m_dTempFlipHourAngle = m_dTempWestSlewLim;
 				uiex->setPropertyDouble("doubleSpinBox_3", "value", m_dTempFlipHourAngle);
@@ -579,7 +579,7 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 			}
 			// If no errors, say slew limits are OK.
 			if (!slewerr) {
-				sprintf(ColourLabel, "%sSlew limits OK", QTGREEN);
+				snprintf(ColourLabel, sizeof(ColourLabel), "%sSlew limits OK", QTGREEN);
 				uiex->setPropertyString("label_12", "text", ColourLabel);
 			}
 		}
@@ -590,7 +590,7 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 				SkyW.TurnOnPec();
 				if (SkyW.GetIsPecTrackingOn()) {
 					uiex->setPropertyString("pushButton_3", "text", "Start PPEC Training"); // Change label to indicate now cancelled.
-					sprintf(ColourLabel, "%sPPEC Training Completed. Data stored and PPEC running.", QTGREEN);
+					snprintf(ColourLabel, sizeof(ColourLabel), "%sPPEC Training Completed. Data stored and PPEC running.", QTGREEN);
 					uiex->setPropertyString("label_16", "text", ColourLabel);
 					uiex->setEnabled("checkBox", true);
 					if (!uiex->isChecked("checkBox")) m_bCausedCheckBoxStateChange = true;  // See if have changed state of check box - if so, we should ignore next ui event.
@@ -599,7 +599,7 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 				}
 				else {
 					uiex->setPropertyString("pushButton_3", "text", "Start PPEC Training"); // Change label to indicate now cancelled.
-					sprintf(ColourLabel, "%sPPEC Training Failed.", QTRED);
+					snprintf(ColourLabel, sizeof(ColourLabel), "%sPPEC Training Failed.", QTRED);
 					uiex->setPropertyString("label_16", "text", ColourLabel);
 					uiex->setEnabled("checkBox", false);
 					if (uiex->isChecked("checkBox")) m_bCausedCheckBoxStateChange = true;  // See if have changed state of check box - if so, we should ignore next ui event.
@@ -626,7 +626,7 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 			uiex->setPropertyString("pushButton_2", "text", "Move to Alignment Position"); // Change label to indicate action taken
 			m_bPolarisAlignmentSlew = false;
 			setTrackingRatesCore(true, true, 0.0, 0.0);        // Start tracking
-			sprintf(ColourLabel, "%sTracking On", QTGREEN);
+			snprintf(ColourLabel, sizeof(ColourLabel), "%sTracking On", QTGREEN);
 			uiex->setPropertyString("label_4", "text", ColourLabel);
 			return;
 		}
@@ -675,7 +675,7 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 		else {
 			err = SkyW.Abort();
 			uiex->setPropertyString("pushButton_2", "text", "Move to Alignment Position"); // Change label to indicate action taken
-			sprintf(ColourLabel, "%sTracking Off", QTRED);
+			snprintf(ColourLabel, sizeof(ColourLabel), "%sTracking Off", QTRED);
 			uiex->setPropertyString("label_4", "text", ColourLabel);
 			m_bPolarisAlignmentSlew = false;
 			return;
@@ -686,7 +686,7 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 	if (!strcmp(pszEvent, "on_pushButton_3_clicked")) { // Start PPEC training
 		if (!m_bIsPECTraining) {
 			uiex->setPropertyString("pushButton_3", "text", "Cancel"); // Change label to indicate action taken
-			sprintf(ColourLabel, "%sPPEC Training Running...", QTGREEN);
+			snprintf(ColourLabel, sizeof(ColourLabel), "%sPPEC Training Running...", QTGREEN);
 			uiex->setPropertyString("label_16", "text", ColourLabel);
 			uiex->setEnabled("checkBox", false);    // Turn off ability to change PEC
 			uiex->setEnabled("pushButton", false);  // And all other pushbuttons
@@ -707,14 +707,14 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 			// Now handle UI
 			uiex->setPropertyString("pushButton_3", "text", "Start PPEC Training"); // Change label to indicate now cancelled.
 			if (SkyW.GetDoesMountHaveValidPecData()) {
-				sprintf(ColourLabel, "%sTraining cancelled, old PPEC being used.", QTRED);
+				snprintf(ColourLabel, sizeof(ColourLabel), "%sTraining cancelled, old PPEC being used.", QTRED);
 				uiex->setPropertyString("label_16", "text", ColourLabel);
 				uiex->setEnabled("checkBox", true);
 				if (uiex->isChecked("checkBox") != m_bPecEnabled) m_bCausedCheckBoxStateChange = true;  // See if have changed state of check box - if so, we should ignore next ui event.
 				uiex->setChecked("checkBox", m_bPecEnabled);
 			}
 			else {
-				sprintf(ColourLabel, "%sTraining cancelled. Mount does not have valid PPEC data. Ensure autoguider is running then click \"Start PPEC Training\" to store.", QTRED);
+				snprintf(ColourLabel, sizeof(ColourLabel), "%sTraining cancelled. Mount does not have valid PPEC data. Ensure autoguider is running then click \"Start PPEC Training\" to store.", QTRED);
 				uiex->setPropertyString("label_16", "text", ColourLabel);
 				uiex->setEnabled("checkBox", false);
 				if (uiex->isChecked("checkBox")) m_bCausedCheckBoxStateChange = true;  // See if have changed state of check box - if so, we should ignore next ui event.
@@ -741,19 +741,19 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 			if (uiex->isChecked("checkBox")) {
 				SkyW.TurnOnPec();
 				if (SkyW.GetIsPecTrackingOn()) {
-					sprintf(ColourLabel, "%sPPEC Tracking Enabled", QTGREEN);
+					snprintf(ColourLabel, sizeof(ColourLabel), "%sPPEC Tracking Enabled", QTGREEN);
 					uiex->setPropertyString("label_16", "text", ColourLabel);
 					m_bPecEnabled = true;
 				}
 				else {
-					sprintf(ColourLabel, "%sUnable to start PPEC", QTRED);
+					snprintf(ColourLabel, sizeof(ColourLabel), "%sUnable to start PPEC", QTRED);
 					uiex->setPropertyString("label_16", "text", ColourLabel);
 					m_bPecEnabled = false;
 				}
 			}
 			else {
 				SkyW.TurnOffPec();
-				sprintf(ColourLabel, "%sPPEC Tracking Disabled", QTRED);
+				snprintf(ColourLabel, sizeof(ColourLabel), "%sPPEC Tracking Disabled", QTRED);
 				uiex->setPropertyString("label_16", "text", ColourLabel);
 				m_bPecEnabled = false;
 			}
@@ -773,14 +773,14 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 	    SkyW.SetConnectionData(m_PortName, m_cWiFiIPAddress, m_iWiFiPort, m_bWiFiEnabled);
 	    if (SkyW.WiFiCheck()== SB_OK) {
 	      if (SkyW.isConnected()) {
-		sprintf(ColourLabel, "%sWiFi Connected to %s", QTGREEN, SkyW.GetMountName());
+		snprintf(ColourLabel, sizeof(ColourLabel), "%sWiFi Connected to %s", QTGREEN, SkyW.GetMountName());
 		uiex->setPropertyString("label_20", "text", ColourLabel);
 	      } else {
-		sprintf(ColourLabel, "%sWiFi found %s", QTGREEN, SkyW.GetMountName());
+		snprintf(ColourLabel, sizeof(ColourLabel), "%sWiFi found %s", QTGREEN, SkyW.GetMountName());
 		uiex->setPropertyString("label_20", "text", ColourLabel);
 	      }
 	    } else {
-	      sprintf(ColourLabel, "%sCould not connect wifi. Untick enable wifi to edit data.", QTRED);
+	      snprintf(ColourLabel, sizeof(ColourLabel), "%sCould not connect wifi. Untick enable wifi to edit data.", QTRED);
 	      uiex->setPropertyString("label_20", "text", ColourLabel);
 	    }
 	    // Disable editing of data when connected to wifi
@@ -788,7 +788,7 @@ void X2Mount::uiEvent(X2GUIExchangeInterface* uiex, const char* pszEvent)
 	    uiex->setEnabled("lineEdit_2", false);
 	  }
 	  else {
-	    sprintf(ColourLabel, "%sWiFi Disconnected", QTRED);
+	    snprintf(ColourLabel, sizeof(ColourLabel), "%sWiFi Disconnected", QTRED);
 	    uiex->setPropertyString("label_20", "text", ColourLabel);
 	    m_bWiFiEnabled = false;
 	    // Enable editiing of data when not connected
