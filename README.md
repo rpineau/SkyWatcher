@@ -10,20 +10,10 @@ cable (or Synscan Wi-Fi dongle).
   the mount communication layer. Replaced the unreliable per-byte read timeout
   with a poll-and-batch-read approach (mirroring the same fix already proven
   out on this project's sibling AstroTrac driver) - measured on real hardware,
-  this alone cut average command round-trip time from ~27ms to ~19ms, on top
-  of making the read loop correctly report an error instead of silently
-  truncating a reply if the mount never sends its terminating character.
-- **Centralized, leveled debug logging.** All debug output now goes through a
-  single `LogDebug(level, ...)` call per class instead of ~90 repeated
-  timestamp/fprintf blocks, with 4 levels (0-3, least to most verbose) instead
-  of a flat on/off flag - see **Debug logging** below if you need to turn it
-  on to diagnose a problem.
-- **Open-loop-move (guiding/jog) timing now measured correctly.** The
-  low-level timing this driver reports for `PulseGuide`/manual jog commands
-  previously used CPU time (`clock()`), which reads near zero for I/O-bound
-  work regardless of how long a command actually took on the wire. It now
-  uses wall-clock time throughout, matching how AstroTrac's driver already
-  measured this.
+  this cut average command round-trip time from ~27ms to ~19ms and removed
+  all communication errors in testing.
+- **Centralized, leveled debug logging.** See **Debug logging** below if you need
+  to turn it on to diagnose a problem.
 
 ## Connecting to the mount
 
@@ -50,22 +40,30 @@ Reached via **More Settings...** in the Serial Device Settings dialog above:
 
 - **Polar Alignment**: choose which of the four clock positions (12/3/6/9
   o'clock) the polar-scope reticle's home position corresponds to on your
-  setup, then use **Set Polar Alignment Home**/**Move to Alignment Position**
-  to slew there for a polar alignment star sighting.
-- **Polar Illuminator Brightness**: brightness of the polar-scope reticle LED,
-  where the mount supports one.
+  setup. Slew the mount in DEC so that the polar scope is visible (set Dec to 
+  plus or minus 90 deg). Slew the mount in RA so that the Polaris marker moves 
+  to the clock position selected above and press **Set Polar Alignment Home**. 
+  Once calibrated, pressing **Move to Alignment Position** will slew the scope
+  so that Polaris marker is in the correct position to polar align.
+- **Polar Illuminator Brightness**: controls brightness of the polar-scope 
+  reticle LED if the mount supports this.
 - **Slew Limits**:
-  - **East Limit** / **West Limit** (hours): how far past the meridian the
-    mount is allowed to track before the driver stops it, east and west
-    respectively. A positive East Limit or a West Limit beyond 0 allows
-    tracking slightly into the weights-up position. West Limit must be ≥ East
-    Limit.
+  - **East Limit** (hours): how far before the meridian the mount move
+    can slew after a meridian flip - will generally be zero or negative.
+    Negative will result in a slightly weights up position
+  **West Limit** (hours): how far past the meridian the
+    mount is allowed to track before the driver stops tracking. A positive
+    Wast Limit allows tracking slightly into the weights-up position. 
+    The West Limit must be ≥ East Limit.
   - **Flip Hour Angle**: the hour angle at which the mount performs a
     meridian flip when slewing. Usually set equal to the East Limit; must lie
-    between the East and West Limits.
+    between the East and West Limits. Note that although all three limits are 
+    set to TheSky correctly, only the West Limit is implemented by TheSky.
   - **Horizon Limit** (degrees): tracking stops once the target sets below
     this altitude.
   - **Post Slew Delay** (seconds): a pause added after every slew completes.
+    Allows a delay before e.g. taking a Closed Loop Slew image if
+    the stars are streaked to allow the scope to settle.
 - **Guide Rate**: the guide rate (as a fraction of sidereal) used for
   autoguiding pulses. 0.25x sidereal is recommended - there's a floor to how
   quickly the mount can respond, so a longer pulse at a lower rate gives more
