@@ -175,7 +175,16 @@ private:
 	bool m_bTracking;							  // Is the telescope tracking?
 	double m_dRATrackingRate;					  // RA Tracking rate in arcsec/sec
 	double m_dDETrackingRate;	                  // DEC Tracking Rate in arcsec/sec
-			
+
+	// Open-loop-move (guiding/jog) duration tracking, per axis since a diagonal move can have
+	// both running independently. Mirrors AstroTrac's m_OpenLoopStartTimeRA/DEC and
+	// m_bOpenLoopRA/DEC: StartOpenSlew() stamps the relevant one when a move begins,
+	// EndOpenSlew() logs the elapsed duration for whichever is set and clears both.
+	struct timespec m_OpenLoopStartTimeRA;
+	struct timespec m_OpenLoopStartTimeDEC;
+	bool m_bOpenLoopRA = false;
+	bool m_bOpenLoopDEC = false;
+
 	// Types
 	enum SkywatcherCommand {
 		SetAxisPositionCmd = 'E',

@@ -213,29 +213,35 @@ int X2Mount::queryAbstraction(const char* pszName, void** ppVal)
 //OpenLoopMoveInterface
 int X2Mount::startOpenLoopMove(const MountDriverInterface::MoveDir& Dir, const int& nRateIndex)
 {
+	if (!SkyW.isConnected())
+		return ERR_NOLINK;
+
 	X2MutexLocker ml(GetMutex());
 	m_CurrentRateIndex = nRateIndex;
 	LogDebug(1, "startOpenLoopMove called %d %d\n", Dir, nRateIndex);
-	return SkyW.StartOpenSlew(Dir, SlewSpeeds[nRateIndex]);
+	int err = SkyW.StartOpenSlew(Dir, SlewSpeeds[nRateIndex]);
+	if (err) {
+		LogDebug(1, "startOpenLoopMove ERROR %d\n", err);
+		m_pLogger->out("startOpenLoopMove ERROR");
+		return ERR_CMDFAILED;
+	}
+	return err;
 }
 
 int X2Mount::endOpenLoopMove(void)
 {
-	int err;
+	if (!SkyW.isConnected())
+		return ERR_NOLINK;
 
 	X2MutexLocker ml(GetMutex());
-#ifdef HEQ5_DEBUG
-    clock_t before = clock();
-#endif
-    LogDebug(1, "endOpenLoopMove Called\n");
-    err =  SkyW.EndOpenSlew();
-
-#ifdef HEQ5_DEBUG
-    clock_t duration = clock()-before;
-    float timetaken = (float) duration/CLOCKS_PER_SEC;
-    LogDebug(1, "endOpenLoopMove Duration %f\n", timetaken);
-#endif
-    return err;
+	LogDebug(1, "endOpenLoopMove Called\n");
+	int err = SkyW.EndOpenSlew();
+	if (err) {
+		LogDebug(1, "endOpenLoopMove ERROR %d\n", err);
+		m_pLogger->out("endOpenLoopMove ERROR");
+		return ERR_CMDFAILED;
+	}
+	return err;
 }
 
 int X2Mount::rateCountOpenLoopMove(void) const

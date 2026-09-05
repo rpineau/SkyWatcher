@@ -515,38 +515,71 @@ int Skywatcher::EndOpenSlew(void)
     SkywatcherDirection Direction = FORWARD;
     int Speedmode = 1; // Low speed mode since have restricted slew rates to siderial or below.
     unsigned long Period;
-    
+
+    // Log how long the open-loop slew that's now ending actually ran, per axis (a diagonal
+    // move can have both running independently) - the real guiding-pulse/jog duration as seen
+    // by the driver, useful for cross-checking against what was requested.
+    {
+        struct timespec now;
+        clock_gettime(CLOCK_MONOTONIC, &now);
+        if (m_bOpenLoopRA) {
+            double elapsedRA = (now.tv_sec - m_OpenLoopStartTimeRA.tv_sec) + (now.tv_nsec - m_OpenLoopStartTimeRA.tv_nsec) * 1e-9;
+            LogDebug(0, "Skyw::EndOpenSlew RA (East/West) duration %.3f seconds\n", elapsedRA);
+        }
+        if (m_bOpenLoopDEC) {
+            double elapsedDEC = (now.tv_sec - m_OpenLoopStartTimeDEC.tv_sec) + (now.tv_nsec - m_OpenLoopStartTimeDEC.tv_nsec) * 1e-9;
+            LogDebug(0, "Skyw::EndOpenSlew DEC (North/South) duration %.3f seconds\n", elapsedDEC);
+        }
+    }
+    m_bOpenLoopRA = false;
+    m_bOpenLoopDEC = false;
+
     Direction = NorthHemisphere ? FORWARD : BACKWARD; // Tracking is backwards in Southern hemisphere
     RARate = SKYWATCHER_SIDEREAL_SPEED;
     DECRate = 0.0;
-    
+
     // Save tracking rates for TSX interface - no difference from Siderial speed since rates ignored
     m_bTracking = true;
     m_dRATrackingRate = 0.0;
     m_dDETrackingRate = 0.0;
-    
+
     /*
     err = SetTrackingRateAxis(Axis1, RARate, RASteps360, RAInteruptFreq, RAHighspeedRatio);
     if (err) return err;
     err = SetTrackingRateAxis(Axis2, DECRate, DESteps360, DEInteruptFreq, DEHighspeedRatio);
     return err;
     */
-    
+
+    // Set tracking on to end the open-loop slew - a sequence of commands here rather than
+    // AstroTrac's single setTrackingRates() call, but timed and logged as one unit to match.
+    struct timespec cmdStart, cmdEnd;
+    clock_gettime(CLOCK_MONOTONIC, &cmdStart);
+
     snprintf(command, SKYWATCHER_MAX_CMD, "%d%d", Speedmode, Direction);
-    err = SendSkywatcherCommand(SetMotionMode, Axis1, command, response, SKYWATCHER_MAX_CMD); if (err) return err;
+    err = SendSkywatcherCommand(SetMotionMode, Axis1, command, response, SKYWATCHER_MAX_CMD);
 
-    // Calulate interupt period for slew rate - see SKYWATCHER basic api code for details
-    Period = (unsigned long) ((double) RAInteruptFreq / (double) RASteps360*360.0*3600.0 / RARate );
-    
-    // Set AxisPeriod
-    long2Revu24str(Period, command);    // Convert period into string
-    err = SendSkywatcherCommand(SetStepPeriod, Axis1, command, response, SKYWATCHER_MAX_CMD); if (err) return err;
+    if (!err) {
+        // Calulate interupt period for slew rate - see SKYWATCHER basic api code for details
+        Period = (unsigned long) ((double) RAInteruptFreq / (double) RASteps360*360.0*3600.0 / RARate );
 
-    // Start axis moving
-    err = SendSkywatcherCommand(StartMotion, Axis1, NULL, response, SKYWATCHER_MAX_CMD); if (err) return err;
+        // Set AxisPeriod
+        long2Revu24str(Period, command);    // Convert period into string
+        err = SendSkywatcherCommand(SetStepPeriod, Axis1, command, response, SKYWATCHER_MAX_CMD);
+    }
 
-    // Now stop DEC axis moving.
-    err = SendSkywatcherCommand(NotInstantAxisStop, Axis2, NULL, response, SKYWATCHER_MAX_CMD);
+    if (!err) {
+        // Start axis moving
+        err = SendSkywatcherCommand(StartMotion, Axis1, NULL, response, SKYWATCHER_MAX_CMD);
+    }
+
+    if (!err) {
+        // Now stop DEC axis moving.
+        err = SendSkywatcherCommand(NotInstantAxisStop, Axis2, NULL, response, SKYWATCHER_MAX_CMD);
+    }
+
+    clock_gettime(CLOCK_MONOTONIC, &cmdEnd);
+    double cmdElapsed = (cmdEnd.tv_sec - cmdStart.tv_sec) + (cmdEnd.tv_nsec - cmdStart.tv_nsec) * 1e-9;
+    LogDebug(0, "Skyw::EndOpenSlew resume-tracking sequence took %.3f seconds, err = %d\n", cmdElapsed, err);
 
     return err;
 }
@@ -921,15 +954,32 @@ int Skywatcher::StartOpenSlew(const MountDriverInterface::MoveDir &		Dir, double
 	}
 	
 	// Only set tracking rate for relevant axis - important for diagonal moves (otherwise reset the second axis)
-	if (Dir == MountDriverInterface::MD_EAST || Dir == MountDriverInterface::MD_WEST) {
-		err = SetTrackingRateAxis(Axis1, RARate, RASteps360, RAInteruptFreq, RAHighspeedRatio);
+	{
+		struct timespec cmdStart, cmdEnd;
+		clock_gettime(CLOCK_MONOTONIC, &cmdStart);
+		if (Dir == MountDriverInterface::MD_EAST || Dir == MountDriverInterface::MD_WEST) {
+			err = SetTrackingRateAxis(Axis1, RARate, RASteps360, RAInteruptFreq, RAHighspeedRatio);
+		}
+		else {
+			err = SetTrackingRateAxis(Axis2, DECRate, DESteps360, DEInteruptFreq, DEHighspeedRatio);
+		}
+		clock_gettime(CLOCK_MONOTONIC, &cmdEnd);
+		double cmdElapsed = (cmdEnd.tv_sec - cmdStart.tv_sec) + (cmdEnd.tv_nsec - cmdStart.tv_nsec) * 1e-9;
+		LogDebug(0, "Skyw::StartOpenSlew SetTrackingRateAxis took %.3f seconds, err = %d\n", cmdElapsed, err);
+	}
+
+	// Start timer to measure open loop slew duration for the appropriate axis
+	if (Dir == MountDriverInterface::MD_NORTH || Dir == MountDriverInterface::MD_SOUTH) {
+		m_bOpenLoopDEC = true;
+		clock_gettime(CLOCK_MONOTONIC, &m_OpenLoopStartTimeDEC);
 	}
 	else {
-		err = SetTrackingRateAxis(Axis2, DECRate, DESteps360, DEInteruptFreq, DEHighspeedRatio);
+		m_bOpenLoopRA = true;
+		clock_gettime(CLOCK_MONOTONIC, &m_OpenLoopStartTimeRA);
 	}
-	
+
 	return err;
-	
+
 }
 
 // Next function starts a slew to align the polar axis
