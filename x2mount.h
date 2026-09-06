@@ -331,7 +331,7 @@ private:
 	int m_iLEDBrightness;
 	bool m_bCausedCheckBoxStateChange = false;						// Have we caused the check box to change state
 #ifdef HEQ5_DEBUG
-	char m_sLogfilePath[SKYWATCHER_CHAR_BUFFER];
+	std::string m_sLogfilePath;
 	FILE *LogFile;      // LogFile
 #endif
 	

@@ -28,12 +28,48 @@ X2Mount::X2Mount(const char* pszDriverSelection,
 
 #ifdef  HEQ5_DEBUG
 	// Open log file
+	std::string sLogDir;
+	std::string sPathSep;
 #if defined(SB_WIN_BUILD)
-	snprintf(m_sLogfilePath, sizeof(m_sLogfilePath), "%s%s%s", getenv("HOMEDRIVE"), getenv("HOMEPATH"), "\\X2Mountlog.txt");
+	sLogDir = getenv("HOMEDRIVE");
+	sLogDir += getenv("HOMEPATH");
+	sPathSep = "\\";
 #else
-	snprintf(m_sLogfilePath, sizeof(m_sLogfilePath), "%s%s", getenv("HOME"), "/X2Mountlog.txt");
+	sLogDir = getenv("HOME");
+	sPathSep = "/";
 #endif
-	LogFile = fopen(m_sLogfilePath, "w");
+
+	// Name the log after the observing night, using the same "noon to noon"
+	// convention TheSkyX itself uses for its guide-log folders, and the same
+	// approach as AstroTrac's own log - see its AstroTrac.cpp for why.
+	time_t nowTime = time(nullptr);
+	struct tm nightTm;
+#if defined(SB_WIN_BUILD)
+	localtime_s(&nightTm, &nowTime);
+#else
+	localtime_r(&nowTime, &nightTm);
+#endif
+	if (nightTm.tm_hour < 12) {
+		nowTime -= 12 * 3600;
+#if defined(SB_WIN_BUILD)
+		localtime_s(&nightTm, &nowTime);
+#else
+		localtime_r(&nowTime, &nightTm);
+#endif
+	}
+	char szNightDate[32];
+	strftime(szNightDate, sizeof(szNightDate), "%B %d %Y", &nightTm);
+
+	std::string sBaseName = std::string("X2Mountlog_") + szNightDate;
+	m_sLogfilePath = sLogDir + sPathSep + sBaseName + ".txt";
+	int nVersion = 1;
+	while (FILE *pExisting = fopen(m_sLogfilePath.c_str(), "r")) {
+		fclose(pExisting);
+		nVersion++;
+		m_sLogfilePath = sLogDir + sPathSep + sBaseName + "_v" + std::to_string(nVersion) + ".txt";
+	}
+
+	LogFile = fopen(m_sLogfilePath.c_str(), "w");
 
 	setbuf(LogFile, NULL);
 #endif

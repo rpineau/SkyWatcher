@@ -312,7 +312,7 @@ private:
 	// CStopWatch        m_cmdDelayTimer;
     
 #ifdef SKYW_DEBUG
-	char m_sLogfilePath[SKYWATCHER_CHAR_BUFFER];
+	std::string m_sLogfilePath;
 	FILE *LogFile;      // LogFile
 #endif
 
