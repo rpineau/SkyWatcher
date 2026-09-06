@@ -30,13 +30,48 @@ Skywatcher::Skywatcher(SerXInterface *pSerX, SleeperInterface *pSleeper, TheSkyX
 	m_dDeltaHASteps = 70.0;		// Opposite direction in Northern Hemisphere
 
 #ifdef  SKYW_DEBUG
+	std::string sLogDir;
+	std::string sPathSep;
 #if defined(SB_WIN_BUILD)
-	snprintf(m_sLogfilePath, sizeof(m_sLogfilePath),"%s%s%s", getenv("HOMEDRIVE"), getenv("HOMEPATH"),"\\Skylog.txt");
+	sLogDir = getenv("HOMEDRIVE");
+	sLogDir += getenv("HOMEPATH");
+	sPathSep = "\\";
 #else
-	snprintf(m_sLogfilePath, sizeof(m_sLogfilePath), "%s%s", getenv("HOME"), "/Skylog.txt");
+	sLogDir = getenv("HOME");
+	sPathSep = "/";
 #endif
 
-	LogFile = fopen(m_sLogfilePath, "w");
+	// Name the log after the observing night, using the same "noon to noon"
+	// convention TheSkyX itself uses for its guide-log folders, and the same
+	// approach as AstroTrac's own log - see its AstroTrac.cpp for why.
+	time_t nowTime = time(nullptr);
+	struct tm nightTm;
+#if defined(SB_WIN_BUILD)
+	localtime_s(&nightTm, &nowTime);
+#else
+	localtime_r(&nowTime, &nightTm);
+#endif
+	if (nightTm.tm_hour < 12) {
+		nowTime -= 12 * 3600;
+#if defined(SB_WIN_BUILD)
+		localtime_s(&nightTm, &nowTime);
+#else
+		localtime_r(&nowTime, &nightTm);
+#endif
+	}
+	char szNightDate[32];
+	strftime(szNightDate, sizeof(szNightDate), "%B %d %Y", &nightTm);
+
+	std::string sBaseName = std::string("Skylog_") + szNightDate;
+	m_sLogfilePath = sLogDir + sPathSep + sBaseName + ".txt";
+	int nVersion = 1;
+	while (FILE *pExisting = fopen(m_sLogfilePath.c_str(), "r")) {
+		fclose(pExisting);
+		nVersion++;
+		m_sLogfilePath = sLogDir + sPathSep + sBaseName + "_v" + std::to_string(nVersion) + ".txt";
+	}
+
+	LogFile = fopen(m_sLogfilePath.c_str(), "w");
 	// Turn off buffering for the log file
 	setbuf(LogFile, NULL);
 #endif
