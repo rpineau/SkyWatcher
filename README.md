@@ -83,10 +83,15 @@ both macros commented out, so `LogDebug` compiles away to nothing and no log
 files are written. To diagnose a problem, uncomment one line in each of two
 headers and rebuild:
 
-- `Skywatcher.h`: `#define SKYW_DEBUG <level>` - logs to `~/Skylog.txt`.
+- `Skywatcher.h`: `#define SKYW_DEBUG <level>` - logs to
+  `~/Skylog_<Month DD YYYY>.txt`, named for the current observing night
+  (noon-to-noon, so a session that runs past midnight stays in one file). If
+  a log for that night already exists (e.g. a second connection later the
+  same night), `_v2`, `_v3`, etc. are appended rather than overwriting it.
   Covers the low-level mount protocol: command send/receive timing, retries,
   timeouts, and open-loop-move (guiding/jog) durations.
-- `x2mount.h`: `#define HEQ5_DEBUG <level>` - logs to `~/X2Mountlog.txt`.
+- `x2mount.h`: `#define HEQ5_DEBUG <level>` - logs to
+  `~/X2Mountlog_<Month DD YYYY>.txt`, named and versioned the same way.
   Covers the X2/TheSkyX-facing interface layer: link state, UI events,
   coordinate/tracking-limit checks.
 
